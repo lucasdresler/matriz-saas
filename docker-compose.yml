@@ -36,6 +36,7 @@ services:
       - AUTHENTICATION_API_KEY=MatrizSuperSecretApiKey2026
       # Banco de dados para Evolution API
       - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
       - DATABASE_CONNECTION_URI=postgresql://matriz_admin:MatrizSecurePass2026!@postgres:5432/matriz_db?schema=evolution
       - DATABASE_CLIENT_NAME=evolution_v2
       # Cache e Fila com Redis
