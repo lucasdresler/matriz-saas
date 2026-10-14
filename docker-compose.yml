@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 1. Painel Web / Dashboard SaaS
   matriz-saas:
@@ -26,7 +24,7 @@ services:
 
   # 2. WhatsApp Gateway (Evolution API v2 - Suporte Nativo ARM64)
   evolution-api:
-    image: atendai/evolution-api:v2.2.2
+    image: evoapicloud/evolution-api:v2.2.2
     container_name: evolution-api
     restart: always
     ports:
