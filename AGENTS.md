@@ -1,26 +1,24 @@
-<!-- BEGIN:nextjs-agent-rules -->
-
-## This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
-
 # AGENTS.md — AllLogic OS (Atendimento IA + CRM SaaS Multi-Tenant)
 
-## Autoridade Institucional
+## 1. Autoridade Institucional
 Este documento é subordinado às diretrizes oficiais da **AllLogic Online**:
-- `~/AllLogic/AGENTS.md` (Documento Pai)
+- `~/AllLogic/AGENTS.md` (Documento Pai da estrutura)
 - `~/AllLogic/SGA/FOUNDATION.md` (Fonte Primária Institucional)
+- `~/AllLogic/SGA/11-Inteligencia-Artificial/01-Fundamentos/ALLLOGIC_AI_CONSTITUTION.md` (Manual Operacional do Agente)
 
-## Contexto do Projeto
-- **Nome:** AllLogic OS
-- **Provedor:** AllLogic Online — *Engenharia de Soluções Digitais*
-- **Slogan:** *Tecnologia que trabalha para as pessoas.*
-- **Objetivo:** Plataforma multi-tenant de agentes inteligentes de atendimento WhatsApp, CRM funil Kanban, agendamento automatizado e base de conhecimento RAG para uso interno da AllLogic Online e atendimento aos seus clientes de agência/SaaS.
+## 2. Contexto do Projeto
+- **Nome do Projeto:** AllLogic OS
+- **Organização:** AllLogic Online — *Engenharia de Soluções Digitais*
+- **Slogan Oficial:** *Tecnologia que trabalha para as pessoas.*
+- **Domínio Institucional:** `alllogiconline.com.br`
+- **Propósito:** Plataforma multi-tenant de gestão e atendimento conversacional, integrando WhatsApp (Evolution API v2.3.7), CRM Funil Kanban, sistema de agendamento e base de conhecimento RAG, servindo tanto ao uso próprio quanto aos clientes da AllLogic Online.
 
-## Governança e Autonomia
-As regras de governança e autonomia do assistente estão registradas em:
-`.agents/rules/governance.md`
+## 3. Governança e Autonomia
+As regras de governança e limites de autonomia específicos do assistente estão registradas em:
+- `.agents/rules/governance.md`
+
+## 4. Padrões Técnicos
+- **Frontend:** Next.js 16 (App Router), TypeScript, Vanilla CSS e tokens de design.
+- **Banco de Dados:** PostgreSQL 16 (conforme ADR-001 do SGA).
+- **Gateway WhatsApp:** Evolution API v2.3.7 oficial via Docker.
+- **Proxy Reverso & SSL:** Traefik com Let's Encrypt.
