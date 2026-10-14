@@ -21,6 +21,13 @@ services:
         condition: service_started
     networks:
       - matriz-network
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.matriz-saas.rule=Host(`hub.alllogiconline.com.br`) || Host(`app.alllogiconline.com.br`)"
+      - "traefik.http.routers.matriz-saas.entrypoints=websecure"
+      - "traefik.http.routers.matriz-saas.tls.certresolver=letsencrypt"
+      - "traefik.http.services.matriz-saas.loadbalancer.server.port=3000" 
 
   # 2. WhatsApp Gateway (Evolution API v2 - Suporte Nativo ARM64)
   evolution-api:
@@ -54,6 +61,13 @@ services:
         condition: service_started
     networks:
       - matriz-network
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.evolution-api.rule=Host(`wa.alllogiconline.com.br`) || Host(`api.alllogiconline.com.br`)"
+      - "traefik.http.routers.evolution-api.entrypoints=websecure"
+      - "traefik.http.routers.evolution-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.evolution-api.loadbalancer.server.port=8080" 
 
   # 3. Banco de Dados PostgreSQL 16
   postgres:
@@ -96,3 +110,5 @@ volumes:
 networks:
   matriz-network:
     driver: bridge
+  proxy:
+    external: true
