@@ -1,4 +1,4 @@
-# AGENTS.md — AllLogic OS (Atendimento IA + CRM SaaS Multi-Tenant)
+# AGENTS.md — Agillex Hub (Atendimento IA + CRM SaaS Multi-Tenant)
 
 ## 1. Autoridade Institucional
 Este documento é subordinado às diretrizes oficiais da **AllLogic Online**:
@@ -7,7 +7,7 @@ Este documento é subordinado às diretrizes oficiais da **AllLogic Online**:
 - `~/AllLogic/SGA/11-Inteligencia-Artificial/01-Fundamentos/ALLLOGIC_AI_CONSTITUTION.md` (Manual Operacional do Agente)
 
 ## 2. Contexto do Projeto
-- **Nome do Projeto:** AllLogic OS
+- **Nome do Projeto:** Agillex Hub
 - **Organização:** AllLogic Online — *Engenharia de Soluções Digitais*
 - **Slogan Oficial:** *Tecnologia que trabalha para as pessoas.*
 - **Domínio Institucional:** `alllogiconline.com.br`

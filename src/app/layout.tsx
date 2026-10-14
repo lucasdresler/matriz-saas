@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AllLogic OS | Engenharia de Soluções Digitais & Atendimento IA",
+  title: "Agillex Hub | Engenharia de Soluções Digitais & Atendimento IA",
   description: "Tecnologia que trabalha para as pessoas. Plataforma multi-tenant com Agentes de Atendimento IA, CRM Kanban e Integração WhatsApp.",
 };
 
