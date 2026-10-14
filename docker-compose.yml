@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile
     container_name: matriz-saas
     restart: always
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -34,8 +32,6 @@ services:
     image: evoapicloud/evolution-api:v2.3.7
     container_name: evolution-api
     restart: always
-    ports:
-      - "8080:8080"
     environment:
       - SERVER_TYPE=http
       - SERVER_PORT=8080
