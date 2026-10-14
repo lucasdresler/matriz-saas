@@ -10,6 +10,20 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- COMPATIBILIDADE POSTGRESQL & EVOLUTION API
+CREATE SCHEMA IF NOT EXISTS auth;
+CREATE SCHEMA IF NOT EXISTS evolution;
+
+CREATE TABLE IF NOT EXISTS auth.users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS UUID AS $$
+    SELECT '00000000-0000-0000-0000-000000000000'::UUID;
+$$ LANGUAGE SQL STABLE;
+
 -- 2. TABELA DE ORGANIZAÇÕES / WORKSPACES (MULTI-TENANT)
 CREATE TABLE IF NOT EXISTS public.organizations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -140,6 +154,7 @@ ALTER TABLE public.knowledge_docs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_configurations ENABLE ROW LEVEL SECURITY;
 
 -- Exemplo de política RLS para Leads: O usuário só acessa leads da sua organização
+DROP POLICY IF EXISTS "Membros acessam leads da sua organização" ON public.leads;
 CREATE POLICY "Membros acessam leads da sua organização"
 ON public.leads
 FOR ALL
