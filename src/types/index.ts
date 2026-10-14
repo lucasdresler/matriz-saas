@@ -11,7 +11,7 @@ export interface Organization {
   name: string;
   slug: string;
   category: string;
-  plan: 'Starter' | 'Pro' | 'Agência VIP';
+  plan: 'Starter' | 'Pro' | 'Agência VIP' | 'Enterprise';
   logoColor: string;
   whatsappPhone: string;
   whatsappStatus: 'connected' | 'qr_ready' | 'disconnected';

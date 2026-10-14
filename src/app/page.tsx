@@ -52,7 +52,7 @@ import { Organization, Lead, LeadStatus, ChatMessage, Appointment, ServiceItem, 
 export default function MatrizDashboard() {
   // Estado Multi-Tenant (Organização Ativa)
   const [organizations, setOrganizations] = useState<Organization[]>(initialOrganizations);
-  const [activeOrgId, setActiveOrgId] = useState<string>('org-matriz');
+  const [activeOrgId, setActiveOrgId] = useState<string>('org-alllogic');
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
 
   // Navegação Principal
@@ -225,20 +225,20 @@ export default function MatrizDashboard() {
               width: '36px',
               height: '36px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #10B981, #059669)',
+              background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 16px rgba(16, 185, 129, 0.4)',
+              boxShadow: '0 0 16px rgba(37, 99, 235, 0.4)',
             }}
           >
             <Bot size={20} color="#fff" />
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.02em', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              MATRIZ OS <span style={{ fontSize: '0.62rem', background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>PRO</span>
+              AllLogic OS <span style={{ fontSize: '0.62rem', background: 'rgba(37, 99, 235, 0.15)', color: '#60A5FA', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(37, 99, 235, 0.3)' }}>PRO</span>
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Agente IA + CRM SaaS</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Engenharia de Soluções Digitais</div>
           </div>
         </div>
 

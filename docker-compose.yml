@@ -44,8 +44,8 @@ services:
       - CACHE_REDIS_URI=redis://redis:6379/1
       - CACHE_REDIS_PREFIX_KEY=evolution
       # Configurações do WhatsApp
-      - CONFIG_SESSION_PHONE_CLIENT=Matriz AI
-      - CONFIG_SESSION_PHONE_NAME=Chrome
+      - CONFIG_SESSION_PHONE_CLIENT=AllLogic Online
+      - CONFIG_SESSION_PHONE_NAME=AllLogic Atendimento
       - QRCODE_LIMIT=30
     depends_on:
       postgres:

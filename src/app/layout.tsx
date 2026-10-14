@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Matriz OS | Agente IA, CRM & WhatsApp SaaS",
-  description: "Plataforma SaaS Multi-Tenant com Agente de Atendimento IA, CRM Kanban, Agendamentos e Integração WhatsApp",
+  title: "AllLogic OS | Engenharia de Soluções Digitais & Atendimento IA",
+  description: "Tecnologia que trabalha para as pessoas. Plataforma multi-tenant com Agentes de Atendimento IA, CRM Kanban e Integração WhatsApp.",
 };
 
 export default function RootLayout({
