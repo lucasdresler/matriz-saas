@@ -35,7 +35,10 @@ import {
   Zap,
   ChevronRight,
   MoreVertical,
-  CalendarCheck2
+  CalendarCheck2,
+  Menu,
+  X,
+  ArrowLeft
 } from 'lucide-react';
 import {
   initialOrganizations,
@@ -74,8 +77,15 @@ export default function MatrizDashboard() {
   const [newLeadModalOpen, setNewLeadModalOpen] = useState(false);
   const [qrCodeRefreshing, setQrCodeRefreshing] = useState(false);
   const [qrCounter, setQrCounter] = useState(1);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileChatView, setMobileChatView] = useState<'list' | 'chat'>('list');
 
   // Organização Atual
+    const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas') => {
+    setActiveTab(tab);
+    setMobileSidebarOpen(false);
+  };
+
   const currentOrg = organizations.find((o) => o.id === activeOrgId) || organizations[0];
   const orgLeads = leads.filter((l) => l.orgId === activeOrgId);
   const orgAppointments = appointments.filter((a) => a.orgId === activeOrgId);
@@ -206,40 +216,49 @@ export default function MatrizDashboard() {
   const totalMrr = saasClients.reduce((acc, curr) => acc + curr.mrr, 0);
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', backgroundColor: 'var(--bg-main)' }}>
+    <div className="app-layout">
+      {/* Backdrop overlay para fechar sidebar no mobile */}
+      {mobileSidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* 1. SIDEBAR LATERAL NAVEGAÇÃO */}
-      <aside
-        style={{
-          width: '260px',
-          borderRight: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-surface)',
-          display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0,
-        }}
-      >
+      <aside className={`app-sidebar ${mobileSidebarOpen ? 'sidebar-open' : ''}`}>
         {/* Logo & Marca da Plataforma */}
-        <div style={{ padding: '20px 18px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 16px rgba(37, 99, 235, 0.4)',
-            }}
-          >
-            <Bot size={20} color="#fff" />
-          </div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.02em', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              AllLogic OS <span style={{ fontSize: '0.62rem', background: 'rgba(37, 99, 235, 0.15)', color: '#60A5FA', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(37, 99, 235, 0.3)' }}>PRO</span>
+        <div style={{ padding: '20px 18px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 16px rgba(37, 99, 235, 0.4)',
+              }}
+            >
+              <Bot size={20} color="#fff" />
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Engenharia de Soluções Digitais</div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.02em', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                AllLogic OS <span style={{ fontSize: '0.62rem', background: 'rgba(37, 99, 235, 0.15)', color: '#60A5FA', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(37, 99, 235, 0.3)' }}>PRO</span>
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Engenharia de Soluções Digitais</div>
+            </div>
           </div>
+          <button
+            className="sidebar-close-btn"
+            onClick={() => setMobileSidebarOpen(false)}
+            title="Fechar menu"
+            aria-label="Fechar menu"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {/* WORKSPACE SWITCHER MULTI-TENANT */}
@@ -363,7 +382,7 @@ export default function MatrizDashboard() {
           </div>
 
           <button
-            onClick={() => setActiveTab('overview')}
+            onClick={() => handleTabChange('overview')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -381,7 +400,7 @@ export default function MatrizDashboard() {
           </button>
 
           <button
-            onClick={() => setActiveTab('kanban')}
+            onClick={() => handleTabChange('kanban')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -404,7 +423,7 @@ export default function MatrizDashboard() {
           </button>
 
           <button
-            onClick={() => setActiveTab('livechat')}
+            onClick={() => handleTabChange('livechat')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -425,7 +444,7 @@ export default function MatrizDashboard() {
           </button>
 
           <button
-            onClick={() => setActiveTab('agenda')}
+            onClick={() => handleTabChange('agenda')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -452,7 +471,7 @@ export default function MatrizDashboard() {
           </div>
 
           <button
-            onClick={() => setActiveTab('ai_brain')}
+            onClick={() => handleTabChange('ai_brain')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -470,7 +489,7 @@ export default function MatrizDashboard() {
           </button>
 
           <button
-            onClick={() => setActiveTab('whatsapp')}
+            onClick={() => handleTabChange('whatsapp')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -495,7 +514,7 @@ export default function MatrizDashboard() {
           </div>
 
           <button
-            onClick={() => setActiveTab('saas')}
+            onClick={() => handleTabChange('saas')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -536,44 +555,56 @@ export default function MatrizDashboard() {
       </aside>
 
       {/* 2. ÁREA CENTRAL DE CONTEÚDO */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <main className="main-wrapper">
         {/* Topbar Superior com Status do Sistema */}
-        <header
-          style={{
-            height: '64px',
-            borderBottom: '1px solid var(--border-subtle)',
-            backgroundColor: 'var(--bg-surface)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 24px',
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <h1 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
-              {activeTab === 'overview' && 'Visão Geral & Métricas'}
-              {activeTab === 'kanban' && 'Funil de Vendas CRM (Kanban)'}
-              {activeTab === 'livechat' && 'Live Chat WhatsApp & Human Handoff'}
-              {activeTab === 'agenda' && 'Gestão de Agendamentos & Calendário'}
-              {activeTab === 'ai_brain' && 'Cérebro da IA & Base de Conhecimento (RAG)'}
-              {activeTab === 'whatsapp' && 'Conexão WhatsApp (Evolution API)'}
-              {activeTab === 'saas' && 'Painel SaaS & Gestão de Clientes'}
-            </h1>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '12px' }}>
-              Empresa: <strong style={{ color: '#fff' }}>{currentOrg.name}</strong>
-            </span>
+        <header className="topbar-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+            <button
+              className="mobile-only"
+              onClick={() => setMobileSidebarOpen(true)}
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-surface-elevated)',
+                border: '1px solid var(--border-subtle)',
+                color: '#fff',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                cursor: 'pointer',
+              }}
+              title="Abrir menu"
+              aria-label="Abrir menu"
+            >
+              <Menu size={20} />
+            </button>
+
+            <div style={{ minWidth: 0 }}>
+              <h1 className="topbar-title" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {activeTab === 'overview' && 'Visão Geral'}
+                {activeTab === 'kanban' && 'Funil CRM'}
+                {activeTab === 'livechat' && 'Live Chat WhatsApp'}
+                {activeTab === 'agenda' && 'Agendamentos'}
+                {activeTab === 'ai_brain' && 'Cérebro IA & RAG'}
+                {activeTab === 'whatsapp' && 'Conexão WhatsApp'}
+                {activeTab === 'saas' && 'Painel SaaS & MRR'}
+              </h1>
+              <span className="desktop-only" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '10px' }}>
+                Empresa: <strong style={{ color: '#fff' }}>{currentOrg.name}</strong>
+              </span>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             {/* Status Conexão WhatsApp */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '99px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '99px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 6px #10B981' }} />
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#34D399' }}>WhatsApp Conectado</span>
+              <span className="desktop-only" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#34D399' }}>WhatsApp Conectado</span>
             </div>
 
             {/* Status Agente de IA */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '99px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+            <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '99px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
               <Sparkles size={13} color="#60A5FA" />
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#60A5FA' }}>Agente IA Ativo</span>
             </div>
@@ -585,39 +616,30 @@ export default function MatrizDashboard() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '8px 14px',
+                padding: '7px 12px',
                 borderRadius: '8px',
                 background: 'linear-gradient(135deg, #10B981, #059669)',
                 color: '#fff',
-                fontSize: '0.82rem',
+                fontSize: '0.8rem',
                 fontWeight: 600,
                 boxShadow: '0 2px 10px rgba(16, 185, 129, 0.3)',
+                whiteSpace: 'nowrap',
               }}
             >
-              <Plus size={15} /> Novo Lead
+              <Plus size={15} /> <span className="desktop-only">Novo Lead</span><span className="mobile-only">Lead</span>
             </button>
           </div>
         </header>
 
         {/* CORPO PRINCIPAL COM CONTEÚDO DA ABA SELECIONADA */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+        <div className="content-scroll">
           {/* ======================================================== */}
           {/* ABA 1: VISÃO GERAL (DASHBOARD & KPIS)                    */}
           {/* ======================================================== */}
           {activeTab === 'overview' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               {/* Banner de Destaque da Operação */}
-              <div
-                style={{
-                  padding: '24px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
+              <div className="hero-banner">
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                     <span style={{ fontSize: '0.75rem', color: '#34D399', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
@@ -636,7 +658,7 @@ export default function MatrizDashboard() {
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button
-                    onClick={() => setActiveTab('livechat')}
+                    onClick={() => handleTabChange('livechat')}
                     style={{
                       padding: '12px 20px',
                       borderRadius: '10px',
@@ -652,7 +674,7 @@ export default function MatrizDashboard() {
                     <MessageSquare size={16} /> Ver Chat Ao Vivo
                   </button>
                   <button
-                    onClick={() => setActiveTab('kanban')}
+                    onClick={() => handleTabChange('kanban')}
                     style={{
                       padding: '12px 18px',
                       borderRadius: '10px',
@@ -669,7 +691,7 @@ export default function MatrizDashboard() {
               </div>
 
               {/* Grid de 4 Cards de Métricas Principais */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px' }}>
+              <div className="metrics-grid">
                 <div style={{ padding: '20px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-muted)', marginBottom: '10px' }}>
                     <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Total de Leads no CRM</span>
@@ -716,12 +738,12 @@ export default function MatrizDashboard() {
               </div>
 
               {/* Divisão em 2 Colunas: Últimos Leads & Agendamentos Próximos */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
+              <div className="split-grid-2col">
                 {/* Coluna 1: Leads Recentes */}
                 <div style={{ padding: '20px', borderRadius: '14px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff' }}>Últimas Oportunidades do WhatsApp</h3>
-                    <button onClick={() => setActiveTab('kanban')} style={{ fontSize: '0.78rem', color: '#34D399', fontWeight: 600 }}>
+                    <button onClick={() => handleTabChange('kanban')} style={{ fontSize: '0.78rem', color: '#34D399', fontWeight: 600 }}>
                       Ver todos no Kanban &rarr;
                     </button>
                   </div>
@@ -997,19 +1019,9 @@ export default function MatrizDashboard() {
           {/* ABA 3: LIVE CHAT WHATSAPP COM HUMAN HANDOFF              */}
           {/* ======================================================== */}
           {activeTab === 'livechat' && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '320px 1fr',
-                height: 'calc(100vh - 120px)',
-                backgroundColor: 'var(--bg-surface)',
-                borderRadius: '14px',
-                border: '1px solid var(--border-subtle)',
-                overflow: 'hidden',
-              }}
-            >
+            <div className={`livechat-grid ${mobileChatView === 'chat' ? 'livechat-chat-active' : 'livechat-list-active'}`}>
               {/* Coluna Esquerda: Lista de Conversas do WhatsApp */}
-              <div style={{ borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
+              <div className="livechat-sidebar" style={{ borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface-elevated)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>Conversas Ativas</span>
@@ -1071,7 +1083,7 @@ export default function MatrizDashboard() {
 
               {/* Coluna Direita: Janela do Chat Ao Vivo */}
               {selectedLead ? (
-                <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#0B141A' }}>
+                <div className="livechat-main" style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#0B141A' }}>
                   {/* Header do Chat com o Lead & BOTÃO HUMAN HANDOFF */}
                   <div
                     style={{
@@ -1083,7 +1095,24 @@ export default function MatrizDashboard() {
                       justifyContent: 'space-between',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <button
+                        className="mobile-only"
+                        onClick={() => setMobileChatView('list')}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          color: '#fff',
+                          fontSize: '0.8rem',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <ArrowLeft size={16} /> Voltar
+                      </button>
                       <div style={{ width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff' }}>
                         {selectedLead.name.charAt(0)}
                       </div>
@@ -1262,7 +1291,7 @@ export default function MatrizDashboard() {
               </div>
 
               {/* Tabela de Agendamentos */}
-              <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+              <div className="table-wrapper" style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                   <thead>
                     <tr style={{ backgroundColor: 'var(--bg-surface-elevated)', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
@@ -1301,7 +1330,7 @@ export default function MatrizDashboard() {
           {/* ABA 5: CÉREBRO DA IA & RAG (BASE DE CONHECIMENTO)        */}
           {/* ======================================================== */}
           {activeTab === 'ai_brain' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
+            <div className="split-grid-2col">
               {/* Lado Esquerdo: Configuração do Agente */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ padding: '20px', borderRadius: '14px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
@@ -1661,7 +1690,7 @@ export default function MatrizDashboard() {
               </div>
 
               {/* Tabela de Assinantes SaaS e Clientes de Agência */}
-              <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+              <div className="table-wrapper" style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>Empresas Cadastradas na Plataforma</h3>
                   <button
