@@ -12,7 +12,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_URL=postgresql://matriz_admin:MatrizSecurePass2026!@postgres:5432/matriz_db?schema=public
-      - NEXT_PUBLIC_EVOLUTION_API_URL=http://evolution-api:8080
+      - NEXT_PUBLIC_EVOLUTION_API_URL=https://wa.alllogiconline.com.br
       - EVOLUTION_API_KEY=MatrizSuperSecretApiKey2026
     depends_on:
       postgres:
@@ -39,7 +39,7 @@ services:
     environment:
       - SERVER_TYPE=http
       - SERVER_PORT=8080
-      - SERVER_URL=http://localhost:8080
+      - SERVER_URL=https://wa.alllogiconline.com.br
       - AUTHENTICATION_API_KEY=MatrizSuperSecretApiKey2026
       # Banco de dados para Evolution API
       - DATABASE_ENABLED=true
