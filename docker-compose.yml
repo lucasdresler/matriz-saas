@@ -24,7 +24,7 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.matriz-saas.rule=Host(`hub.alllogiconline.com.br`) || Host(`app.alllogiconline.com.br`)"
+      - "traefik.http.routers.matriz-saas.rule=Host(`hub.alllogiconline.com.br`)"
       - "traefik.http.routers.matriz-saas.entrypoints=websecure"
       - "traefik.http.routers.matriz-saas.tls.certresolver=letsencrypt"
       - "traefik.http.services.matriz-saas.loadbalancer.server.port=3000" 
@@ -64,7 +64,7 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.evolution-api.rule=Host(`wa.alllogiconline.com.br`) || Host(`api.alllogiconline.com.br`)"
+      - "traefik.http.routers.evolution-api.rule=Host(`wa.alllogiconline.com.br`)"
       - "traefik.http.routers.evolution-api.entrypoints=websecure"
       - "traefik.http.routers.evolution-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.evolution-api.loadbalancer.server.port=8080" 
