@@ -24,7 +24,7 @@ services:
 
   # 2. WhatsApp Gateway (Evolution API v2 - Suporte Nativo ARM64)
   evolution-api:
-    image: evoapicloud/evolution-api:v2.2.2
+    image: evoapicloud/evolution-api:v2.3.7
     container_name: evolution-api
     restart: always
     ports:
