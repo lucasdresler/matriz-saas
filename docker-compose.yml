@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile
     container_name: matriz-saas
     restart: always
-    env_file:
-      - .env.production
     environment:
       - NODE_ENV=production
       - PORT=3000
