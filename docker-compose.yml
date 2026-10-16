@@ -14,6 +14,8 @@ services:
       - DATABASE_URL=postgresql://matriz_admin:MatrizSecurePass2026!@postgres:5432/matriz_db?schema=public
       - NEXT_PUBLIC_EVOLUTION_API_URL=https://wa.alllogiconline.com.br
       - EVOLUTION_API_KEY=MatrizSuperSecretApiKey2026
+    volumes:
+      - .env.production:/app/.env.production:ro
     depends_on:
       postgres:
         condition: service_healthy

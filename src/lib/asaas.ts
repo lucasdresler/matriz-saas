@@ -48,14 +48,46 @@ export interface AsaasPaymentInput {
   description: string;
 }
 
+import fs from 'fs';
+import path from 'path';
+
+function getEnvVariable(name: string): string {
+  if (process.env[name] && process.env[name] !== '') {
+    return process.env[name] as string;
+  }
+
+  try {
+    const candidatePaths = [
+      path.resolve(process.cwd(), '.env.production'),
+      path.resolve(process.cwd(), '.env'),
+      '/app/.env.production',
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        const content = fs.readFileSync(p, 'utf8');
+        for (const line of content.split('\n')) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith(`${name}=`)) {
+            const val = trimmed.substring(`${name}=`.length).trim();
+            return val.replace(/^['"]|['"]$/g, '');
+          }
+        }
+      }
+    }
+  } catch {
+    // Silencioso em caso de permissao
+  }
+  return '';
+}
+
 export class AsaasService {
   private apiKey: string;
   private baseUrl: string;
   private isConfigured: boolean;
 
   constructor() {
-    this.apiKey = process.env.ASAAS_API_KEY || '';
-    const env = process.env.ASAAS_ENVIRONMENT || 'sandbox';
+    this.apiKey = getEnvVariable('ASAAS_API_KEY');
+    const env = getEnvVariable('ASAAS_ENVIRONMENT') || 'sandbox';
     this.baseUrl =
       env === 'production'
         ? 'https://api.asaas.com/v3'
