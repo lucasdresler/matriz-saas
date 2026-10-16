@@ -1603,11 +1603,9 @@ export default function MatrizDashboard() {
                 </div>
 
                 <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Link de Autoatendimento</div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#38BDF8', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                    /{currentOrg.slug}
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: '#10B981', marginTop: '6px', fontWeight: 600 }}>● Online 24 Horas</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Agillex Pay (Intermediação)</div>
+                  <div style={{ fontSize: '1.7rem', fontWeight: 700, color: '#10B981' }}>R$ 1,99</div>
+                  <div style={{ fontSize: '0.72rem', color: '#34D399', marginTop: '4px', fontWeight: 600 }}>● Taxa fixa por agendamento pago</div>
                 </div>
               </div>
 
