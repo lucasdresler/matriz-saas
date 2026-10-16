@@ -83,7 +83,12 @@ export default function MatrizDashboard() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileChatView, setMobileChatView] = useState<'list' | 'chat'>('list');
   const [moduleModalOpen, setModuleModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [rescheduleApt, setRescheduleApt] = useState<Appointment | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState<string>('');
+  const [rescheduleTime, setRescheduleTime] = useState<string>('');
+  const [rescheduleSuccess, setRescheduleSuccess] = useState<boolean>(false);
 
   // Organização Atual
   const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas') => {
@@ -705,7 +710,21 @@ export default function MatrizDashboard() {
               <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Super Admin</div>
             </div>
           </div>
-          <button style={{ color: 'var(--text-muted)' }} title="Configurações">
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            style={{
+              color: 'var(--text-muted)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            title="Configurações da Empresa e Workspace"
+          >
             <Settings size={16} />
           </button>
         </div>
@@ -1703,7 +1722,25 @@ export default function MatrizDashboard() {
                             </span>
                           </td>
                           <td style={{ padding: '14px 16px' }}>
-                            <button style={{ color: '#38BDF8', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Remarcar</button>
+                            <button
+                              onClick={() => {
+                                setRescheduleApt(apt);
+                                setRescheduleDate(apt.date);
+                                setRescheduleTime(apt.time);
+                                setRescheduleSuccess(false);
+                              }}
+                              style={{
+                                color: '#38BDF8',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              Remarcar
+                            </button>
                           </td>
                         </tr>
                       ))
@@ -2462,6 +2499,799 @@ export default function MatrizDashboard() {
               >
                 Concluir
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DETALHES DO LEAD & CRM */}
+      {selectedLeadDetails && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 110,
+            padding: '16px',
+          }}
+          onClick={() => setSelectedLeadDetails(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-hover)',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    backgroundColor: '#10B981',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                  }}
+                >
+                  {selectedLeadDetails.name.charAt(0)}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                    {selectedLeadDetails.name}
+                  </h3>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Cadastrado {selectedLeadDetails.createdAt}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedLeadDetails(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Ações Diretas: WhatsApp */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '18px' }}>
+              <a
+                href={`https://wa.me/${selectedLeadDetails.phone.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '10px 14px',
+                  backgroundColor: '#25D366',
+                  color: '#fff',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                }}
+              >
+                <Phone size={14} /> Abrir no WhatsApp
+              </a>
+              <button
+                onClick={() => {
+                  setActiveTab('livechat');
+                  setSelectedLeadId(selectedLeadDetails.id);
+                  setSelectedLeadDetails(null);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '10px 14px',
+                  backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                  color: '#38BDF8',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                }}
+              >
+                <MessageSquare size={14} /> Abrir no Chat Interno
+              </button>
+            </div>
+
+            {/* Informações de Contato */}
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface-elevated)',
+                borderRadius: '10px',
+                padding: '14px 16px',
+                marginBottom: '16px',
+                border: '1px solid var(--border-subtle)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Telefone:</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{selectedLeadDetails.phone}</span>
+              </div>
+              {selectedLeadDetails.email && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>E-mail:</span>
+                  <span style={{ color: '#fff' }}>{selectedLeadDetails.email}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Serviço de Interesse:</span>
+                <span style={{ color: '#FBBF24', fontWeight: 600 }}>{selectedLeadDetails.serviceInterest}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Valor Estimado:</span>
+                <span style={{ color: '#34D399', fontWeight: 600 }}>
+                  {selectedLeadDetails.estimatedValue
+                    ? `R$ ${selectedLeadDetails.estimatedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                    : 'A definir'}
+                </span>
+              </div>
+            </div>
+
+            {/* Controle da IA para este Lead */}
+            <div
+              style={{
+                backgroundColor: selectedLeadDetails.aiPaused ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                border: selectedLeadDetails.aiPaused ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid rgba(16, 185, 129, 0.25)',
+                borderRadius: '10px',
+                padding: '12px 16px',
+                marginBottom: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.84rem', fontWeight: 600, color: '#fff' }}>
+                  {selectedLeadDetails.aiPaused ? 'Atendimento Manual (IA Pausada)' : 'Atendimento IA Ativo 24/7'}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                  {selectedLeadDetails.aiPaused ? 'O robô não responderá automaticamente este lead.' : 'O assistente responde em segundos no WhatsApp.'}
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const updatedAi = !selectedLeadDetails.aiPaused;
+                  setLeads((prev) =>
+                    prev.map((l) => (l.id === selectedLeadDetails.id ? { ...l, aiPaused: updatedAi } : l))
+                  );
+                  setSelectedLeadDetails((prev) => (prev ? { ...prev, aiPaused: updatedAi } : null));
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  backgroundColor: selectedLeadDetails.aiPaused ? '#10B981' : '#EF4444',
+                  color: '#fff',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                {selectedLeadDetails.aiPaused ? <Play size={12} /> : <Pause size={12} />}
+                {selectedLeadDetails.aiPaused ? 'Reativar IA' : 'Pausar IA'}
+              </button>
+            </div>
+
+            {/* Estágio do Funil (Pipeline CRM) */}
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
+                Estágio no Funil CRM:
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                {(
+                  [
+                    { id: 'novo', label: 'Novo Lead' },
+                    { id: 'em_atendimento', label: 'Em Atendimento' },
+                    { id: 'aguardando_followup', label: 'Follow-up' },
+                    { id: 'agendado', label: 'Agendado' },
+                    { id: 'concluido', label: 'Concluído' },
+                    { id: 'perdido', label: 'Perdido' },
+                  ] as { id: LeadStatus; label: string }[]
+                ).map((stage) => {
+                  const isSelected = selectedLeadDetails.status === stage.id;
+                  return (
+                    <button
+                      key={stage.id}
+                      onClick={() => {
+                        setLeads((prev) =>
+                          prev.map((l) => (l.id === selectedLeadDetails.id ? { ...l, status: stage.id } : l))
+                        );
+                        setSelectedLeadDetails((prev) => (prev ? { ...prev, status: stage.id } : null));
+                      }}
+                      style={{
+                        padding: '8px 6px',
+                        borderRadius: '6px',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        backgroundColor: isSelected ? '#2563EB' : 'var(--bg-surface-elevated)',
+                        color: isSelected ? '#fff' : 'var(--text-muted)',
+                        border: isSelected ? '1px solid #3B82F6' : '1px solid var(--border-subtle)',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {stage.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Tags do Lead */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+                Tags e Marcadores:
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {selectedLeadDetails.tags?.map((t, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      fontSize: '0.72rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid var(--border-subtle)',
+                      color: 'var(--text-secondary)',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                    }}
+                  >
+                    #{t}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
+              <button
+                onClick={() => setSelectedLeadDetails(null)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: '#fff',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: 'none',
+                }}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CONFIGURAÇÕES DO WORKSPACE & EMPRESA */}
+      {isSettingsOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 110,
+            padding: '16px',
+          }}
+          onClick={() => setIsSettingsOpen(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '560px',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-hover)',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#3B82F6',
+                  }}
+                >
+                  <Settings size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                    Configurações do Workspace
+                  </h3>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    {currentOrg.name} · AllLogic Online
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Informações da Empresa */}
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface-elevated)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid var(--border-subtle)',
+                marginBottom: '16px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Nome da Empresa / Tenant:</span>
+                <span style={{ fontSize: '0.86rem', fontWeight: 600, color: '#fff' }}>{currentOrg.name}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Segmento:</span>
+                <span style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>{currentOrg.category}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Plano Ativo:</span>
+                <span
+                  style={{
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '99px',
+                    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                    color: '#60A5FA',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                  }}
+                >
+                  {currentOrg.plan}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>WhatsApp Conectado:</span>
+                <span style={{ fontSize: '0.84rem', color: '#10B981', fontWeight: 600 }}>{currentOrg.whatsappPhone}</span>
+              </div>
+            </div>
+
+            {/* Acesso à Agenda Pública */}
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface-elevated)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid var(--border-subtle)',
+                marginBottom: '16px',
+              }}
+            >
+              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>
+                Link da Agenda Pública dos Clientes:
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-subtle)',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '0.78rem',
+                    color: '#38BDF8',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flex: 1,
+                  }}
+                >
+                  {`https://agenda.alllogiconline.com.br/${currentOrg.slug}`}
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://agenda.alllogiconline.com.br/${currentOrg.slug}`);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2000);
+                  }}
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    backgroundColor: copiedLink ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  {copiedLink ? <Check size={12} /> : <Copy size={12} />}
+                  {copiedLink ? 'Copiado!' : 'Copiar'}
+                </button>
+                <a
+                  href={`https://agenda.alllogiconline.com.br/${currentOrg.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                  title="Abrir em nova aba"
+                >
+                  <ExternalLink size={14} />
+                </a>
+              </div>
+            </div>
+
+            {/* Atalhos Rápidos para Módulos e Painel da Agenda */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+              <a
+                href="https://agenda.alllogiconline.com.br/admin"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(56, 189, 248, 0.08)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  color: '#fff',
+                  textDecoration: 'none',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Calendar size={18} style={{ color: '#38BDF8' }} />
+                  <div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Acessar Painel da Agenda (Admin)</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Gerenciar profissionais, serviços e horários</div>
+                  </div>
+                </div>
+                <ExternalLink size={14} style={{ color: '#38BDF8' }} />
+              </a>
+
+              <a
+                href="https://hub.alllogiconline.com.br/checkout?modulo=combo"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  color: '#fff',
+                  textDecoration: 'none',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <DollarSign size={18} style={{ color: '#10B981' }} />
+                  <div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Assinatura & Faturamento Asaas</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Gerenciar plano, faturas e métodos de pagamento</div>
+                  </div>
+                </div>
+                <ExternalLink size={14} style={{ color: '#10B981' }} />
+              </a>
+            </div>
+
+            {/* Footer */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: '#fff',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: 'none',
+                }}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL REMARCAR AGENDAMENTO */}
+      {rescheduleApt && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 110,
+            padding: '16px',
+          }}
+          onClick={() => setRescheduleApt(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-hover)',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#38BDF8',
+                  }}
+                >
+                  <CalendarCheck2 size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                    Remarcar Agendamento
+                  </h3>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    {rescheduleApt.leadName}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setRescheduleApt(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Dados do Agendamento Atual */}
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface-elevated)',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                marginBottom: '16px',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '0.8rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Cliente:</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{rescheduleApt.leadName}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Serviço:</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{rescheduleApt.serviceName}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Local / Canal:</span>
+                <span style={{ color: '#fff' }}>{rescheduleApt.location || 'Online / WhatsApp'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Horário Atual:</span>
+                <span style={{ color: '#FBBF24', fontWeight: 600 }}>{rescheduleApt.date} às {rescheduleApt.time}</span>
+              </div>
+            </div>
+
+            {rescheduleSuccess ? (
+              <div
+                style={{
+                  padding: '16px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: '#34D399',
+                  textAlign: 'center',
+                  marginBottom: '16px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                }}
+              >
+                <CheckCircle2 size={24} style={{ margin: '0 auto 8px auto', display: 'block' }} />
+                Agendamento remarcado com sucesso para {rescheduleDate} às {rescheduleTime}!
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (rescheduleDate && rescheduleTime) {
+                    setAppointments((prev) =>
+                      prev.map((a) =>
+                        a.id === rescheduleApt.id
+                          ? { ...a, date: rescheduleDate, time: rescheduleTime }
+                          : a
+                      )
+                    );
+                    setRescheduleSuccess(true);
+                    setTimeout(() => {
+                      setRescheduleApt(null);
+                      setRescheduleSuccess(false);
+                    }, 1800);
+                  }
+                }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}
+              >
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                    Nova Data
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={rescheduleDate}
+                    onChange={(e) => setRescheduleDate(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
+                      color: '#fff',
+                      fontSize: '0.85rem',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                    Novo Horário
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={rescheduleTime}
+                    onChange={(e) => setRescheduleTime(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
+                      color: '#fff',
+                      fontSize: '0.85rem',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setRescheduleApt(null)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'transparent',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.82rem',
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      padding: '8px 18px',
+                      borderRadius: '8px',
+                      backgroundColor: '#2563EB',
+                      color: '#fff',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Confirmar Remarcação
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <div style={{ paddingTop: '12px', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
+              <a
+                href="https://agenda.alllogiconline.com.br/admin"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: '0.74rem',
+                  color: '#38BDF8',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                Gerenciar disponibilidade avançada no painel da Agenda <ExternalLink size={12} />
+              </a>
             </div>
           </div>
         </div>
