@@ -6,6 +6,12 @@ export type LeadStatus =
   | 'concluido'
   | 'perdido';
 
+export interface OrganizationModules {
+  agenda: boolean;
+  atendimento: boolean;
+  crm: boolean;
+}
+
 export interface Organization {
   id: string;
   name: string;
@@ -17,6 +23,7 @@ export interface Organization {
   whatsappStatus: 'connected' | 'qr_ready' | 'disconnected';
   aiActive: boolean;
   totalLeads: number;
+  modules: OrganizationModules;
 }
 
 export interface Lead {
@@ -98,7 +105,7 @@ export interface SaaSClient {
   name: string;
   company: string;
   email: string;
-  plan: 'Starter' | 'Pro' | 'Agência VIP';
+  plan: 'Starter' | 'Pro' | 'Agência VIP' | 'Agillex Agenda' | 'Agillex Atendimento';
   mrr: number;
   status: 'active' | 'trial' | 'overdue';
   instancesCount: number;

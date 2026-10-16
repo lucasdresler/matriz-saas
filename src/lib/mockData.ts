@@ -8,10 +8,15 @@ export const initialOrganizations: Organization[] = [
     category: 'Engenharia de Soluções Digitais',
     plan: 'Enterprise',
     logoColor: '#2563EB',
-    whatsappPhone: '+55 11 98845-2121',
+    whatsappPhone: '+55 11 96638-1915',
     whatsappStatus: 'connected',
     aiActive: true,
     totalLeads: 48,
+    modules: {
+      agenda: true,
+      atendimento: true,
+      crm: true,
+    },
   },
   {
     id: 'org-vitta',
@@ -24,6 +29,28 @@ export const initialOrganizations: Organization[] = [
     whatsappStatus: 'connected',
     aiActive: true,
     totalLeads: 124,
+    modules: {
+      agenda: true,
+      atendimento: true,
+      crm: true,
+    },
+  },
+  {
+    id: 'org-retro',
+    name: 'Barbearia Retrô (Plano Agenda)',
+    slug: 'barbearia-retro',
+    category: 'Barbearia & Estética',
+    plan: 'Starter',
+    logoColor: '#F59E0B',
+    whatsappPhone: '+55 11 96638-1915',
+    whatsappStatus: 'connected',
+    aiActive: false,
+    totalLeads: 18,
+    modules: {
+      agenda: true,
+      atendimento: false,
+      crm: false,
+    },
   },
   {
     id: 'org-silva',
@@ -36,6 +63,11 @@ export const initialOrganizations: Organization[] = [
     whatsappStatus: 'connected',
     aiActive: true,
     totalLeads: 31,
+    modules: {
+      agenda: false,
+      atendimento: true,
+      crm: false,
+    },
   },
 ];
 
@@ -313,9 +345,62 @@ export const initialAppointments: Appointment[] = [
     googleSynced: true,
     location: 'Google Meet (Link Gerado)',
   },
+  // Barbearia Retrô (Plano Agillex Agenda Standalone)
+  {
+    id: 'apt-ret-1',
+    orgId: 'org-retro',
+    leadId: 'lead-ret-1',
+    leadName: 'Guilherme Ferreira',
+    serviceName: 'Corte Degradê + Barboterapia',
+    date: '2026-10-16',
+    time: '14:30',
+    durationMinutes: 45,
+    status: 'confirmed',
+    googleSynced: true,
+    location: 'Cadeira 01 - Barbeiro Thiago',
+  },
+  {
+    id: 'apt-ret-2',
+    orgId: 'org-retro',
+    leadId: 'lead-ret-2',
+    leadName: 'Rodrigo Antunes',
+    serviceName: 'Corte Clássico na Tesoura',
+    date: '2026-10-16',
+    time: '16:00',
+    durationMinutes: 30,
+    status: 'confirmed',
+    googleSynced: true,
+    location: 'Cadeira 02 - Barbeiro Lucas',
+  },
 ];
 
 export const initialServices: ServiceItem[] = [
+  // Barbearia Retrô (Catálogo Agillex Agenda)
+  {
+    id: 'srv-ret-1',
+    orgId: 'org-retro',
+    name: 'Corte Degradê na Tesoura/Máquina',
+    price: 45,
+    durationMinutes: 30,
+    description: 'Corte moderno ou clássico com acabamento na navalha e lavagem.',
+  },
+  {
+    id: 'srv-ret-2',
+    orgId: 'org-retro',
+    name: 'Barboterapia com Toalha Quente',
+    price: 40,
+    durationMinutes: 30,
+    description: 'Modelagem completa da barba com vapor de ozônio, hidratação e óleos essenciais.',
+  },
+  {
+    id: 'srv-ret-3',
+    orgId: 'org-retro',
+    name: 'Combo Completo (Cabelo + Barba)',
+    price: 75,
+    durationMinutes: 50,
+    description: 'Experiência completa de corte e barba com alinhamento e finalização premium.',
+  },
+
   // Minha Empresa
   {
     id: 'srv-1',
@@ -434,6 +519,18 @@ export const initialSaaSClients: SaaSClient[] = [
     instancesCount: 1,
     leadsThisMonth: 88,
     createdAt: '12/09/2026',
+  },
+  {
+    id: 'saas-5',
+    name: 'Carlos Oliveira',
+    company: 'Barbearia Retrô',
+    email: 'carlos@barbeariaretro.com.br',
+    plan: 'Agillex Agenda',
+    mrr: 89,
+    status: 'active',
+    instancesCount: 0,
+    leadsThisMonth: 18,
+    createdAt: '14/10/2026',
   },
 ];
 

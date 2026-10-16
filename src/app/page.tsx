@@ -38,7 +38,10 @@ import {
   CalendarCheck2,
   Menu,
   X,
-  ArrowLeft
+  ArrowLeft,
+  Copy,
+  CheckCheck,
+  Layers
 } from 'lucide-react';
 import {
   initialOrganizations,
@@ -79,9 +82,11 @@ export default function MatrizDashboard() {
   const [qrCounter, setQrCounter] = useState(1);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileChatView, setMobileChatView] = useState<'list' | 'chat'>('list');
+  const [moduleModalOpen, setModuleModalOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Organização Atual
-    const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas') => {
+  const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas') => {
     setActiveTab(tab);
     setMobileSidebarOpen(false);
   };
@@ -91,6 +96,45 @@ export default function MatrizDashboard() {
   const orgAppointments = appointments.filter((a) => a.orgId === activeOrgId);
   const orgServices = services.filter((s) => s.orgId === activeOrgId);
   const orgDocs = knowledgeDocs.filter((d) => d.orgId === activeOrgId);
+
+  // Ativação / Desativação de Módulos (Simulação de Upgrade e Contratação Modular)
+  const handleToggleModule = (moduleId: 'agenda' | 'atendimento' | 'crm') => {
+    setOrganizations((prev) =>
+      prev.map((org) => {
+        if (org.id === activeOrgId) {
+          const updatedModules = {
+            ...org.modules,
+            [moduleId]: !org.modules[moduleId],
+          };
+          return { ...org, modules: updatedModules };
+        }
+        return org;
+      })
+    );
+  };
+
+  // Ajustar aba ativa automaticamente caso a organização atual não possua o módulo contratado
+  useEffect(() => {
+    const isTabSupported = (tab: string, org: Organization) => {
+      if (tab === 'saas') return true;
+      if (tab === 'agenda') return org.modules?.agenda;
+      if (tab === 'livechat' || tab === 'ai_brain' || tab === 'whatsapp') return org.modules?.atendimento;
+      if (tab === 'overview' || tab === 'kanban') return org.modules?.crm;
+      return true;
+    };
+
+    if (!isTabSupported(activeTab, currentOrg)) {
+      if (currentOrg.modules?.agenda && !currentOrg.modules?.crm && !currentOrg.modules?.atendimento) {
+        setActiveTab('agenda');
+      } else if (currentOrg.modules?.atendimento && !currentOrg.modules?.crm) {
+        setActiveTab('livechat');
+      } else if (currentOrg.modules?.crm) {
+        setActiveTab('overview');
+      } else if (currentOrg.modules?.agenda) {
+        setActiveTab('agenda');
+      }
+    }
+  }, [activeOrgId, currentOrg, activeTab]);
 
   // Atualizar lead selecionado ao mudar de workspace
   useEffect(() => {
@@ -350,6 +394,11 @@ export default function MatrizDashboard() {
                         whatsappStatus: 'qr_ready',
                         aiActive: true,
                         totalLeads: 0,
+                        modules: {
+                          agenda: true,
+                          atendimento: false,
+                          crm: false,
+                        },
                       };
                       setOrganizations((prev) => [...prev, newOrg]);
                       setActiveOrgId(newOrg.id);
@@ -372,169 +421,277 @@ export default function MatrizDashboard() {
                 </button>
               </div>
             )}
+            {/* Badges dos Módulos Ativos do Workspace */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
+              {currentOrg.modules?.agenda && (
+                <span style={{ fontSize: '0.64rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', border: '1px solid rgba(59, 130, 246, 0.25)', fontWeight: 600 }}>
+                  📅 Agenda
+                </span>
+              )}
+              {currentOrg.modules?.atendimento && (
+                <span style={{ fontSize: '0.64rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.25)', fontWeight: 600 }}>
+                  🤖 Atendimento
+                </span>
+              )}
+              {currentOrg.modules?.crm && (
+                <span style={{ fontSize: '0.64rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.25)', fontWeight: 600 }}>
+                  📊 CRM
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Links de Navegação */}
-        <nav style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
-          <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, padding: '0 8px', marginBottom: '4px', letterSpacing: '0.05em' }}>
-            Operação da Empresa
+        {/* Links de Navegação Modular */}
+        <nav style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
+          {/* MÓDULO 1: AGILLEX AGENDA (Quando Contratado) */}
+          {currentOrg.modules?.agenda && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '2px' }}>
+                <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#60A5FA', fontWeight: 700, letterSpacing: '0.05em' }}>
+                  Agillex Agenda
+                </span>
+                <span style={{ fontSize: '0.6rem', color: '#60A5FA', fontWeight: 600 }}>ATIVO</span>
+              </div>
+
+              <button
+                onClick={() => handleTabChange('agenda')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: activeTab === 'agenda' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                  color: activeTab === 'agenda' ? '#60A5FA' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'agenda' ? 600 : 400,
+                  border: activeTab === 'agenda' ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Calendar size={18} />
+                  <span style={{ fontSize: '0.86rem' }}>Agendamentos & Catálogo</span>
+                </div>
+                <span style={{ fontSize: '0.72rem', background: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA', padding: '1px 6px', borderRadius: '99px', fontWeight: 600 }}>
+                  {orgAppointments.length}
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* MÓDULO 2: AGILLEX ATENDIMENTO (Quando Contratado) */}
+          {currentOrg.modules?.atendimento && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '2px' }}>
+                <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#34D399', fontWeight: 700, letterSpacing: '0.05em' }}>
+                  Agillex Atendimento
+                </span>
+                <span style={{ fontSize: '0.6rem', color: '#10B981', fontWeight: 600 }}>IA ONLINE</span>
+              </div>
+
+              <button
+                onClick={() => handleTabChange('livechat')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: activeTab === 'livechat' ? 'var(--emerald-subtle)' : 'transparent',
+                  color: activeTab === 'livechat' ? '#34D399' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'livechat' ? 600 : 400,
+                  border: activeTab === 'livechat' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <MessageSquare size={18} />
+                  <span style={{ fontSize: '0.86rem' }}>Live Chat WhatsApp</span>
+                </div>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+              </button>
+
+              <button
+                onClick={() => handleTabChange('ai_brain')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: activeTab === 'ai_brain' ? 'var(--emerald-subtle)' : 'transparent',
+                  color: activeTab === 'ai_brain' ? '#34D399' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'ai_brain' ? 600 : 400,
+                  border: activeTab === 'ai_brain' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                }}
+              >
+                <Bot size={18} />
+                <span style={{ fontSize: '0.86rem' }}>Cérebro IA & RAG</span>
+              </button>
+
+              <button
+                onClick={() => handleTabChange('whatsapp')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: activeTab === 'whatsapp' ? 'var(--emerald-subtle)' : 'transparent',
+                  color: activeTab === 'whatsapp' ? '#34D399' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'whatsapp' ? 600 : 400,
+                  border: activeTab === 'whatsapp' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <QrCode size={18} />
+                  <span style={{ fontSize: '0.86rem' }}>WhatsApp (Instância)</span>
+                </div>
+                <span style={{ fontSize: '0.62rem', color: '#10B981', fontWeight: 600, background: 'rgba(16, 185, 129, 0.1)', padding: '1px 5px', borderRadius: '4px' }}>CONECTADO</span>
+              </button>
+            </div>
+          )}
+
+          {/* MÓDULO 3: AGILLEX CRM (Quando Contratado) */}
+          {currentOrg.modules?.crm && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '2px' }}>
+                <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#FBBF24', fontWeight: 700, letterSpacing: '0.05em' }}>
+                  Agillex CRM
+                </span>
+                <span style={{ fontSize: '0.6rem', color: '#FBBF24', fontWeight: 600 }}>ATIVO</span>
+              </div>
+
+              <button
+                onClick={() => handleTabChange('overview')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: activeTab === 'overview' ? 'var(--emerald-subtle)' : 'transparent',
+                  color: activeTab === 'overview' ? '#34D399' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'overview' ? 600 : 400,
+                  border: activeTab === 'overview' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                }}
+              >
+                <LayoutDashboard size={18} />
+                <span style={{ fontSize: '0.86rem' }}>Visão Geral</span>
+              </button>
+
+              <button
+                onClick={() => handleTabChange('kanban')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: activeTab === 'kanban' ? 'var(--emerald-subtle)' : 'transparent',
+                  color: activeTab === 'kanban' ? '#34D399' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'kanban' ? 600 : 400,
+                  border: activeTab === 'kanban' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Kanban size={18} />
+                  <span style={{ fontSize: '0.86rem' }}>Funil CRM Kanban</span>
+                </div>
+                <span style={{ fontSize: '0.72rem', background: 'rgba(255, 255, 255, 0.1)', padding: '1px 6px', borderRadius: '99px', color: '#fff' }}>
+                  {orgLeads.length}
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* MÓDULOS DISPONÍVEIS PARA ATIVAÇÃO / UPGRADE (Caso algum módulo não esteja ativo) */}
+          {(!currentOrg.modules?.agenda || !currentOrg.modules?.atendimento || !currentOrg.modules?.crm) && (
+            <div style={{ margin: '8px 0', padding: '10px', borderRadius: '10px', backgroundColor: 'rgba(255, 255, 255, 0.03)', border: '1px dashed var(--border-hover)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                <Sparkles size={13} color="#FBBF24" />
+                <span style={{ fontSize: '0.66rem', fontWeight: 700, color: '#FBBF24', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Módulos Disponíveis
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {!currentOrg.modules?.agenda && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff' }}>Agillex Agenda</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>R$ 89/mês</div>
+                    </div>
+                    <button
+                      onClick={() => handleToggleModule('agenda')}
+                      style={{ fontSize: '0.68rem', padding: '3px 8px', borderRadius: '5px', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA', border: '1px solid rgba(59, 130, 246, 0.4)', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      + Ativar
+                    </button>
+                  </div>
+                )}
+
+                {!currentOrg.modules?.atendimento && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff' }}>Atendimento IA</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>R$ 149/mês</div>
+                    </div>
+                    <button
+                      onClick={() => handleToggleModule('atendimento')}
+                      style={{ fontSize: '0.68rem', padding: '3px 8px', borderRadius: '5px', backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.4)', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      + Ativar
+                    </button>
+                  </div>
+                )}
+
+                {!currentOrg.modules?.crm && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff' }}>Agillex CRM</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>R$ 99/mês</div>
+                    </div>
+                    <button
+                      onClick={() => handleToggleModule('crm')}
+                      style={{ fontSize: '0.68rem', padding: '3px 8px', borderRadius: '5px', backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.4)', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      + Ativar
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ADMIN MASTER */}
+          <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
+            <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, padding: '0 8px', marginBottom: '4px', letterSpacing: '0.05em' }}>
+              Gestão Master
+            </div>
+            <button
+              onClick={() => handleTabChange('saas')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                backgroundColor: activeTab === 'saas' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+                color: activeTab === 'saas' ? '#A78BFA' : 'var(--text-secondary)',
+                fontWeight: activeTab === 'saas' ? 600 : 400,
+                border: activeTab === 'saas' ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid transparent',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Building2 size={18} />
+                <span style={{ fontSize: '0.86rem' }}>Painel SaaS & MRR</span>
+              </div>
+              <span style={{ fontSize: '0.65rem', background: '#8B5CF6', color: '#fff', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                ADMIN
+              </span>
+            </button>
           </div>
-
-          <button
-            onClick={() => handleTabChange('overview')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 12px',
-              borderRadius: '8px',
-              backgroundColor: activeTab === 'overview' ? 'var(--emerald-subtle)' : 'transparent',
-              color: activeTab === 'overview' ? '#34D399' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'overview' ? 600 : 400,
-              border: activeTab === 'overview' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
-            }}
-          >
-            <LayoutDashboard size={18} />
-            <span style={{ fontSize: '0.88rem' }}>Visão Geral</span>
-          </button>
-
-          <button
-            onClick={() => handleTabChange('kanban')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 12px',
-              borderRadius: '8px',
-              backgroundColor: activeTab === 'kanban' ? 'var(--emerald-subtle)' : 'transparent',
-              color: activeTab === 'kanban' ? '#34D399' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'kanban' ? 600 : 400,
-              border: activeTab === 'kanban' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Kanban size={18} />
-              <span style={{ fontSize: '0.88rem' }}>CRM Kanban</span>
-            </div>
-            <span style={{ fontSize: '0.72rem', background: 'rgba(255, 255, 255, 0.1)', padding: '1px 6px', borderRadius: '99px', color: '#fff' }}>
-              {orgLeads.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => handleTabChange('livechat')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 12px',
-              borderRadius: '8px',
-              backgroundColor: activeTab === 'livechat' ? 'var(--emerald-subtle)' : 'transparent',
-              color: activeTab === 'livechat' ? '#34D399' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'livechat' ? 600 : 400,
-              border: activeTab === 'livechat' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <MessageSquare size={18} />
-              <span style={{ fontSize: '0.88rem' }}>Live Chat WhatsApp</span>
-            </div>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' }} />
-          </button>
-
-          <button
-            onClick={() => handleTabChange('agenda')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 12px',
-              borderRadius: '8px',
-              backgroundColor: activeTab === 'agenda' ? 'var(--emerald-subtle)' : 'transparent',
-              color: activeTab === 'agenda' ? '#34D399' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'agenda' ? 600 : 400,
-              border: activeTab === 'agenda' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Calendar size={18} />
-              <span style={{ fontSize: '0.88rem' }}>Agendamentos</span>
-            </div>
-            <span style={{ fontSize: '0.72rem', background: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', padding: '1px 6px', borderRadius: '99px' }}>
-              {orgAppointments.length}
-            </span>
-          </button>
-
-          <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, padding: '14px 8px 4px', letterSpacing: '0.05em' }}>
-            Inteligência & Conexão
-          </div>
-
-          <button
-            onClick={() => handleTabChange('ai_brain')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 12px',
-              borderRadius: '8px',
-              backgroundColor: activeTab === 'ai_brain' ? 'var(--emerald-subtle)' : 'transparent',
-              color: activeTab === 'ai_brain' ? '#34D399' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'ai_brain' ? 600 : 400,
-              border: activeTab === 'ai_brain' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
-            }}
-          >
-            <Bot size={18} />
-            <span style={{ fontSize: '0.88rem' }}>Cérebro IA & RAG</span>
-          </button>
-
-          <button
-            onClick={() => handleTabChange('whatsapp')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 12px',
-              borderRadius: '8px',
-              backgroundColor: activeTab === 'whatsapp' ? 'var(--emerald-subtle)' : 'transparent',
-              color: activeTab === 'whatsapp' ? '#34D399' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'whatsapp' ? 600 : 400,
-              border: activeTab === 'whatsapp' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <QrCode size={18} />
-              <span style={{ fontSize: '0.88rem' }}>WhatsApp (QR Code)</span>
-            </div>
-            <span style={{ fontSize: '0.65rem', color: '#10B981', fontWeight: 600 }}>ONLINE</span>
-          </button>
-
-          <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, padding: '14px 8px 4px', letterSpacing: '0.05em' }}>
-            Gestão Master (SaaS & Agência)
-          </div>
-
-          <button
-            onClick={() => handleTabChange('saas')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 12px',
-              borderRadius: '8px',
-              backgroundColor: activeTab === 'saas' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
-              color: activeTab === 'saas' ? '#A78BFA' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'saas' ? 600 : 400,
-              border: activeTab === 'saas' ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid transparent',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Building2 size={18} />
-              <span style={{ fontSize: '0.88rem' }}>Painel SaaS & MRR</span>
-            </div>
-            <span style={{ fontSize: '0.65rem', background: '#8B5CF6', color: '#fff', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
-              ADMIN
-            </span>
-          </button>
         </nav>
 
         {/* Rodapé da Sidebar com Status do Usuário */}
@@ -580,54 +737,110 @@ export default function MatrizDashboard() {
               <Menu size={20} />
             </button>
 
-            <div style={{ minWidth: 0 }}>
-              <h1 className="topbar-title" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <h1 className="topbar-title" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
                 {activeTab === 'overview' && 'Visão Geral'}
                 {activeTab === 'kanban' && 'Funil CRM'}
                 {activeTab === 'livechat' && 'Live Chat WhatsApp'}
-                {activeTab === 'agenda' && 'Agendamentos'}
+                {activeTab === 'agenda' && 'Agillex Agenda'}
                 {activeTab === 'ai_brain' && 'Cérebro IA & RAG'}
                 {activeTab === 'whatsapp' && 'Conexão WhatsApp'}
                 {activeTab === 'saas' && 'Painel SaaS & MRR'}
               </h1>
-              <span className="desktop-only" style={{ fontSize: '0.78rem', color: 'var(--text-muted)', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '10px' }}>
-                Empresa: <strong style={{ color: '#fff' }}>{currentOrg.name}</strong>
-              </span>
+              <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '10px' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Workspace: <strong style={{ color: '#fff' }}>{currentOrg.name}</strong>
+                </span>
+                {/* Badges de Módulos Contratados */}
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {currentOrg.modules?.agenda && (
+                    <span style={{ fontSize: '0.66rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', border: '1px solid rgba(59, 130, 246, 0.25)', fontWeight: 600 }}>
+                      Agenda
+                    </span>
+                  )}
+                  {currentOrg.modules?.atendimento && (
+                    <span style={{ fontSize: '0.66rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.25)', fontWeight: 600 }}>
+                      Atendimento IA
+                    </span>
+                  )}
+                  {currentOrg.modules?.crm && (
+                    <span style={{ fontSize: '0.66rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.25)', fontWeight: 600 }}>
+                      CRM
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            {/* Status Conexão WhatsApp */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '99px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 6px #10B981' }} />
-              <span className="desktop-only" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#34D399' }}>WhatsApp Conectado</span>
-            </div>
+            {/* Status Conexão WhatsApp (Se módulo Atendimento contratado) */}
+            {currentOrg.modules?.atendimento && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '99px', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 6px #10B981' }} />
+                <span className="desktop-only" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#34D399' }}>WhatsApp Conectado</span>
+              </div>
+            )}
 
-            {/* Status Agente de IA */}
-            <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '99px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
-              <Sparkles size={13} color="#60A5FA" />
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#60A5FA' }}>Agente IA Ativo</span>
-            </div>
+            {/* Status Google Calendar (Se módulo Agenda contratado) */}
+            {currentOrg.modules?.agenda && !currentOrg.modules?.atendimento && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '99px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+                <CalendarCheck2 size={13} color="#60A5FA" />
+                <span className="desktop-only" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#60A5FA' }}>Google Calendar Sincronizado</span>
+              </div>
+            )}
 
-            {/* Botão Novo Lead */}
+            {/* Status Agente de IA (Se módulo Atendimento contratado) */}
+            {currentOrg.modules?.atendimento && (
+              <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '99px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+                <Sparkles size={13} color="#60A5FA" />
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#60A5FA' }}>Agente IA Ativo</span>
+              </div>
+            )}
+
+            {/* Botão Configurar Módulos */}
             <button
-              onClick={() => setNewLeadModalOpen(true)}
+              onClick={() => setModuleModalOpen(true)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '7px 12px',
+                padding: '7px 11px',
                 borderRadius: '8px',
-                background: 'linear-gradient(135deg, #10B981, #059669)',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid var(--border-hover)',
                 color: '#fff',
-                fontSize: '0.8rem',
+                fontSize: '0.78rem',
                 fontWeight: 600,
-                boxShadow: '0 2px 10px rgba(16, 185, 129, 0.3)',
-                whiteSpace: 'nowrap',
+                cursor: 'pointer',
               }}
+              title="Gerenciar módulos deste cliente"
             >
-              <Plus size={15} /> <span className="desktop-only">Novo Lead</span><span className="mobile-only">Lead</span>
+              <Sliders size={14} color="#A78BFA" />
+              <span className="desktop-only">Módulos</span>
             </button>
+
+            {/* Botão Novo Lead (Se módulo CRM contratado) */}
+            {currentOrg.modules?.crm && (
+              <button
+                onClick={() => setNewLeadModalOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #10B981, #059669)',
+                  color: '#fff',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  boxShadow: '0 2px 10px rgba(16, 185, 129, 0.3)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Plus size={15} /> <span className="desktop-only">Novo Lead</span><span className="mobile-only">Lead</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -1276,50 +1489,233 @@ export default function MatrizDashboard() {
           {/* ======================================================== */}
           {/* ABA 4: AGENDAMENTOS & SINCRONIZAÇÃO GOOGLE CALENDAR      */}
           {/* ======================================================== */}
+          {/* ======================================================== */}
+          {/* ABA 4: AGILLEX AGENDA & CATÁLOGO DE SERVIÇOS            */}
+          {/* ======================================================== */}
           {activeTab === 'agenda' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+              {/* Header do Módulo Agillex Agenda */}
+              <div
+                style={{
+                  padding: '20px 24px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                  border: '1px solid rgba(59, 130, 246, 0.25)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '16px',
+                }}
+              >
                 <div>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>Agenda Integrada</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                    Consultas e reuniões fechadas pelo agente de IA no WhatsApp são sincronizadas diretamente aqui e no Google Calendar.
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#60A5FA', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Módulo Agillex Agenda
+                    </span>
+                    <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.2)', color: '#93C5FD', padding: '1px 8px', borderRadius: '99px', fontWeight: 600 }}>
+                      Plano Standalone ou Integrado
+                    </span>
+                  </div>
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#fff', margin: '2px 0 6px' }}>
+                    Agendamentos & Catálogo · {currentOrg.name}
+                  </h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '600px' }}>
+                    Página pública de autoatendimento, sincronização com Google Calendar e gestão de horários da sua equipe.
                   </p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '8px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#60A5FA', fontSize: '0.8rem', fontWeight: 600 }}>
-                  <CalendarCheck2 size={16} /> Google Calendar: Conectado
+
+                {/* Ações da Página Pública de Agendamento */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => {
+                      const url = `https://agenda.alllogiconline.com.br/${currentOrg.slug}`;
+                      window.open(url, '_blank');
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '9px 15px',
+                      borderRadius: '8px',
+                      backgroundColor: '#2563EB',
+                      color: '#fff',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 10px rgba(37, 99, 235, 0.3)',
+                    }}
+                  >
+                    <ExternalLink size={15} /> Abrir Página Pública
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const url = `https://agenda.alllogiconline.com.br/${currentOrg.slug}`;
+                      navigator.clipboard.writeText(url);
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '9px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid var(--border-hover)',
+                      color: copiedLink ? '#34D399' : '#fff',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {copiedLink ? <CheckCheck size={15} color="#34D399" /> : <Copy size={15} />}
+                    {copiedLink ? 'Link Copiado!' : 'Copiar Link'}
+                  </button>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#60A5FA', fontSize: '0.78rem', fontWeight: 600 }}>
+                    <CalendarCheck2 size={15} /> Google Calendar: Conectado
+                  </div>
                 </div>
               </div>
 
-              {/* Tabela de Agendamentos */}
-              <div className="table-wrapper" style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+              {/* 4 Cards de Métricas do Agillex Agenda */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Total de Agendamentos</div>
+                  <div style={{ fontSize: '1.7rem', fontWeight: 700, color: '#fff' }}>{orgAppointments.length}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#60A5FA', marginTop: '4px' }}>Registrados na plataforma</div>
+                </div>
+
+                <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Status das Reservas</div>
+                  <div style={{ fontSize: '1.7rem', fontWeight: 700, color: '#34D399' }}>
+                    {orgAppointments.filter((a) => a.status === 'confirmed').length}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>100% Confirmados</div>
+                </div>
+
+                <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Serviços no Catálogo</div>
+                  <div style={{ fontSize: '1.7rem', fontWeight: 700, color: '#A78BFA' }}>{orgServices.length}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>Disponíveis para agendar</div>
+                </div>
+
+                <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Link de Autoatendimento</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#38BDF8', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    /{currentOrg.slug}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#10B981', marginTop: '6px', fontWeight: 600 }}>● Online 24 Horas</div>
+                </div>
+              </div>
+
+              {/* Seção 1: Catálogo de Serviços */}
+              <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)', padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>Catálogo de Serviços da Empresa</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
+                      Serviços que seus clientes encontram ao agendar pelo link web ou pelo WhatsApp.
+                    </p>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: '#60A5FA', background: 'rgba(59, 130, 246, 0.1)', padding: '4px 10px', borderRadius: '6px', fontWeight: 600 }}>
+                    {orgServices.length} serviços cadastrados
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+                  {orgServices.map((srv) => (
+                    <div
+                      key={srv.id}
+                      style={{
+                        padding: '16px',
+                        borderRadius: '10px',
+                        backgroundColor: 'var(--bg-surface-elevated)',
+                        border: '1px solid var(--border-subtle)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                          <h4 style={{ fontSize: '0.92rem', fontWeight: 600, color: '#fff' }}>{srv.name}</h4>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#34D399' }}>
+                            R$ {srv.price.toFixed(2).replace('.', ',')}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: '12px' }}>
+                          {srv.description}
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                          <Clock size={13} color="#60A5FA" /> {srv.durationMinutes} minutos
+                        </div>
+                        <span style={{ fontSize: '0.66rem', color: '#34D399', background: 'rgba(16, 185, 129, 0.12)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                          Online
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Seção 2: Tabela de Agendamentos */}
+              <div className="table-wrapper" style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>Próximos Agendamentos</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
+                      Sincronizados com o Google Calendar e notificados via WhatsApp.
+                    </p>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', background: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', padding: '3px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                    {orgAppointments.length} agendados
+                  </span>
+                </div>
+
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                   <thead>
                     <tr style={{ backgroundColor: 'var(--bg-surface-elevated)', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
                       <th style={{ padding: '12px 16px' }}>Cliente</th>
-                      <th style={{ padding: '12px 16px' }}>Serviço Solicitado</th>
+                      <th style={{ padding: '12px 16px' }}>Serviço</th>
                       <th style={{ padding: '12px 16px' }}>Data & Horário</th>
+                      <th style={{ padding: '12px 16px' }}>Local / Profissional</th>
                       <th style={{ padding: '12px 16px' }}>Duração</th>
                       <th style={{ padding: '12px 16px' }}>Status</th>
                       <th style={{ padding: '12px 16px' }}>Ações</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {orgAppointments.map((apt) => (
-                      <tr key={apt.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                        <td style={{ padding: '14px 16px', fontWeight: 600, color: '#fff' }}>{apt.leadName}</td>
-                        <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{apt.serviceName}</td>
-                        <td style={{ padding: '14px 16px', color: '#34D399', fontWeight: 600 }}>{apt.date} às {apt.time}</td>
-                        <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>{apt.durationMinutes} min</td>
-                        <td style={{ padding: '14px 16px' }}>
-                          <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', padding: '2px 8px', borderRadius: '99px', fontWeight: 600 }}>
-                            Confirmado (IA)
-                          </span>
-                        </td>
-                        <td style={{ padding: '14px 16px' }}>
-                          <button style={{ color: '#38BDF8', fontSize: '0.75rem', fontWeight: 600 }}>Remarcar</button>
+                    {orgAppointments.length > 0 ? (
+                      orgAppointments.map((apt) => (
+                        <tr key={apt.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                          <td style={{ padding: '14px 16px', fontWeight: 600, color: '#fff' }}>{apt.leadName}</td>
+                          <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{apt.serviceName}</td>
+                          <td style={{ padding: '14px 16px', color: '#34D399', fontWeight: 600 }}>{apt.date} às {apt.time}</td>
+                          <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{apt.location || 'Consultório Principal'}</td>
+                          <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>{apt.durationMinutes} min</td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', padding: '2px 8px', borderRadius: '99px', fontWeight: 600 }}>
+                              Confirmado (Online)
+                            </span>
+                          </td>
+                          <td style={{ padding: '14px 16px' }}>
+                            <button style={{ color: '#38BDF8', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>Remarcar</button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          Nenhum agendamento registrado ainda para esta empresa. Compartilhe o link da página pública para receber agendamentos!
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1848,6 +2244,227 @@ export default function MatrizDashboard() {
                 <button type="submit" style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: '#10B981', color: '#fff', fontSize: '0.82rem', fontWeight: 600 }}>Salvar Lead</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL GERENCIAMENTO DE MÓDULOS DO WORKSPACE */}
+      {moduleModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '16px',
+          }}
+          onClick={() => setModuleModalOpen(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'var(--bg-surface-elevated)',
+              border: '1px solid var(--border-hover)',
+              borderRadius: '16px',
+              padding: '24px',
+              width: '100%',
+              maxWidth: '520px',
+              boxShadow: 'var(--shadow-xl)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff' }}>
+                  Módulos Contratados · {currentOrg.name}
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Ative ou desative módulos individuais para simular assinaturas customizadas.
+                </p>
+              </div>
+              <button
+                onClick={() => setModuleModalOpen(false)}
+                style={{ color: 'var(--text-muted)', cursor: 'pointer', padding: '4px', background: 'transparent', border: 'none' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Módulo Agillex Agenda */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: currentOrg.modules?.agenda ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                  border: currentOrg.modules?.agenda ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid var(--border-subtle)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#60A5FA',
+                    }}
+                  >
+                    <Calendar size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>Agillex Agenda</div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      Página pública, catálogo de serviços e Google Calendar (R$ 89/mês)
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleModule('agenda')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    backgroundColor: currentOrg.modules?.agenda ? '#2563EB' : 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {currentOrg.modules?.agenda ? 'Ativo' : 'Ativar'}
+                </button>
+              </div>
+
+              {/* Módulo Agillex Atendimento */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: currentOrg.modules?.atendimento ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                  border: currentOrg.modules?.atendimento ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#34D399',
+                    }}
+                  >
+                    <MessageSquare size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>Agillex Atendimento (IA)</div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      WhatsApp 24/7 com IA generativa, RAG e Live Chat (R$ 149/mês)
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleModule('atendimento')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    backgroundColor: currentOrg.modules?.atendimento ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {currentOrg.modules?.atendimento ? 'Ativo' : 'Ativar'}
+                </button>
+              </div>
+
+              {/* Módulo Agillex CRM */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: currentOrg.modules?.crm ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                  border: currentOrg.modules?.crm ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid var(--border-subtle)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#FBBF24',
+                    }}
+                  >
+                    <Kanban size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>Agillex CRM</div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      Pipeline Kanban, qualificação de leads e métricas (R$ 99/mês)
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleModule('crm')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    backgroundColor: currentOrg.modules?.crm ? '#F59E0B' : 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {currentOrg.modules?.crm ? 'Ativo' : 'Ativar'}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setModuleModalOpen(false)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: '#fff',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: 'none',
+                }}
+              >
+                Concluir
+              </button>
+            </div>
           </div>
         </div>
       )}
