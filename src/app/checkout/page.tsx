@@ -42,6 +42,7 @@ function CheckoutContent() {
   const [isTrial, setIsTrial] = useState<boolean>(initialTrial);
   const [billingMethod, setBillingMethod] = useState<BillingMethod>('CREDIT_CARD');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Formulário
   const [formData, setFormData] = useState({
@@ -233,23 +234,63 @@ function CheckoutContent() {
                     Soluções
                   </a>
                 </li>
-                <li>
-                  <a
-                    href="https://alllogiconline.com.br/agillex-hub"
-                    className="site-navigation__link site-navigation__link--active"
-                  >
-                    Agillex Hub
-                  </a>
-                </li>
-                <li>
-                  <a href="https://alllogiconline.com.br/agillex-agenda" className="site-navigation__link">
-                    Agillex Agenda
-                  </a>
-                </li>
-                <li>
-                  <a href="https://alllogiconline.com.br/agillex-atendimento" className="site-navigation__link">
-                    Agillex Atendimento
-                  </a>
+                <li className={`site-navigation__item--has-dropdown ${dropdownOpen ? 'is-open' : ''}`}>
+                  <div className="site-navigation__dropdown">
+                    <button
+                      type="button"
+                      className="site-navigation__link site-navigation__dropdown-toggle"
+                      onClick={() => setDropdownOpen(!dropdownOpen)}
+                      aria-expanded={dropdownOpen}
+                      aria-haspopup="true"
+                    >
+                      <span>Família Agillex</span>
+                      <svg
+                        className="site-navigation__dropdown-icon"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M4 6L8 10L12 6"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                    <ul className="site-navigation__dropdown-menu" role="menu">
+                      <li role="none">
+                        <a
+                          href="https://alllogiconline.com.br/agillex-hub"
+                          className="site-navigation__dropdown-link"
+                          role="menuitem"
+                        >
+                          Agillex Hub
+                        </a>
+                      </li>
+                      <li role="none">
+                        <a
+                          href="https://alllogiconline.com.br/agillex-agenda"
+                          className="site-navigation__dropdown-link"
+                          role="menuitem"
+                        >
+                          Agillex Agenda
+                        </a>
+                      </li>
+                      <li role="none">
+                        <a
+                          href="https://alllogiconline.com.br/agillex-atendimento"
+                          className="site-navigation__dropdown-link"
+                          role="menuitem"
+                        >
+                          Agillex Atendimento
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
                 </li>
                 <li>
                   <a href="https://alllogiconline.com.br/#portfolio" className="site-navigation__link">
