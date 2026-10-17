@@ -43,6 +43,15 @@ function CheckoutContent() {
   const [billingMethod, setBillingMethod] = useState<BillingMethod>('CREDIT_CARD');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Formulário
   const [formData, setFormData] = useState({
@@ -964,6 +973,17 @@ function CheckoutContent() {
           </div>
         </div>
       </footer>
+
+      {/* Botão Voltar ao Topo (Dourado Oficial da Paleta AllLogic) */}
+      <button
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className={`scroll-to-top ${showScrollTop ? 'scroll-to-top--visible' : ''}`}
+        aria-label="Voltar ao topo"
+        title="Voltar ao topo"
+      >
+        <span aria-hidden="true">↑</span>
+      </button>
     </div>
   );
 }
