@@ -1,17 +1,27 @@
 :root {
-  --bg-main: #080C14;
-  --bg-surface: #0E1524;
-  --bg-surface-elevated: #151F33;
-  --bg-surface-hover: #1C2A44;
-  --bg-card: rgba(15, 23, 38, 0.75);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.16);
-  --border-active: rgba(16, 185, 129, 0.4);
+  /* AllLogic Online Official Dark Navy Palette */
+  --bg-main: #060E1E;
+  --bg-surface: #0A172E;
+  --bg-surface-elevated: #0F2244;
+  --bg-surface-hover: #162E5A;
+  --bg-card: rgba(10, 23, 46, 0.85);
+  --border-subtle: rgba(31, 111, 255, 0.14);
+  --border-hover: rgba(31, 111, 255, 0.28);
+  --border-active: rgba(31, 111, 255, 0.5);
 
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
-  --text-inverse: #080C14;
+  --text-inverse: #060E1E;
+
+  /* Cores Institucionais AllLogic Online */
+  --alllogic-navy: #0A1F44;
+  --alllogic-blue: #1F6FFF;
+  --alllogic-blue-glow: rgba(31, 111, 255, 0.35);
+  --alllogic-blue-subtle: rgba(31, 111, 255, 0.12);
+  --alllogic-gold: #C9A227;
+  --alllogic-gold-light: #DFB738;
+  --alllogic-gold-subtle: rgba(201, 162, 39, 0.14);
 
   --emerald-500: #10B981;
   --emerald-400: #34D399;
@@ -19,14 +29,14 @@
   --emerald-glow: rgba(16, 185, 129, 0.2);
   --emerald-subtle: rgba(16, 185, 129, 0.1);
 
-  --blue-500: #3B82F6;
-  --blue-subtle: rgba(59, 130, 246, 0.12);
-  --purple-500: #8B5CF6;
-  --purple-subtle: rgba(139, 92, 246, 0.12);
-  --amber-500: #F59E0B;
-  --amber-subtle: rgba(245, 158, 11, 0.12);
-  --rose-500: #F43F5E;
-  --rose-subtle: rgba(244, 63, 94, 0.12);
+  --blue-500: #1F6FFF;
+  --blue-subtle: rgba(31, 111, 255, 0.14);
+  --purple-500: #6366F1;
+  --purple-subtle: rgba(99, 102, 241, 0.12);
+  --amber-500: #C9A227;
+  --amber-subtle: rgba(201, 162, 39, 0.14);
+  --rose-500: #EF4444;
+  --rose-subtle: rgba(239, 68, 68, 0.12);
 
   --wa-green: #25D366;
   --wa-dark-green: #075E54;
@@ -44,7 +54,7 @@
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.2);
   --shadow-lg: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 8px 10px -4px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 25px -4px rgba(16, 185, 129, 0.25);
+  --shadow-glow: 0 0 25px -4px rgba(31, 111, 255, 0.3);
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -211,8 +221,8 @@ input, textarea, select {
 .hero-banner {
   padding: 24px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: linear-gradient(135deg, rgba(31, 111, 255, 0.14) 0%, rgba(10, 31, 68, 0.75) 100%);
+  border: 1px solid rgba(31, 111, 255, 0.28);
   display: flex;
   justify-content: space-between;
   align-items: center;

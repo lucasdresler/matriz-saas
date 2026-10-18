@@ -43,7 +43,10 @@ import {
   CheckCheck,
   Layers,
   MapPin,
-  Loader2
+  Loader2,
+  Trash2,
+  Download,
+  Pencil
 } from 'lucide-react';
 import {
   initialOrganizations,
@@ -63,11 +66,30 @@ export default function MatrizDashboard() {
   const [activeOrgId, setActiveOrgId] = useState<string>('org-alllogic');
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
 
-  // Navegação Principal
-  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas'>('overview');
+  // Navegação Principal (Inicia direto no Funil CRM para o trabalho diário)
+  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas'>('kanban');
 
-  // Estados dos Dados
-  const [leads, setLeads] = useState<Lead[]>(initialLeads);
+  // Estados dos Dados com Persistência em localStorage
+  const [leads, setLeads] = useState<Lead[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('agillex_hub_leads_prod');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return parsed;
+        } catch (e) {}
+      }
+    }
+    return initialLeads;
+  });
+
+  // Salva automaticamente qualquer alteração nos leads no navegador
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('agillex_hub_leads_prod', JSON.stringify(leads));
+    }
+  }, [leads]);
+
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(initialMessages);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [services, setServices] = useState<ServiceItem[]>(initialServices);
@@ -79,6 +101,13 @@ export default function MatrizDashboard() {
   const [chatInput, setChatInput] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [selectedLeadDetails, setSelectedLeadDetails] = useState<Lead | null>(null);
+  const [isEditingLead, setIsEditingLead] = useState(false);
+  const [editLeadName, setEditLeadName] = useState('');
+  const [editLeadPhone, setEditLeadPhone] = useState('');
+  const [editLeadEmail, setEditLeadEmail] = useState('');
+  const [editLeadService, setEditLeadService] = useState('');
+  const [editLeadValue, setEditLeadValue] = useState<string>('');
+  const [kanbanSearch, setKanbanSearch] = useState('');
   const [newLeadModalOpen, setNewLeadModalOpen] = useState(false);
   const [qrCodeRefreshing, setQrCodeRefreshing] = useState(false);
   const [qrCounter, setQrCounter] = useState(1);
@@ -255,6 +284,102 @@ export default function MatrizDashboard() {
   const orgAppointments = appointments.filter((a) => a.orgId === activeOrgId);
   const orgServices = services.filter((s) => s.orgId === activeOrgId);
   const orgDocs = knowledgeDocs.filter((d) => d.orgId === activeOrgId);
+
+  // Filtro de Busca em Tempo Real no Funil Kanban
+  const filteredLeads = orgLeads.filter((l) => {
+    if (!kanbanSearch.trim()) return true;
+    const q = kanbanSearch.toLowerCase();
+    return (
+      (l.name && l.name.toLowerCase().includes(q)) ||
+      (l.phone && l.phone.toLowerCase().includes(q)) ||
+      (l.email && l.email.toLowerCase().includes(q)) ||
+      (l.serviceInterest && l.serviceInterest.toLowerCase().includes(q)) ||
+      (l.tags && l.tags.some((t) => t.toLowerCase().includes(q)))
+    );
+  });
+
+  // Excluir Lead Individual
+  const handleDeleteLead = (leadId: string, leadName: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (confirm(`Deseja realmente excluir o lead "${leadName}" do funil?`)) {
+      setLeads((prev) => prev.filter((l) => l.id !== leadId));
+      if (selectedLeadDetails?.id === leadId) {
+        setSelectedLeadDetails(null);
+      }
+      if (selectedLeadId === leadId) {
+        setSelectedLeadId('');
+      }
+    }
+  };
+
+  // Limpar Funil Completo (Zerar para começar do zero)
+  const handleClearFunnel = () => {
+    if (orgLeads.length === 0) return;
+    if (confirm(`Atenção: Deseja realmente excluir todos os ${orgLeads.length} leads do funil para recomeçar do zero?`)) {
+      setLeads((prev) => prev.filter((l) => l.orgId !== activeOrgId));
+      setSelectedLeadDetails(null);
+      setSelectedLeadId('');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('agillex_hub_leads_prod');
+      }
+    }
+  };
+
+  // Exportar Leads para CSV
+  const handleExportCSV = () => {
+    if (orgLeads.length === 0) {
+      alert('Nenhum lead no funil para exportar.');
+      return;
+    }
+    const headers = ['ID', 'Nome', 'Telefone', 'Email', 'Serviço de Interesse', 'Status', 'Valor Estimado', 'Criado Em', 'Tags'];
+    const rows = orgLeads.map((l) => [
+      l.id,
+      `"${(l.name || '').replace(/"/g, '""')}"`,
+      `"${l.phone || ''}"`,
+      `"${l.email || ''}"`,
+      `"${(l.serviceInterest || '').replace(/"/g, '""')}"`,
+      `"${l.status || ''}"`,
+      l.estimatedValue || 0,
+      `"${l.createdAt || ''}"`,
+      `"${(l.tags || []).join(', ')}"`,
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `leads_alllogic_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Abrir Detalhes do Lead preparando modo edição
+  const handleOpenLeadDetails = (lead: Lead) => {
+    setSelectedLeadDetails(lead);
+    setIsEditingLead(false);
+    setEditLeadName(lead.name || '');
+    setEditLeadPhone(lead.phone || '');
+    setEditLeadEmail(lead.email || '');
+    setEditLeadService(lead.serviceInterest || '');
+    setEditLeadValue(lead.estimatedValue ? String(lead.estimatedValue) : '');
+  };
+
+  // Salvar Edição do Lead
+  const handleSaveLeadEdit = () => {
+    if (!selectedLeadDetails) return;
+    const parsedValue = editLeadValue.trim() ? parseFloat(editLeadValue.replace(/[^\d.,]/g, '').replace(',', '.')) : undefined;
+    const updated: Lead = {
+      ...selectedLeadDetails,
+      name: editLeadName.trim() || selectedLeadDetails.name,
+      phone: editLeadPhone.trim() || selectedLeadDetails.phone,
+      email: editLeadEmail.trim() || undefined,
+      serviceInterest: editLeadService.trim() || selectedLeadDetails.serviceInterest,
+      estimatedValue: !isNaN(Number(parsedValue)) ? Number(parsedValue) : selectedLeadDetails.estimatedValue,
+    };
+    setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+    setSelectedLeadDetails(updated);
+    setIsEditingLead(false);
+  };
 
   // Ativação / Desativação de Módulos (Simulação de Upgrade e Contratação Modular)
   const handleToggleModule = (moduleId: 'agenda' | 'atendimento' | 'crm') => {
@@ -580,24 +705,6 @@ export default function MatrizDashboard() {
                 </button>
               </div>
             )}
-            {/* Badges dos Módulos Ativos do Workspace */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
-              {currentOrg.modules?.agenda && (
-                <span style={{ fontSize: '0.64rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', border: '1px solid rgba(59, 130, 246, 0.25)', fontWeight: 600 }}>
-                  📅 Agenda
-                </span>
-              )}
-              {currentOrg.modules?.atendimento && (
-                <span style={{ fontSize: '0.64rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.25)', fontWeight: 600 }}>
-                  🤖 Atendimento
-                </span>
-              )}
-              {currentOrg.modules?.crm && (
-                <span style={{ fontSize: '0.64rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.25)', fontWeight: 600 }}>
-                  📊 CRM
-                </span>
-              )}
-            </div>
           </div>
         </div>
 
@@ -656,10 +763,10 @@ export default function MatrizDashboard() {
                   justifyContent: 'space-between',
                   padding: '9px 12px',
                   borderRadius: '8px',
-                  backgroundColor: activeTab === 'livechat' ? 'var(--emerald-subtle)' : 'transparent',
-                  color: activeTab === 'livechat' ? '#34D399' : 'var(--text-secondary)',
+                  backgroundColor: activeTab === 'livechat' ? 'rgba(31, 111, 255, 0.15)' : 'transparent',
+                  color: activeTab === 'livechat' ? '#60A5FA' : 'var(--text-secondary)',
                   fontWeight: activeTab === 'livechat' ? 600 : 400,
-                  border: activeTab === 'livechat' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                  border: activeTab === 'livechat' ? '1px solid rgba(31, 111, 255, 0.35)' : '1px solid transparent',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -677,10 +784,10 @@ export default function MatrizDashboard() {
                   gap: '10px',
                   padding: '9px 12px',
                   borderRadius: '8px',
-                  backgroundColor: activeTab === 'ai_brain' ? 'var(--emerald-subtle)' : 'transparent',
-                  color: activeTab === 'ai_brain' ? '#34D399' : 'var(--text-secondary)',
+                  backgroundColor: activeTab === 'ai_brain' ? 'rgba(31, 111, 255, 0.15)' : 'transparent',
+                  color: activeTab === 'ai_brain' ? '#60A5FA' : 'var(--text-secondary)',
                   fontWeight: activeTab === 'ai_brain' ? 600 : 400,
-                  border: activeTab === 'ai_brain' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                  border: activeTab === 'ai_brain' ? '1px solid rgba(31, 111, 255, 0.35)' : '1px solid transparent',
                 }}
               >
                 <Bot size={18} />
@@ -695,10 +802,10 @@ export default function MatrizDashboard() {
                   justifyContent: 'space-between',
                   padding: '9px 12px',
                   borderRadius: '8px',
-                  backgroundColor: activeTab === 'whatsapp' ? 'var(--emerald-subtle)' : 'transparent',
-                  color: activeTab === 'whatsapp' ? '#34D399' : 'var(--text-secondary)',
+                  backgroundColor: activeTab === 'whatsapp' ? 'rgba(31, 111, 255, 0.15)' : 'transparent',
+                  color: activeTab === 'whatsapp' ? '#60A5FA' : 'var(--text-secondary)',
                   fontWeight: activeTab === 'whatsapp' ? 600 : 400,
-                  border: activeTab === 'whatsapp' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                  border: activeTab === 'whatsapp' ? '1px solid rgba(31, 111, 255, 0.35)' : '1px solid transparent',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -714,10 +821,10 @@ export default function MatrizDashboard() {
           {currentOrg.modules?.crm && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '2px' }}>
-                <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#FBBF24', fontWeight: 700, letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#C9A227', fontWeight: 700, letterSpacing: '0.05em' }}>
                   Agillex CRM
                 </span>
-                <span style={{ fontSize: '0.6rem', color: '#FBBF24', fontWeight: 600 }}>ATIVO</span>
+                <span style={{ fontSize: '0.6rem', color: '#C9A227', fontWeight: 600 }}>ATIVO</span>
               </div>
 
               <button
@@ -728,10 +835,10 @@ export default function MatrizDashboard() {
                   gap: '10px',
                   padding: '9px 12px',
                   borderRadius: '8px',
-                  backgroundColor: activeTab === 'overview' ? 'var(--emerald-subtle)' : 'transparent',
-                  color: activeTab === 'overview' ? '#34D399' : 'var(--text-secondary)',
+                  backgroundColor: activeTab === 'overview' ? 'rgba(31, 111, 255, 0.15)' : 'transparent',
+                  color: activeTab === 'overview' ? '#60A5FA' : 'var(--text-secondary)',
                   fontWeight: activeTab === 'overview' ? 600 : 400,
-                  border: activeTab === 'overview' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                  border: activeTab === 'overview' ? '1px solid rgba(31, 111, 255, 0.35)' : '1px solid transparent',
                 }}
               >
                 <LayoutDashboard size={18} />
@@ -746,79 +853,20 @@ export default function MatrizDashboard() {
                   justifyContent: 'space-between',
                   padding: '9px 12px',
                   borderRadius: '8px',
-                  backgroundColor: activeTab === 'kanban' ? 'var(--emerald-subtle)' : 'transparent',
-                  color: activeTab === 'kanban' ? '#34D399' : 'var(--text-secondary)',
+                  backgroundColor: activeTab === 'kanban' ? 'rgba(31, 111, 255, 0.15)' : 'transparent',
+                  color: activeTab === 'kanban' ? '#60A5FA' : 'var(--text-secondary)',
                   fontWeight: activeTab === 'kanban' ? 600 : 400,
-                  border: activeTab === 'kanban' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
+                  border: activeTab === 'kanban' ? '1px solid rgba(31, 111, 255, 0.35)' : '1px solid transparent',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Kanban size={18} />
                   <span style={{ fontSize: '0.86rem' }}>Funil CRM Kanban</span>
                 </div>
-                <span style={{ fontSize: '0.72rem', background: 'rgba(255, 255, 255, 0.1)', padding: '1px 6px', borderRadius: '99px', color: '#fff' }}>
+                <span style={{ fontSize: '0.72rem', background: 'rgba(31, 111, 255, 0.25)', color: '#93C5FD', padding: '1px 6px', borderRadius: '99px', fontWeight: 600 }}>
                   {orgLeads.length}
                 </span>
               </button>
-            </div>
-          )}
-
-          {/* MÓDULOS DISPONÍVEIS PARA ATIVAÇÃO / UPGRADE (Caso algum módulo não esteja ativo) */}
-          {(!currentOrg.modules?.agenda || !currentOrg.modules?.atendimento || !currentOrg.modules?.crm) && (
-            <div style={{ margin: '8px 0', padding: '10px', borderRadius: '10px', backgroundColor: 'rgba(255, 255, 255, 0.03)', border: '1px dashed var(--border-hover)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                <Sparkles size={13} color="#FBBF24" />
-                <span style={{ fontSize: '0.66rem', fontWeight: 700, color: '#FBBF24', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Módulos Disponíveis
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {!currentOrg.modules?.agenda && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
-                    <div>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff' }}>Agillex Agenda</div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>R$ 89/mês</div>
-                    </div>
-                    <button
-                      onClick={() => handleToggleModule('agenda')}
-                      style={{ fontSize: '0.68rem', padding: '3px 8px', borderRadius: '5px', backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60A5FA', border: '1px solid rgba(59, 130, 246, 0.4)', fontWeight: 600, cursor: 'pointer' }}
-                    >
-                      + Ativar
-                    </button>
-                  </div>
-                )}
-
-                {!currentOrg.modules?.atendimento && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
-                    <div>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff' }}>Atendimento IA</div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>R$ 149/mês</div>
-                    </div>
-                    <button
-                      onClick={() => handleToggleModule('atendimento')}
-                      style={{ fontSize: '0.68rem', padding: '3px 8px', borderRadius: '5px', backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.4)', fontWeight: 600, cursor: 'pointer' }}
-                    >
-                      + Ativar
-                    </button>
-                  </div>
-                )}
-
-                {!currentOrg.modules?.crm && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.25)' }}>
-                    <div>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#fff' }}>Agillex CRM</div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>R$ 99/mês</div>
-                    </div>
-                    <button
-                      onClick={() => handleToggleModule('crm')}
-                      style={{ fontSize: '0.68rem', padding: '3px 8px', borderRadius: '5px', backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.4)', fontWeight: 600, cursor: 'pointer' }}
-                    >
-                      + Ativar
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -924,24 +972,6 @@ export default function MatrizDashboard() {
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                   Workspace: <strong style={{ color: '#fff' }}>{currentOrg.name}</strong>
                 </span>
-                {/* Badges de Módulos Contratados */}
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  {currentOrg.modules?.agenda && (
-                    <span style={{ fontSize: '0.66rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', border: '1px solid rgba(59, 130, 246, 0.25)', fontWeight: 600 }}>
-                      Agenda
-                    </span>
-                  )}
-                  {currentOrg.modules?.atendimento && (
-                    <span style={{ fontSize: '0.66rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#34D399', border: '1px solid rgba(16, 185, 129, 0.25)', fontWeight: 600 }}>
-                      Atendimento IA
-                    </span>
-                  )}
-                  {currentOrg.modules?.crm && (
-                    <span style={{ fontSize: '0.66rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.25)', fontWeight: 600 }}>
-                      CRM
-                    </span>
-                  )}
-                </div>
               </div>
             </div>
           </div>
@@ -965,33 +995,11 @@ export default function MatrizDashboard() {
 
             {/* Status Agente de IA (Se módulo Atendimento contratado) */}
             {currentOrg.modules?.atendimento && (
-              <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '99px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+              <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '99px', backgroundColor: 'rgba(31, 111, 255, 0.1)', border: '1px solid rgba(31, 111, 255, 0.25)' }}>
                 <Sparkles size={13} color="#60A5FA" />
                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#60A5FA' }}>Agente IA Ativo</span>
               </div>
             )}
-
-            {/* Botão Configurar Módulos */}
-            <button
-              onClick={() => setModuleModalOpen(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '7px 11px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid var(--border-hover)',
-                color: '#fff',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-              title="Gerenciar módulos deste cliente"
-            >
-              <Sliders size={14} color="#A78BFA" />
-              <span className="desktop-only">Módulos</span>
-            </button>
 
             {/* Botão Novo Lead (Se módulo CRM contratado) */}
             {currentOrg.modules?.crm && (
@@ -1003,12 +1011,14 @@ export default function MatrizDashboard() {
                   gap: '6px',
                   padding: '7px 12px',
                   borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #10B981, #059669)',
+                  background: 'linear-gradient(135deg, #1F6FFF, #1754C7)',
                   color: '#fff',
                   fontSize: '0.8rem',
                   fontWeight: 600,
-                  boxShadow: '0 2px 10px rgba(16, 185, 129, 0.3)',
+                  boxShadow: '0 2px 10px rgba(31, 111, 255, 0.35)',
                   whiteSpace: 'nowrap',
+                  border: 'none',
+                  cursor: 'pointer',
                 }}
               >
                 <Plus size={15} /> <span className="desktop-only">Novo Lead</span><span className="mobile-only">Lead</span>
@@ -1029,18 +1039,18 @@ export default function MatrizDashboard() {
                   gap: '6px',
                   padding: '7px 12px',
                   borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                  background: 'linear-gradient(135deg, #C9A227, #9B7B1B)',
                   color: '#fff',
                   fontSize: '0.8rem',
                   fontWeight: 600,
-                  boxShadow: '0 2px 12px rgba(99, 102, 241, 0.35)',
+                  boxShadow: '0 2px 12px rgba(201, 162, 39, 0.35)',
                   whiteSpace: 'nowrap',
                   cursor: 'pointer',
                   border: 'none',
                 }}
                 title="Minere novas empresas no Google Maps com copy pronta e adicione diretamente ao Funil CRM"
               >
-                <MapPin size={15} color="#FBBF24" />
+                <MapPin size={15} color="#fff" />
                 <span className="desktop-only">Prospectar no Maps</span>
                 <span className="mobile-only">Prospectar</span>
               </button>
@@ -1059,11 +1069,11 @@ export default function MatrizDashboard() {
               <div className="hero-banner">
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#34D399', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#60A5FA', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                       Automação em Execução
                     </span>
-                    <span style={{ fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.2)', color: '#34D399', padding: '2px 8px', borderRadius: '99px' }}>
-                      Multi-Tenant Ativo
+                    <span style={{ fontSize: '0.7rem', background: 'rgba(31, 111, 255, 0.2)', color: '#93C5FD', padding: '2px 8px', borderRadius: '99px' }}>
+                      AllLogic Online
                     </span>
                   </div>
                   <h2 style={{ fontSize: '1.45rem', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>
@@ -1079,13 +1089,16 @@ export default function MatrizDashboard() {
                     style={{
                       padding: '12px 20px',
                       borderRadius: '10px',
-                      backgroundColor: '#10B981',
+                      background: 'linear-gradient(135deg, #1F6FFF, #1754C7)',
                       color: '#fff',
                       fontWeight: 600,
                       fontSize: '0.88rem',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
+                      border: 'none',
+                      boxShadow: '0 2px 10px rgba(31, 111, 255, 0.35)',
+                      cursor: 'pointer',
                     }}
                   >
                     <MessageSquare size={16} /> Ver Chat Ao Vivo
@@ -1265,15 +1278,35 @@ export default function MatrizDashboard() {
           )}
 
           {/* ======================================================== */}
-          {/* ABA 2: CRM KANBAN (FUNIL DE VENDAS COM DRAG & CLICK)     */}
-          {/* ======================================================== */}
           {activeTab === 'kanban' && (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
-                  Gerencie o fluxo de atendimento da <strong>{currentOrg.name}</strong>. Os leads avançam sozinhos conforme interagem com o agente de IA.
-                </p>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+                    Gerencie o fluxo de atendimento da <strong>{currentOrg.name}</strong>. Os leads avançam sozinhos conforme interagem com o agente de IA.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {/* Busca Rápida de Leads */}
+                  <div style={{ position: 'relative', minWidth: '180px' }}>
+                    <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      placeholder="Buscar lead ou telefone..."
+                      value={kanbanSearch}
+                      onChange={(e) => setKanbanSearch(e.target.value)}
+                      style={{
+                        padding: '7px 10px 7px 30px',
+                        borderRadius: '8px',
+                        backgroundColor: 'var(--bg-surface-elevated)',
+                        border: '1px solid var(--border-subtle)',
+                        color: '#fff',
+                        fontSize: '0.78rem',
+                        width: '100%',
+                      }}
+                    />
+                  </div>
+
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -1284,22 +1317,65 @@ export default function MatrizDashboard() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     style={{
-                      padding: '8px 14px',
+                      padding: '7px 12px',
                       borderRadius: '8px',
                       backgroundColor: 'rgba(255, 255, 255, 0.06)',
                       border: '1px solid var(--border-subtle)',
                       color: 'var(--text-secondary)',
-                      fontSize: '0.82rem',
+                      fontSize: '0.78rem',
                       fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
+                      gap: '5px',
                       cursor: 'pointer',
                     }}
                     title="Importar lista de leads de um arquivo CSV ou JSON"
                   >
-                    <UploadCloud size={15} color="#38BDF8" /> Importar Planilha
+                    <UploadCloud size={14} color="#38BDF8" /> Importar
                   </button>
+
+                  <button
+                    onClick={handleExportCSV}
+                    style={{
+                      padding: '7px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid var(--border-subtle)',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      cursor: 'pointer',
+                    }}
+                    title="Exportar todos os leads do funil para planilha CSV"
+                  >
+                    <Download size={14} color="#C9A227" /> Exportar CSV
+                  </button>
+
+                  {orgLeads.length > 0 && (
+                    <button
+                      onClick={handleClearFunnel}
+                      style={{
+                        padding: '7px 10px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        color: '#F87171',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        cursor: 'pointer',
+                      }}
+                      title="Limpar todos os leads do funil e começar do zero"
+                    >
+                      <Trash2 size={13} /> Limpar Funil
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       setProspectorModalOpen(true);
@@ -1307,37 +1383,41 @@ export default function MatrizDashboard() {
                       setProspectorSuccessMsg('');
                     }}
                     style={{
-                      padding: '8px 14px',
+                      padding: '7px 13px',
                       borderRadius: '8px',
-                      background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                      background: 'linear-gradient(135deg, #C9A227, #9B7B1B)',
                       color: '#fff',
-                      fontSize: '0.82rem',
+                      fontSize: '0.78rem',
                       fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
                       cursor: 'pointer',
                       border: 'none',
-                      boxShadow: '0 2px 10px rgba(99, 102, 241, 0.3)',
+                      boxShadow: '0 2px 10px rgba(201, 162, 39, 0.35)',
                     }}
                   >
-                    <MapPin size={15} color="#FBBF24" /> Prospectar no Maps
+                    <MapPin size={14} color="#fff" /> Prospectar no Maps
                   </button>
+
                   <button
                     onClick={() => setNewLeadModalOpen(true)}
                     style={{
-                      padding: '8px 14px',
+                      padding: '7px 13px',
                       borderRadius: '8px',
-                      backgroundColor: '#10B981',
+                      background: 'linear-gradient(135deg, #1F6FFF, #1754C7)',
                       color: '#fff',
-                      fontSize: '0.82rem',
+                      fontSize: '0.78rem',
                       fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
+                      border: 'none',
+                      boxShadow: '0 2px 10px rgba(31, 111, 255, 0.35)',
+                      cursor: 'pointer',
                     }}
                   >
-                    <Plus size={15} /> Adicionar Lead
+                    <Plus size={14} /> Novo Lead
                   </button>
                 </div>
               </div>
@@ -1354,12 +1434,12 @@ export default function MatrizDashboard() {
                 }}
               >
                 {[
-                  { id: 'novo', title: 'Novo Lead', color: '#38BDF8', desc: 'Chegou pelo WhatsApp' },
-                  { id: 'em_atendimento', title: 'Em Atendimento IA', color: '#A78BFA', desc: 'Agente conversando' },
-                  { id: 'aguardando_followup', title: 'Follow-up Automático', color: '#FBBF24', desc: 'Cliente parou de falar' },
-                  { id: 'agendado', title: 'Agendado / Fechado', color: '#34D399', desc: 'Horário confirmado' },
+                  { id: 'novo', title: 'Novo Lead', color: '#1F6FFF', desc: 'Chegou ou Prospectado' },
+                  { id: 'em_atendimento', title: 'Em Atendimento IA', color: '#818CF8', desc: 'Agente conversando' },
+                  { id: 'aguardando_followup', title: 'Follow-up Automático', color: '#C9A227', desc: 'Contato parou de falar' },
+                  { id: 'agendado', title: 'Agendado / Fechado', color: '#10B981', desc: 'Horário ou Negócio confirmado' },
                 ].map((col) => {
-                  const colLeads = orgLeads.filter((l) => l.status === col.id);
+                  const colLeads = filteredLeads.filter((l) => l.status === col.id);
                   return (
                     <div
                       key={col.id}
@@ -1389,6 +1469,7 @@ export default function MatrizDashboard() {
                         {colLeads.map((lead) => (
                           <div
                             key={lead.id}
+                            onClick={() => handleOpenLeadDetails(lead)}
                             style={{
                               padding: '12px',
                               borderRadius: '10px',
@@ -1398,6 +1479,8 @@ export default function MatrizDashboard() {
                               display: 'flex',
                               flexDirection: 'column',
                               gap: '8px',
+                              cursor: 'pointer',
+                              transition: 'transform 0.15s ease, border-color 0.15s ease',
                             }}
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1417,8 +1500,9 @@ export default function MatrizDashboard() {
                                     fontSize: '0.65rem',
                                     padding: '1px 6px',
                                     borderRadius: '4px',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.07)',
-                                    color: 'var(--text-secondary)',
+                                    backgroundColor: 'rgba(31, 111, 255, 0.12)',
+                                    color: '#93C5FD',
+                                    border: '1px solid rgba(31, 111, 255, 0.2)',
                                   }}
                                 >
                                   {t}
@@ -1428,49 +1512,126 @@ export default function MatrizDashboard() {
 
                             {/* Ações Rápidas no Card */}
                             <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <button
-                                onClick={() => {
-                                  setSelectedLeadId(lead.id);
-                                  setActiveTab('livechat');
-                                }}
-                                style={{
-                                  fontSize: '0.74rem',
-                                  color: '#34D399',
-                                  fontWeight: 600,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                }}
-                              >
-                                <MessageSquare size={13} /> Abrir Chat
-                              </button>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedLeadId(lead.id);
+                                    setActiveTab('livechat');
+                                  }}
+                                  style={{
+                                    fontSize: '0.74rem',
+                                    color: '#60A5FA',
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  <MessageSquare size={13} /> Chat
+                                </button>
+                                <a
+                                  href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{
+                                    fontSize: '0.74rem',
+                                    color: '#25D366',
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    textDecoration: 'none',
+                                  }}
+                                  title="Chamar no WhatsApp"
+                                >
+                                  <Phone size={12} /> WhatsApp
+                                </a>
+                              </div>
 
-                              {/* Mover para próximo estágio */}
-                              <button
-                                onClick={() => {
-                                  const stages: LeadStatus[] = ['novo', 'em_atendimento', 'aguardando_followup', 'agendado'];
-                                  const currIdx = stages.indexOf(lead.status);
-                                  const nextStage = stages[(currIdx + 1) % stages.length];
-                                  moveLeadStatus(lead.id, nextStage);
-                                }}
-                                style={{
-                                  fontSize: '0.72rem',
-                                  color: 'var(--text-muted)',
-                                  padding: '2px 6px',
-                                  borderRadius: '4px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                }}
-                                title="Avançar etapa no funil"
-                              >
-                                Mover &rarr;
-                              </button>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {/* Botão Excluir Lead */}
+                                <button
+                                  onClick={(e) => handleDeleteLead(lead.id, lead.name, e)}
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    color: 'var(--text-muted)',
+                                    padding: '3px 6px',
+                                    borderRadius: '4px',
+                                    backgroundColor: 'transparent',
+                                    cursor: 'pointer',
+                                  }}
+                                  title="Excluir este lead"
+                                >
+                                  <Trash2 size={13} color="#94A3B8" />
+                                </button>
+
+                                {/* Mover para próximo estágio */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const stages: LeadStatus[] = ['novo', 'em_atendimento', 'aguardando_followup', 'agendado'];
+                                    const currIdx = stages.indexOf(lead.status);
+                                    const nextStage = stages[(currIdx + 1) % stages.length];
+                                    moveLeadStatus(lead.id, nextStage);
+                                  }}
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    color: 'var(--text-muted)',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    cursor: 'pointer',
+                                  }}
+                                  title="Avançar etapa no funil"
+                                >
+                                  Mover &rarr;
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
 
                         {colLeads.length === 0 && (
-                          <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--text-muted)', fontSize: '0.78rem', border: '1px dashed var(--border-subtle)', borderRadius: '8px' }}>
-                            Nenhum contato nesta etapa
+                          <div
+                            style={{
+                              textAlign: 'center',
+                              padding: '32px 14px',
+                              color: 'var(--text-muted)',
+                              fontSize: '0.8rem',
+                              border: '1px dashed var(--border-subtle)',
+                              borderRadius: '10px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '8px',
+                              backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                            }}
+                          >
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'rgba(255, 255, 255, 0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Users size={16} color="var(--text-muted)" />
+                            </div>
+                            <span>Nenhum lead nesta etapa</span>
+                            {col.id === 'novo' && (
+                              <button
+                                onClick={() => setNewLeadModalOpen(true)}
+                                style={{
+                                  fontSize: '0.72rem',
+                                  color: '#60A5FA',
+                                  fontWeight: 600,
+                                  marginTop: '4px',
+                                  padding: '4px 10px',
+                                  borderRadius: '5px',
+                                  backgroundColor: 'rgba(31, 111, 255, 0.1)',
+                                  border: '1px solid rgba(31, 111, 255, 0.25)',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                + Adicionar Lead
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -3108,7 +3269,7 @@ export default function MatrizDashboard() {
                     width: '40px',
                     height: '40px',
                     borderRadius: '50%',
-                    backgroundColor: '#10B981',
+                    backgroundColor: '#1F6FFF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -3128,18 +3289,38 @@ export default function MatrizDashboard() {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedLeadDetails(null)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  padding: '4px',
-                }}
-              >
-                <X size={20} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  onClick={() => setIsEditingLead(!isEditingLead)}
+                  style={{
+                    background: isEditingLead ? 'rgba(239, 68, 68, 0.15)' : 'rgba(31, 111, 255, 0.15)',
+                    border: isEditingLead ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(31, 111, 255, 0.3)',
+                    color: isEditingLead ? '#F87171' : '#60A5FA',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <Pencil size={12} /> {isEditingLead ? 'Cancelar' : 'Editar'}
+                </button>
+                <button
+                  onClick={() => setSelectedLeadDetails(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: '4px',
+                  }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Ações Diretas: WhatsApp */}
@@ -3176,9 +3357,9 @@ export default function MatrizDashboard() {
                   justifyContent: 'center',
                   gap: '8px',
                   padding: '10px 14px',
-                  backgroundColor: 'rgba(56, 189, 248, 0.15)',
-                  color: '#38BDF8',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  backgroundColor: 'rgba(31, 111, 255, 0.15)',
+                  color: '#60A5FA',
+                  border: '1px solid rgba(31, 111, 255, 0.3)',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   fontSize: '0.8rem',
@@ -3189,42 +3370,121 @@ export default function MatrizDashboard() {
               </button>
             </div>
 
-            {/* Informações de Contato */}
-            <div
-              style={{
-                backgroundColor: 'var(--bg-surface-elevated)',
-                borderRadius: '10px',
-                padding: '14px 16px',
-                marginBottom: '16px',
-                border: '1px solid var(--border-subtle)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Telefone:</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{selectedLeadDetails.phone}</span>
-              </div>
-              {selectedLeadDetails.email && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>E-mail:</span>
-                  <span style={{ color: '#fff' }}>{selectedLeadDetails.email}</span>
+            {/* Informações de Contato / Modo de Edição */}
+            {isEditingLead ? (
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-surface-elevated)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '16px',
+                  border: '1px solid var(--border-hover)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                }}
+              >
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#60A5FA', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Editar Informações do Lead
                 </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Serviço de Interesse:</span>
-                <span style={{ color: '#FBBF24', fontWeight: 600 }}>{selectedLeadDetails.serviceInterest}</span>
+                <div>
+                  <label style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>Nome / Razão Social:</label>
+                  <input
+                    type="text"
+                    value={editLeadName}
+                    onChange={(e) => setEditLeadName(e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.82rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>Telefone WhatsApp:</label>
+                  <input
+                    type="text"
+                    value={editLeadPhone}
+                    onChange={(e) => setEditLeadPhone(e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.82rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>E-mail (opcional):</label>
+                  <input
+                    type="email"
+                    value={editLeadEmail}
+                    onChange={(e) => setEditLeadEmail(e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.82rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>Serviço de Interesse:</label>
+                  <input
+                    type="text"
+                    value={editLeadService}
+                    onChange={(e) => setEditLeadService(e.target.value)}
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.82rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>Valor Estimado (R$):</label>
+                  <input
+                    type="text"
+                    value={editLeadValue}
+                    onChange={(e) => setEditLeadValue(e.target.value)}
+                    placeholder="Ex: 1500"
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.82rem' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+                  <button
+                    onClick={() => setIsEditingLead(false)}
+                    style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.08)', color: 'var(--text-secondary)', fontSize: '0.78rem', cursor: 'pointer' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSaveLeadEdit}
+                    style={{ padding: '6px 14px', borderRadius: '6px', background: 'linear-gradient(135deg, #1F6FFF, #1754C7)', color: '#fff', fontSize: '0.78rem', fontWeight: 600, border: 'none', cursor: 'pointer' }}
+                  >
+                    Salvar Alterações
+                  </button>
+                </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Valor Estimado:</span>
-                <span style={{ color: '#34D399', fontWeight: 600 }}>
-                  {selectedLeadDetails.estimatedValue
-                    ? `R$ ${selectedLeadDetails.estimatedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                    : 'A definir'}
-                </span>
+            ) : (
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-surface-elevated)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  marginBottom: '16px',
+                  border: '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Telefone:</span>
+                  <span style={{ color: '#fff', fontWeight: 600 }}>{selectedLeadDetails.phone}</span>
+                </div>
+                {selectedLeadDetails.email && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>E-mail:</span>
+                    <span style={{ color: '#fff' }}>{selectedLeadDetails.email}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Serviço de Interesse:</span>
+                  <span style={{ color: '#C9A227', fontWeight: 600 }}>{selectedLeadDetails.serviceInterest}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Valor Estimado:</span>
+                  <span style={{ color: '#10B981', fontWeight: 600 }}>
+                    {selectedLeadDetails.estimatedValue
+                      ? `R$ ${selectedLeadDetails.estimatedValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                      : 'A definir'}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Controle da IA para este Lead */}
             <div
@@ -3392,7 +3652,25 @@ export default function MatrizDashboard() {
             </div>
 
             {/* Footer */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
+              <button
+                onClick={() => handleDeleteLead(selectedLeadDetails.id, selectedLeadDetails.name)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#F87171',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Trash2 size={14} /> Excluir Lead
+              </button>
               <button
                 onClick={() => setSelectedLeadDetails(null)}
                 style={{
