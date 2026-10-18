@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { asaasService } from '@/lib/asaas';
 import { SAAS_PLANS } from '@/types/pricing';
+import { whmService } from '@/lib/whm';
 
 export async function POST(request: Request) {
   try {
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
       billingMethod = 'PIX',
       creditCard,
       isTrial = false,
+      domain = '',
     } = body;
 
     // Validações básicas
@@ -61,7 +63,10 @@ export async function POST(request: Request) {
 
     const isYearly = cycle === 'yearly';
     const amount = isYearly ? plan.annualTotal : plan.priceMonthly;
-    const description = `Assinatura ${plan.name} (${isYearly ? 'Anual' : 'Mensal'}) - AllLogic Online`;
+    const description =
+      plan.module === 'hospedagem'
+        ? `Hospedagem AllLogic - ${plan.name} (${isYearly ? 'Anual' : 'Mensal'})${domain ? ` - Domínio: ${domain}` : ''}`
+        : `Assinatura ${plan.name} (${isYearly ? 'Anual' : 'Mensal'}) - AllLogic Online`;
 
     // 2. Processar de acordo com a forma de pagamento
     if (billingMethod === 'CREDIT_CARD') {
@@ -90,6 +95,21 @@ export async function POST(request: Request) {
         },
       });
 
+      // Se for plano de hospedagem, provisiona imediatamente no WHM/cPanel
+      let provisioning = null;
+      if (plan.module === 'hospedagem' && domain) {
+        try {
+          provisioning = await whmService.createAccount({
+            domain,
+            contactemail: email,
+            planId: plan.id,
+            customerName: name,
+          });
+        } catch (provisionErr: any) {
+          console.error('[API Checkout] Erro no provisionamento WHM pós-cartão:', provisionErr);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         status: 'active',
@@ -97,7 +117,11 @@ export async function POST(request: Request) {
         subscriptionId: subscription.id,
         plan: plan.name,
         amount,
-        message: 'Assinatura confirmada com sucesso no cartão de crédito!',
+        domain: domain || undefined,
+        provisioning,
+        message: provisioning
+          ? 'Assinatura confirmada e sua hospedagem foi ativada com sucesso!'
+          : 'Assinatura confirmada com sucesso no cartão de crédito!',
       });
     }
 
@@ -120,6 +144,8 @@ export async function POST(request: Request) {
         billingMethod: 'PIX',
         paymentId: payment.id,
         plan: plan.name,
+        planId: plan.id,
+        domain: domain || undefined,
         amount,
         qrCodeBase64: qr.encodedImage,
         copyPaste: qr.payload,

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { whmService } from '@/lib/whm';
 
 export async function POST(request: Request) {
   try {
@@ -25,7 +26,24 @@ export async function POST(request: Request) {
       case 'PAYMENT_CONFIRMED':
       case 'PAYMENT_RECEIVED':
         console.log(`[Asaas Webhook] Pagamento liquidado com sucesso: ${payment?.id}`);
-        // Aqui atualiza a organização/cliente no banco de dados para 'active'
+
+        // Provisionamento automático de hospedagem se o pagamento for de plano de hospedagem
+        if (payment?.description && payment.description.includes('Hospedagem AllLogic')) {
+          const domainMatch = payment.description.match(/Domínio:\s*([a-zA-Z0-9.-]+)/);
+          const domain = domainMatch ? domainMatch[1].trim() : '';
+          if (domain) {
+            try {
+              console.log(`[Asaas Webhook] Provisionando hospedagem automaticamente para ${domain}...`);
+              await whmService.createAccount({
+                domain,
+                contactemail: payment.clientEmail || `contato@${domain}`,
+                planId: 'profissional',
+              });
+            } catch (whmErr) {
+              console.error('[Asaas Webhook] Erro ao provisionar WHM via webhook:', whmErr);
+            }
+          }
+        }
         break;
 
       case 'PAYMENT_OVERDUE':

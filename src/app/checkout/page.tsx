@@ -16,6 +16,8 @@ import {
   Calendar,
   MessageSquare,
   Zap,
+  Server,
+  Globe,
 } from 'lucide-react';
 import { SAAS_PLANS, PlanConfig, ModuleType, BillingCycle, BillingMethod } from '@/types/pricing';
 import './checkout.css';
@@ -25,19 +27,24 @@ function CheckoutContent() {
 
   // Parâmetros iniciais da URL
   const initialModule = (searchParams.get('modulo') as ModuleType) || 'combo';
+  const initialDomain = searchParams.get('dominio') || '';
+  const initialPlanParam = searchParams.get('plano') || '';
   const initialPlanId =
-    searchParams.get('plano') ||
+    initialPlanParam ||
     (initialModule === 'atendimento'
       ? 'pro'
       : initialModule === 'agenda'
       ? 'agenda_intermediario'
+      : initialModule === 'hospedagem'
+      ? 'hospedagem_profissional'
       : 'combo');
   const initialCycle = (searchParams.get('ciclo') as BillingCycle) || 'monthly';
-  const initialTrial = searchParams.get('trial') === 'true';
+  const initialTrial = searchParams.get('trial') === 'true' && initialModule !== 'hospedagem';
   const initialEmail = searchParams.get('email') || '';
 
   const [selectedModule, setSelectedModule] = useState<ModuleType>(initialModule);
   const [selectedPlanId, setSelectedPlanId] = useState<string>(initialPlanId);
+  const [domain, setDomain] = useState<string>(initialDomain);
   const [cycle, setCycle] = useState<BillingCycle>(initialCycle);
   const [isTrial, setIsTrial] = useState<boolean>(initialTrial);
   const [billingMethod, setBillingMethod] = useState<BillingMethod>('CREDIT_CARD');
@@ -86,12 +93,24 @@ function CheckoutContent() {
   const [pixData, setPixData] = useState<{ qrCode: string; copyPaste: string; paymentId: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Filtrar planos do módulo ativo
-  const availablePlans = Object.values(SAAS_PLANS).filter((p) => p.module === selectedModule);
+  // Filtrar planos do módulo ativo (sem duplicatas)
+  const availablePlans = Array.from(
+    new Map(
+      Object.values(SAAS_PLANS)
+        .filter((p) => p.module === selectedModule)
+        .map((p) => [p.name, p])
+    ).values()
+  );
 
   // Garantir plano selecionado válido ao trocar módulo
   useEffect(() => {
-    const plans = Object.values(SAAS_PLANS).filter((p) => p.module === selectedModule);
+    const plans = Array.from(
+      new Map(
+        Object.values(SAAS_PLANS)
+          .filter((p) => p.module === selectedModule)
+          .map((p) => [p.name, p])
+      ).values()
+    );
     if (!plans.some((p) => p.id === selectedPlanId)) {
       if (plans.length > 0) {
         setSelectedPlanId(plans[0].id);
@@ -105,19 +124,24 @@ function CheckoutContent() {
   const displayPrice = isYearly ? currentPlan.priceYearlyMonthly : currentPlan.priceMonthly;
   const totalPrice = isYearly ? currentPlan.annualTotal : currentPlan.priceMonthly;
 
-  // Polling para checagem do PIX
+  // Polling para checagem do PIX com suporte a provisionamento de hospedagem
   useEffect(() => {
     let interval: any;
     if (pixData?.paymentId) {
       interval = setInterval(async () => {
         try {
-          const res = await fetch(`/api/checkout/status?paymentId=${pixData.paymentId}`);
+          const pollUrl = `/api/checkout/status?paymentId=${pixData.paymentId}&domain=${encodeURIComponent(domain)}&planId=${currentPlan.id}&email=${encodeURIComponent(formData.email)}&name=${encodeURIComponent(formData.name)}`;
+          const res = await fetch(pollUrl);
           const data = await res.json();
           if (data.isPaid) {
             setSuccessData({
               status: 'active',
               plan: currentPlan.name,
-              message: 'Pagamento PIX confirmado com sucesso! Sua conta foi ativada.',
+              domain: domain || undefined,
+              provisioning: data.provisioning,
+              message: data.provisioning
+                ? 'Pagamento PIX confirmado com sucesso! Sua hospedagem foi ativada.'
+                : 'Pagamento PIX confirmado com sucesso! Sua conta foi ativada.',
             });
             setPixData(null);
             clearInterval(interval);
@@ -128,7 +152,7 @@ function CheckoutContent() {
       }, 3000);
     }
     return () => clearInterval(interval);
-  }, [pixData, currentPlan.name]);
+  }, [pixData, currentPlan.name, currentPlan.id, domain, formData.email, formData.name]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,12 +171,19 @@ function CheckoutContent() {
         }
       }
 
+      if (selectedModule === 'hospedagem' && !domain.trim()) {
+        setErrorMsg('Por favor, informe o domínio do site para configurar a sua hospedagem.');
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         ...formData,
         planId: currentPlan.id,
         cycle,
         billingMethod,
-        isTrial,
+        isTrial: selectedModule === 'hospedagem' ? false : isTrial,
+        domain: domain.trim(),
         creditCard:
           billingMethod === 'CREDIT_CARD' && !isTrial
             ? {
@@ -375,6 +406,65 @@ function CheckoutContent() {
                 {successData.message}
               </p>
 
+              {/* Box de Credenciais cPanel da Hospedagem */}
+              {successData.provisioning && (
+                <div
+                  style={{
+                    background: 'rgba(201, 162, 39, 0.08)',
+                    border: '1px solid rgba(201, 162, 39, 0.35)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '20px',
+                    maxWidth: '480px',
+                    margin: '0 auto 24px',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', color: 'var(--color-primary)' }}>
+                    <Server size={20} color="var(--color-secondary)" />
+                    <strong style={{ fontSize: '16px' }}>Dados de Acesso da Sua Hospedagem</strong>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', color: 'var(--color-text)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border)', paddingBottom: '6px' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Domínio:</span>
+                      <strong style={{ color: 'var(--color-primary)' }}>{successData.provisioning.domain}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border)', paddingBottom: '6px' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Painel cPanel:</span>
+                      <a
+                        href={successData.provisioning.cpanelUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--color-secondary)', fontWeight: 600, textDecoration: 'underline' }}
+                      >
+                        {successData.provisioning.cpanelUrl}
+                      </a>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border)', paddingBottom: '6px' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Usuário:</span>
+                      <code style={{ background: '#f3f4f6', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, color: '#111827' }}>
+                        {successData.provisioning.username}
+                      </code>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border)', paddingBottom: '6px' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Senha Temporária:</span>
+                      <code style={{ background: '#f3f4f6', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, color: '#111827' }}>
+                        {successData.provisioning.password}
+                      </code>
+                    </div>
+                    <div style={{ marginTop: '4px', paddingTop: '6px' }}>
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: '12px', display: 'block', marginBottom: '4px' }}>
+                        Servidores DNS (Nameservers) para apontamento:
+                      </span>
+                      <div style={{ background: '#ffffff', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--color-border)', fontFamily: 'monospace', fontSize: '12px', color: 'var(--color-primary)' }}>
+                        ns1.alllogiconline.com.br<br />
+                        ns2.alllogiconline.com.br
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div
                 style={{
                   background: 'var(--color-surface)',
@@ -406,14 +496,27 @@ function CheckoutContent() {
                 )}
               </div>
 
-              <a
-                href="/"
-                className="checkout-submit-btn btn-interactive"
-                style={{ maxWidth: '300px', margin: '0 auto', textDecoration: 'none' }}
-              >
-                <span>Acessar Painel do Agillex Hub</span>
-                <ArrowRight size={18} />
-              </a>
+              {successData.provisioning ? (
+                <a
+                  href={successData.provisioning.cpanelUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="checkout-submit-btn btn-interactive"
+                  style={{ maxWidth: '320px', margin: '0 auto', textDecoration: 'none' }}
+                >
+                  <span>Acessar Painel cPanel</span>
+                  <ArrowRight size={18} />
+                </a>
+              ) : (
+                <a
+                  href="/"
+                  className="checkout-submit-btn btn-interactive"
+                  style={{ maxWidth: '300px', margin: '0 auto', textDecoration: 'none' }}
+                >
+                  <span>Acessar Painel do Agillex Hub</span>
+                  <ArrowRight size={18} />
+                </a>
+              )}
             </div>
           )}
 
@@ -511,16 +614,24 @@ function CheckoutContent() {
               {/* Título e Módulos */}
               <div className="checkout-header-area">
                 <span className="checkout-eyebrow">CHECKOUT OFICIAL ALLLOGIC ONLINE</span>
-                <h1 className="checkout-title">Ativação Segura do Agillex Hub</h1>
+                <h1 className="checkout-title">
+                  {selectedModule === 'hospedagem'
+                    ? 'Contratação Segura de Hospedagem'
+                    : 'Ativação Segura do Agillex Hub'}
+                </h1>
                 <p className="checkout-subtitle">
-                  Configure seus dados corporativos e escolha o formato ideal para sua operação.
+                  {selectedModule === 'hospedagem'
+                    ? 'Ativação automatizada de cPanel, certificado SSL incluso e suporte técnico de alta disponibilidade.'
+                    : 'Configure seus dados corporativos e escolha o formato ideal para sua operação.'}
                 </p>
 
                 {/* Seletor de Módulos (Tabs) */}
                 <div className="checkout-modules-pills">
                   <button
                     type="button"
-                    onClick={() => setSelectedModule('combo')}
+                    onClick={() => {
+                      setSelectedModule('combo');
+                    }}
                     className={`checkout-module-btn ${selectedModule === 'combo' ? 'checkout-module-btn--active' : ''}`}
                   >
                     <Sparkles size={16} />
@@ -529,7 +640,9 @@ function CheckoutContent() {
 
                   <button
                     type="button"
-                    onClick={() => setSelectedModule('atendimento')}
+                    onClick={() => {
+                      setSelectedModule('atendimento');
+                    }}
                     className={`checkout-module-btn ${selectedModule === 'atendimento' ? 'checkout-module-btn--active' : ''}`}
                   >
                     <MessageSquare size={16} />
@@ -538,11 +651,25 @@ function CheckoutContent() {
 
                   <button
                     type="button"
-                    onClick={() => setSelectedModule('agenda')}
+                    onClick={() => {
+                      setSelectedModule('agenda');
+                    }}
                     className={`checkout-module-btn ${selectedModule === 'agenda' ? 'checkout-module-btn--active' : ''}`}
                   >
                     <Calendar size={16} />
                     <span>Agillex Agenda</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedModule('hospedagem');
+                      setIsTrial(false);
+                    }}
+                    className={`checkout-module-btn ${selectedModule === 'hospedagem' ? 'checkout-module-btn--active' : ''}`}
+                  >
+                    <Server size={16} />
+                    <span>Hospedagem Gerenciada</span>
                   </button>
                 </div>
               </div>
@@ -567,14 +694,33 @@ function CheckoutContent() {
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsTrial(!isTrial)}
-                  className={`checkout-trial-pill ${isTrial ? 'checkout-trial-pill--active' : ''}`}
-                >
-                  <Zap size={16} color={isTrial ? 'var(--color-accent)' : 'var(--color-secondary)'} />
-                  <span>{isTrial ? 'Modo: Teste 14 Dias Grátis Ativo (Risco Zero)' : 'Quero testar 14 dias grátis primeiro'}</span>
-                </button>
+                {selectedModule !== 'hospedagem' ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsTrial(!isTrial)}
+                    className={`checkout-trial-pill ${isTrial ? 'checkout-trial-pill--active' : ''}`}
+                  >
+                    <Zap size={16} color={isTrial ? 'var(--color-accent)' : 'var(--color-secondary)'} />
+                    <span>{isTrial ? 'Modo: Teste 14 Dias Grátis Ativo (Risco Zero)' : 'Quero testar 14 dias grátis primeiro'}</span>
+                  </button>
+                ) : isYearly && currentPlan.freeDomain ? (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: 'rgba(201, 162, 39, 0.12)',
+                      border: '1px solid rgba(201, 162, 39, 0.35)',
+                      padding: '8px 16px',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: 'var(--color-primary)',
+                    }}
+                  >
+                    <span>🎁 1º ano de Domínio .com.br Grátis incluso</span>
+                  </div>
+                ) : null}
               </div>
 
               {/* Grid Principal de 2 Colunas */}
@@ -600,6 +746,31 @@ function CheckoutContent() {
                         className="checkout-text-input"
                       />
                     </div>
+
+                    {selectedModule === 'hospedagem' && (
+                      <div>
+                        <label className="checkout-field-label">
+                          Domínio Principal do Site
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Ex: suaempresa.com.br"
+                          value={domain}
+                          onChange={(e) => setDomain(e.target.value.toLowerCase().trim())}
+                          className="checkout-text-input"
+                        />
+                        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                          {isYearly && currentPlan.freeDomain ? (
+                            <strong style={{ color: 'var(--color-success)' }}>
+                              🎁 1º ano do registro deste domínio .com.br 100% grátis incluso no plano anual!
+                            </strong>
+                          ) : (
+                            'Informe o domínio que será configurado e gerenciado neste plano cPanel.'
+                          )}
+                        </p>
+                      </div>
+                    )}
 
                     <div className="checkout-row">
                       <div>
