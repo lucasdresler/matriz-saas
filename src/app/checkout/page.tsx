@@ -1004,6 +1004,28 @@ function CheckoutContent() {
                           : `Confirmar Assinatura (R$ ${totalPrice.toFixed(2).replace('.', ',')})`}
                       </span>
                     </button>
+
+                    {/* Garantia Incondicional de 7 Dias */}
+                    {selectedModule === 'hospedagem' && (
+                      <div
+                        style={{
+                          marginTop: '16px',
+                          padding: '12px 14px',
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: 'rgba(30, 142, 62, 0.06)',
+                          border: '1px solid rgba(30, 142, 62, 0.2)',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '10px',
+                        }}
+                      >
+                        <ShieldCheck size={20} style={{ color: 'var(--color-success)', flexShrink: 0, marginTop: '2px' }} />
+                        <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
+                          <strong style={{ color: 'var(--color-primary)' }}>Garantia Incondicional de 7 Dias:</strong>{' '}
+                          Experimente com risco zero. Se não ficar totalmente satisfeito, solicite o cancelamento em até 7 dias e devolvemos 100% do valor investido em sua hospedagem.
+                        </div>
+                      </div>
+                    )}
                   </form>
                 </div>
 
@@ -1084,6 +1106,23 @@ function CheckoutContent() {
                         </span>
                       </div>
                     </div>
+
+                    {selectedModule === 'hospedagem' && (
+                      <div
+                        style={{
+                          marginTop: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '11px',
+                          color: 'var(--color-success)',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <ShieldCheck size={14} style={{ flexShrink: 0 }} />
+                        <span>Garantia de 7 dias com devolução de 100% do valor</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
