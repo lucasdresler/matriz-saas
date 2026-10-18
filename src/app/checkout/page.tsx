@@ -1022,7 +1022,7 @@ function CheckoutContent() {
                         <ShieldCheck size={20} style={{ color: 'var(--color-success)', flexShrink: 0, marginTop: '2px' }} />
                         <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', lineHeight: 1.5 }}>
                           <strong style={{ color: 'var(--color-primary)' }}>Garantia Incondicional de 7 Dias:</strong>{' '}
-                          Experimente com risco zero. Se não ficar totalmente satisfeito, solicite o cancelamento em até 7 dias e devolvemos 100% do valor investido em sua hospedagem.
+                          Experimente com risco zero. Se não ficar totalmente satisfeito, solicite o cancelamento em até 7 dias e devolvemos 100% do valor da sua hospedagem.
                           <span style={{ display: 'block', marginTop: '6px', fontSize: '11px', color: 'var(--color-text-muted)', borderTop: '1px dashed rgba(30, 142, 62, 0.2)', paddingTop: '6px' }}>
                             * O reembolso refere-se estritamente à hospedagem. O registro do domínio (contratado ou bonificado no plano anual) é definitivo, registrado em seu nome por 1 ano e não reembolsável perante o Registro.br.
                           </span>
