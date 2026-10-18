@@ -209,7 +209,7 @@ function CheckoutContent() {
         <div className="header__services">
           <a
             className="header__services-link"
-            href="https://alllogiconline.com.br/dominios-e-hospedagem#busca-dominio"
+            href="https://alllogiconline.com.br/dominios-e-hospedagem"
             target="_blank"
             rel="noopener noreferrer"
           >
