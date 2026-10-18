@@ -203,19 +203,19 @@ function CheckoutContent() {
 
   return (
     <div className="checkout-page">
-      {/* 1. TOPBAR DE SERVIÇOS (Idêntica ao site) */}
-      <a
-        className="header__services"
-        href="https://alllogiconline.com.br/dominios-e-hospedagem"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span>Encontre seu domínio</span>
-        <span>Hospede seu site</span>
-      </a>
-
       {/* 2. HEADER E MENU INSTITUCIONAL (Idêntico ao site) */}
       <header className="site-header">
+        {/* 1. TOPBAR DE SERVIÇOS (Idêntica ao site) */}
+        <a
+          className="header__services"
+          href="https://alllogiconline.com.br/dominios-e-hospedagem"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span>Encontre seu domínio</span>
+          <span>Hospede seu site</span>
+        </a>
+
         <div className="checkout-container">
           <div className="site-header__inner">
             <div className="site-header__brand">
@@ -1041,7 +1041,7 @@ function CheckoutContent() {
         </div>
       </footer>
 
-      {/* Botão Voltar ao Topo (Dourado Oficial da Paleta AllLogic) */}
+      {/* Botão Voltar ao Topo (Dourado Oficial da Paleta AllLogic com seta branca encorpada) */}
       <button
         type="button"
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -1049,7 +1049,20 @@ function CheckoutContent() {
         aria-label="Voltar ao topo"
         title="Voltar ao topo"
       >
-        <span aria-hidden="true">↑</span>
+        <svg
+          className="scroll-to-top__icon"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 19V5M5 12l7-7 7 7" />
+        </svg>
       </button>
     </div>
   );
