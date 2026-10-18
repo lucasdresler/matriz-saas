@@ -152,6 +152,98 @@ export default function MatrizDashboard() {
     }
   };
 
+  // Importador de Planilhas (CSV / JSON gerados pelo Prospector)
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        if (!text) return;
+
+        // Se for JSON
+        if (file.name.endsWith('.json')) {
+          const parsed = JSON.parse(text);
+          const rawList = Array.isArray(parsed) ? parsed : (parsed.leads || []);
+          const importedLeads: Lead[] = rawList.map((item: any, idx: number) => ({
+            id: `lead-import-${Date.now()}-${idx}`,
+            orgId: activeOrgId,
+            name: item.Nome || item.name || 'Empresa Importada',
+            phone: item.Telefone || item.phone || 'N/A',
+            email: item.Email || item.email || '',
+            status: 'novo',
+            tags: ['Planilha', item.Categoria_Google || item.Nicho_Buscado || 'Google Maps'],
+            serviceInterest: item.Oferta_Recomendada || item.serviceInterest || 'Hospedagem cPanel + Domínio',
+            lastMessage: item.Mensagem_Abordagem_WhatsApp || item.lastMessage || 'Lead importado via planilha.',
+            lastMessageTime: 'Agora',
+            aiPaused: false,
+            unreadCount: 0,
+            estimatedValue: 197,
+            createdAt: 'Hoje',
+            avatar: '',
+          }));
+          setLeads((prev) => [...importedLeads, ...prev]);
+          alert(`✓ ${importedLeads.length} leads importados do arquivo com sucesso!`);
+          return;
+        }
+
+        // Se for CSV
+        const lines = text.split('\n').filter((l) => l.trim().length > 0);
+        if (lines.length <= 1) return;
+
+        const sep = lines[0].includes(';') ? ';' : ',';
+        const headers = lines[0].split(sep).map((h) => h.trim().replace(/^"|"$/g, ''));
+
+        const importedLeads: Lead[] = [];
+        for (let i = 1; i < lines.length; i++) {
+          const row = lines[i].split(sep).map((cell) => cell.trim().replace(/^"|"$/g, ''));
+          if (row.length < 2) continue;
+
+          const rowData: Record<string, string> = {};
+          headers.forEach((h, idx) => {
+            rowData[h] = row[idx] || '';
+          });
+
+          const name = rowData['Nome'] || rowData['name'] || row[0] || 'Empresa';
+          const phone = rowData['Telefone'] || rowData['phone'] || row[1] || '';
+          const copy = rowData['Mensagem_Abordagem_WhatsApp'] || rowData['copy'] || 'Lead importado do Google Maps.';
+          const offer = rowData['Oferta_Recomendada'] || rowData['service'] || 'Hospedagem cPanel + Domínio';
+          const cat = rowData['Categoria_Google'] || rowData['Nicho_Buscado'] || 'Google Maps';
+
+          importedLeads.push({
+            id: `lead-csv-${Date.now()}-${i}`,
+            orgId: activeOrgId,
+            name,
+            phone,
+            email: '',
+            status: 'novo',
+            tags: ['Google Maps', cat, 'Importado'],
+            serviceInterest: offer,
+            lastMessage: copy,
+            lastMessageTime: 'Agora',
+            aiPaused: false,
+            unreadCount: 0,
+            estimatedValue: 197,
+            createdAt: 'Hoje',
+            avatar: '',
+          });
+        }
+
+        if (importedLeads.length > 0) {
+          setLeads((prev) => [...importedLeads, ...prev]);
+          alert(`✓ ${importedLeads.length} leads importados com sucesso para o seu CRM!`);
+        }
+      } catch (err: any) {
+        alert('Erro ao importar planilha: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   // Organização Atual
   const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas') => {
     setActiveTab(tab);
@@ -1181,7 +1273,33 @@ export default function MatrizDashboard() {
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
                   Gerencie o fluxo de atendimento da <strong>{currentOrg.name}</strong>. Os leads avançam sozinhos conforme interagem com o agente de IA.
                 </p>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImportFile}
+                    accept=".csv, .json"
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid var(--border-subtle)',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                    }}
+                    title="Importar lista de leads de um arquivo CSV ou JSON"
+                  >
+                    <UploadCloud size={15} color="#38BDF8" /> Importar Planilha
+                  </button>
                   <button
                     onClick={() => {
                       setProspectorModalOpen(true);
