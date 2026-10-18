@@ -206,15 +206,25 @@ function CheckoutContent() {
       {/* 2. HEADER E MENU INSTITUCIONAL (Idêntico ao site) */}
       <header className="site-header">
         {/* 1. TOPBAR DE SERVIÇOS (Idêntica ao site) */}
-        <a
-          className="header__services"
-          href="https://alllogiconline.com.br/dominios-e-hospedagem"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span>Encontre seu domínio</span>
-          <span>Hospede seu site</span>
-        </a>
+        <div className="header__services">
+          <a
+            className="header__services-link"
+            href="https://alllogiconline.com.br/dominios-e-hospedagem#busca-dominio"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span>Encontre seu domínio</span>
+          </a>
+          <span className="header__services-sep" aria-hidden="true">|</span>
+          <a
+            className="header__services-link"
+            href="https://alllogiconline.com.br/dominios-e-hospedagem#hospedagem-sites"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span>Hospede seu site</span>
+          </a>
+        </div>
 
         <div className="checkout-container">
           <div className="site-header__inner">
