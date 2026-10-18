@@ -81,12 +81,58 @@ export class WhmService {
       case 'profissional':
         return 'top_profissional';
       case 'avancado':
-        return 'top_avancado';
+      case 'avançado':
+        return 'top_avançado';
       case 'empresarial':
         return 'top_empresarial';
       default:
         return 'top_profissional';
     }
+  }
+
+  /**
+   * Executa chamadas autenticadas na WHM API v1 via módulo nativo https
+   */
+  private async executeWhmGet(functionName: string, params: Record<string, string>): Promise<any> {
+    const query = new URLSearchParams(params).toString();
+    const path = `/json-api/${functionName}?${query}`;
+
+    return new Promise((resolve, reject) => {
+      const options: https.RequestOptions = {
+        hostname: this.host,
+        port: parseInt(this.port, 10),
+        path,
+        method: 'GET',
+        headers: {
+          Authorization: `whm ${this.user}:${this.apiToken}`,
+        },
+        rejectUnauthorized: false,
+      };
+
+      const req = https.request(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(data);
+            resolve(parsed);
+          } catch (e: any) {
+            reject(new Error(`Resposta inválida do WHM (status ${res.statusCode}): ${data}`));
+          }
+        });
+      });
+
+      req.on('error', (err) => {
+        reject(new Error(`Falha de rede ao conectar no WHM: ${err.message}`));
+      });
+
+      req.setTimeout(30000, () => {
+        req.destroy();
+        reject(new Error('Timeout ao aguardar resposta do servidor WHM'));
+      });
+
+      req.end();
+    });
   }
 
   /**
@@ -168,7 +214,7 @@ export class WhmService {
     }
 
     try {
-      const queryParams = new URLSearchParams({
+      const data = await this.executeWhmGet('createacct', {
         'api.version': '1',
         username,
         domain,
@@ -176,28 +222,6 @@ export class WhmService {
         contactemail: input.contactemail,
         password,
       });
-
-      const url = `https://${this.host}:${this.port}/json-api/createacct?${queryParams.toString()}`;
-
-      // WHM utiliza certificado SSL próprio do servidor
-      const agent = new https.Agent({
-        rejectUnauthorized: false,
-      });
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Authorization: `whm ${this.user}:${this.apiToken}`,
-        },
-        // @ts-ignore
-        agent,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Falha HTTP ao comunicar com WHM: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
 
       if (data.metadata?.result !== 1) {
         throw new Error(data.metadata?.reason || 'Erro desconhecido ao criar conta no WHM');
