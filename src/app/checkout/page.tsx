@@ -43,14 +43,23 @@ function CheckoutContent() {
   const [billingMethod, setBillingMethod] = useState<BillingMethod>('CREDIT_CARD');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [footerDropdownOpen, setFooterDropdownOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 400);
     };
+    const handleDocumentClick = () => {
+      setDropdownOpen(false);
+      setFooterDropdownOpen(false);
+    };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    document.addEventListener('click', handleDocumentClick);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('click', handleDocumentClick);
+    };
   }, []);
 
   // Formulário
@@ -922,17 +931,75 @@ function CheckoutContent() {
               <h2>Navegação</h2>
               <nav aria-label="Navegação institucional">
                 <ul>
-                  <li>
-                    <a href="https://alllogiconline.com.br/agillex-hub">Agillex Hub</a>
-                  </li>
-                  <li>
-                    <a href="https://alllogiconline.com.br/agillex-agenda">Agillex Agenda</a>
-                  </li>
-                  <li>
-                    <a href="https://alllogiconline.com.br/agillex-atendimento">Agillex Atendimento</a>
+                  <li className="footer__nav-item--has-dropdown">
+                    <div className={`footer__dropdown ${footerDropdownOpen ? 'is-open' : ''}`}>
+                      <button
+                        type="button"
+                        className="footer__dropdown-toggle"
+                        aria-expanded={footerDropdownOpen}
+                        aria-haspopup="true"
+                        id="footer-dropdown-familia-agillex"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFooterDropdownOpen(!footerDropdownOpen);
+                        }}
+                      >
+                        <span>Família Agillex</span>
+                        <svg
+                          className="footer__dropdown-icon"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                      <ul
+                        className="footer__dropdown-menu"
+                        role="menu"
+                        aria-labelledby="footer-dropdown-familia-agillex"
+                      >
+                        <li className="footer__dropdown-item" role="none">
+                          <a
+                            className="footer__dropdown-link"
+                            href="https://alllogiconline.com.br/agillex-hub"
+                            role="menuitem"
+                          >
+                            Agillex Hub
+                          </a>
+                        </li>
+                        <li className="footer__dropdown-item" role="none">
+                          <a
+                            className="footer__dropdown-link"
+                            href="https://alllogiconline.com.br/agillex-agenda"
+                            role="menuitem"
+                          >
+                            Agillex Agenda
+                          </a>
+                        </li>
+                        <li className="footer__dropdown-item" role="none">
+                          <a
+                            className="footer__dropdown-link"
+                            href="https://alllogiconline.com.br/agillex-atendimento"
+                            role="menuitem"
+                          >
+                            Agillex Atendimento
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
                   </li>
                   <li>
                     <a href="https://alllogiconline.com.br/politica-de-privacidade">Política de Privacidade</a>
+                  </li>
+                  <li>
+                    <a href="https://alllogiconline.com.br/termos-de-uso">Termos de Uso</a>
                   </li>
                 </ul>
               </nav>
