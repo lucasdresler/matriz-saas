@@ -1,4 +1,37 @@
 import https from 'https';
+import fs from 'fs';
+import path from 'path';
+
+function getEnvVariable(name: string): string {
+  try {
+    const candidatePaths = [
+      '/app/.env.production',
+      path.resolve(process.cwd(), '.env.production'),
+      path.resolve(process.cwd(), '.env'),
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        const content = fs.readFileSync(p, 'utf8');
+        for (const line of content.split('\n')) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith(`${name}=`)) {
+            const val = trimmed.substring(`${name}=`.length).trim();
+            const clean = val.replace(/^['"]|['"]$/g, '');
+            if (clean) return clean;
+          }
+        }
+      }
+    }
+  } catch {
+    // Silencioso
+  }
+
+  if (process.env[name] && process.env[name] !== '') {
+    return process.env[name] as string;
+  }
+
+  return '';
+}
 
 export interface WhmCreateAccountInput {
   domain: string;
@@ -30,10 +63,10 @@ export class WhmService {
   private isConfigured: boolean;
 
   constructor() {
-    this.host = process.env.WHM_HOST || '177.104.163.165';
-    this.port = process.env.WHM_PORT || '2087';
-    this.user = process.env.WHM_USER || 'root';
-    this.apiToken = process.env.WHM_API_TOKEN || '';
+    this.host = getEnvVariable('WHM_HOST') || '177.104.163.165';
+    this.port = getEnvVariable('WHM_PORT') || '2087';
+    this.user = getEnvVariable('WHM_USER') || 'root';
+    this.apiToken = getEnvVariable('WHM_API_TOKEN');
     this.isConfigured = Boolean(this.apiToken && this.apiToken.trim() !== '');
   }
 
