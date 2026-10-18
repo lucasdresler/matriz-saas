@@ -90,6 +90,76 @@ export default function MatrizDashboard() {
     }
   }, [leads]);
 
+  // Sincronização em tempo real com o backend do Hub (/api/leads)
+  useEffect(() => {
+    let isMounted = true;
+    let initialSyncDone = false;
+
+    const syncLeads = async () => {
+      try {
+        const res = await fetch('/api/leads');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.success && isMounted) {
+          if (Array.isArray(data.leads)) {
+            // Se o backend ainda estiver vazio e o usuário tiver leads minerados no navegador, sincronizar para o banco
+            if (data.leads.length === 0 && !initialSyncDone) {
+              const localSaved = typeof window !== 'undefined' ? localStorage.getItem('agillex_hub_leads_prod') : null;
+              if (localSaved) {
+                try {
+                  const parsed = JSON.parse(localSaved);
+                  if (Array.isArray(parsed) && parsed.length > 0) {
+                    fetch('/api/leads', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ syncAll: parsed }),
+                    }).catch(() => {});
+                  }
+                } catch (e) {}
+              }
+              initialSyncDone = true;
+            } else if (data.leads.length > 0) {
+              setLeads((prevLeads) => {
+                const backendMap = new Map<string, Lead>();
+                data.leads.forEach((l: Lead) => {
+                  const phoneDigits = l.phone.replace(/\D/g, '').slice(-8);
+                  backendMap.set(l.id, l);
+                  if (phoneDigits) backendMap.set(phoneDigits, l);
+                });
+
+                // Preserva leads locais não sincronizados ainda
+                const merged: Lead[] = [...data.leads];
+                prevLeads.forEach((localLead) => {
+                  const phoneDigits = localLead.phone.replace(/\D/g, '').slice(-8);
+                  if (!backendMap.has(localLead.id) && (!phoneDigits || !backendMap.has(phoneDigits))) {
+                    merged.push(localLead);
+                  }
+                });
+                return merged;
+              });
+            }
+          }
+
+          if (data.messages && typeof data.messages === 'object') {
+            setMessages((prev) => ({
+              ...prev,
+              ...data.messages,
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn('Falha na sincronização de leads:', err);
+      }
+    };
+
+    syncLeads();
+    const interval = setInterval(syncLeads, 8000); // Polling a cada 8s
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(initialMessages);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [services, setServices] = useState<ServiceItem[]>(initialServices);
