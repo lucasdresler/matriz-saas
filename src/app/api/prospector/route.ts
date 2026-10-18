@@ -151,15 +151,9 @@ async function fetchGoogleMapsLeads(
     let copy = `Olá, equipe da ${name}! Tudo bem?\n\nNotamos o destaque de vocês em ${cidade} e identificamos uma oportunidade de fortalecer sua autoridade criando o domínio oficial e o site profissional da sua empresa com hospedagem cPanel da AllLogic Online.\n\nPodemos enviar uma demonstração rápida sem compromisso?`;
 
     if (hasOwnSite) {
-      if (isAppointment) {
-        oferta = 'Agillex Agenda (Agendamento Online 24/7)';
-        diagnostico = 'Automação de Agendamentos: Redução de no-show e agendamento online com WhatsApp e Google Calendar.';
-        copy = `Olá, equipe da ${name}! Tudo bem?\n\nVocês já utilizam sistema de agendamento online integrado ao WhatsApp e Google Calendar para seus pacientes/clientes?\n\nA AllLogic Online desenvolveu o Agillex Agenda, que reduz em até 85% as faltas e permite que seus clientes agendem consultas e serviços 24 horas por dia.\n\nGostariam de ver uma demonstração em 3 minutos?`;
-      } else {
-        oferta = 'Agillex Atendimento (IA no WhatsApp)';
-        diagnostico = 'Atendimento Inteligente 24/7: IA humanizada para qualificar leads e responder clientes instantaneamente.';
-        copy = `Olá, equipe da ${name}! Tudo bem?\n\nAcompanhamos o trabalho de vocês em ${cidade}. Vocês já contam com atendente virtual com Inteligência Artificial no WhatsApp para responder dúvidas, orçamentos e qualificar novos clientes em tempo real?\n\nO Agillex Atendimento da AllLogic Online atende 24h por dia com linguagem humanizada.\n\nPosso apresentar como funciona em 2 minutos?`;
-      }
+      oferta = 'Agillex Agenda (Agendamento Online 24/7)';
+      diagnostico = 'Automação de Agendamentos: Redução de no-show e agendamento online com WhatsApp e Google Calendar.';
+      copy = `Olá equipe da ${name}, Tudo bem!?\n\nVocês utilizam sistema de agendamento online integrado ao WhatsApp para seus pacientes/clientes?\n\nA AllLogic Online desenvolveu o Agillex Agenda, que reduz em até 85% as faltas e permite que seus pacientes/clientes agendem consultas e serviços em qualquer horário e dia da semana.\n\nPosso lhes enviar o link de agendamento para conhecerem o Agillex Agenda?`;
     }
 
     allParsed.push({
@@ -246,7 +240,7 @@ async function fetchFallbackLeads(nicho: string, cidade: string, limit: number):
     if (isAppointment) {
       oferta = 'Agillex Agenda (Agendamento Online 24/7)';
       diagnostico = 'Automação de Agendamentos: Redução de no-show e agendamento online com WhatsApp.';
-      copy = `Olá, equipe da ${name}! Tudo bem?\n\nVocês já utilizam sistema de agendamento online integrado ao WhatsApp e Google Calendar para seus pacientes/clientes?\n\nA AllLogic Online desenvolveu o Agillex Agenda, que reduz em até 85% as faltas e permite agendar 24h por dia.\n\nGostariam de conhecer em 3 minutos?`;
+      copy = `Olá equipe da ${name}, Tudo bem!?\n\nVocês utilizam sistema de agendamento online integrado ao WhatsApp para seus pacientes/clientes?\n\nA AllLogic Online desenvolveu o Agillex Agenda, que reduz em até 85% as faltas e permite que seus pacientes/clientes agendem consultas e serviços em qualquer horário e dia da semana.\n\nPosso lhes enviar o link de agendamento para conhecerem o Agillex Agenda?`;
     }
 
     return {

@@ -107,6 +107,7 @@ export default function MatrizDashboard() {
   const [editLeadEmail, setEditLeadEmail] = useState('');
   const [editLeadService, setEditLeadService] = useState('');
   const [editLeadValue, setEditLeadValue] = useState<string>('');
+  const [editLeadMessage, setEditLeadMessage] = useState('');
   const [kanbanSearch, setKanbanSearch] = useState('');
   const [newLeadModalOpen, setNewLeadModalOpen] = useState(false);
   const [qrCodeRefreshing, setQrCodeRefreshing] = useState(false);
@@ -362,6 +363,7 @@ export default function MatrizDashboard() {
     setEditLeadEmail(lead.email || '');
     setEditLeadService(lead.serviceInterest || '');
     setEditLeadValue(lead.estimatedValue ? String(lead.estimatedValue) : '');
+    setEditLeadMessage(lead.lastMessage || '');
   };
 
   // Salvar Edição do Lead
@@ -375,6 +377,7 @@ export default function MatrizDashboard() {
       email: editLeadEmail.trim() || undefined,
       serviceInterest: editLeadService.trim() || selectedLeadDetails.serviceInterest,
       estimatedValue: !isNaN(Number(parsedValue)) ? Number(parsedValue) : selectedLeadDetails.estimatedValue,
+      lastMessage: editLeadMessage.trim() ? editLeadMessage : selectedLeadDetails.lastMessage,
     };
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
     setSelectedLeadDetails(updated);
@@ -1532,7 +1535,7 @@ export default function MatrizDashboard() {
                                   <MessageSquare size={13} /> Chat
                                 </button>
                                 <a
-                                  href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`}
+                                  href={`https://wa.me/${(lead.phone || '').replace(/\D/g, '').startsWith('55') ? (lead.phone || '').replace(/\D/g, '') : '55' + (lead.phone || '').replace(/\D/g, '')}${lead.lastMessage ? `?text=${encodeURIComponent(lead.lastMessage)}` : ''}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
@@ -3326,7 +3329,7 @@ export default function MatrizDashboard() {
             {/* Ações Diretas: WhatsApp */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '18px' }}>
               <a
-                href={`https://wa.me/${selectedLeadDetails.phone.replace(/\D/g, '')}`}
+                href={`https://wa.me/${(selectedLeadDetails.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLeadDetails.phone || '').replace(/\D/g, '') : '55' + (selectedLeadDetails.phone || '').replace(/\D/g, '')}${selectedLeadDetails.lastMessage ? `?text=${encodeURIComponent(selectedLeadDetails.lastMessage)}` : ''}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -3431,6 +3434,16 @@ export default function MatrizDashboard() {
                     onChange={(e) => setEditLeadValue(e.target.value)}
                     placeholder="Ex: 1500"
                     style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.82rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>Mensagem / Copy de Abordagem:</label>
+                  <textarea
+                    rows={4}
+                    value={editLeadMessage}
+                    onChange={(e) => setEditLeadMessage(e.target.value)}
+                    placeholder="Mensagem personalizada de abordagem..."
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.78rem', lineHeight: '1.4', resize: 'vertical' }}
                   />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
