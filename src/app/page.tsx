@@ -41,7 +41,9 @@ import {
   ArrowLeft,
   Copy,
   CheckCheck,
-  Layers
+  Layers,
+  MapPin,
+  Loader2
 } from 'lucide-react';
 import {
   initialOrganizations,
@@ -89,6 +91,66 @@ export default function MatrizDashboard() {
   const [rescheduleDate, setRescheduleDate] = useState<string>('');
   const [rescheduleTime, setRescheduleTime] = useState<string>('');
   const [rescheduleSuccess, setRescheduleSuccess] = useState<boolean>(false);
+  const [copiedMessage, setCopiedMessage] = useState<boolean>(false);
+
+  // Estados do Prospector Google Maps
+  const [prospectorModalOpen, setProspectorModalOpen] = useState(false);
+  const [prospectorNiche, setProspectorNiche] = useState('');
+  const [prospectorCity, setProspectorCity] = useState('');
+  const [prospectorLimit, setProspectorLimit] = useState(15);
+  const [prospectorOnlyNoSite, setProspectorOnlyNoSite] = useState(false);
+  const [isProspecting, setIsProspecting] = useState(false);
+  const [prospectorError, setProspectorError] = useState('');
+  const [prospectorSuccessMsg, setProspectorSuccessMsg] = useState('');
+
+  // Handler de Prospecção no Google Maps
+  const handleRunProspector = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prospectorNiche.trim() || !prospectorCity.trim()) {
+      setProspectorError('Por favor, informe o nicho e a cidade desejada.');
+      return;
+    }
+
+    setIsProspecting(true);
+    setProspectorError('');
+    setProspectorSuccessMsg('');
+
+    try {
+      const res = await fetch('/api/prospector', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nicho: prospectorNiche,
+          cidade: prospectorCity,
+          limite: prospectorLimit,
+          semSite: prospectorOnlyNoSite,
+          orgId: activeOrgId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao executar a prospecção no Google Maps.');
+      }
+
+      if (data.leads && data.leads.length > 0) {
+        setLeads((prev) => [...data.leads, ...prev]);
+        setProspectorSuccessMsg(`✓ ${data.leads.length} leads minerados e adicionados ao Kanban com sucesso!`);
+        setTimeout(() => {
+          setProspectorModalOpen(false);
+          setProspectorSuccessMsg('');
+          setProspectorNiche('');
+          setProspectorCity('');
+        }, 2200);
+      } else {
+        setProspectorError('Nenhum resultado foi encontrado para os critérios informados.');
+      }
+    } catch (err: any) {
+      setProspectorError(err.message || 'Falha na comunicação com o robô de prospecção.');
+    } finally {
+      setIsProspecting(false);
+    }
+  };
 
   // Organização Atual
   const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas') => {
@@ -860,6 +922,37 @@ export default function MatrizDashboard() {
                 <Plus size={15} /> <span className="desktop-only">Novo Lead</span><span className="mobile-only">Lead</span>
               </button>
             )}
+
+            {/* Botão Prospectar no Maps (Se módulo CRM contratado) */}
+            {currentOrg.modules?.crm && (
+              <button
+                onClick={() => {
+                  setProspectorModalOpen(true);
+                  setProspectorError('');
+                  setProspectorSuccessMsg('');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                  color: '#fff',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  boxShadow: '0 2px 12px rgba(99, 102, 241, 0.35)',
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer',
+                  border: 'none',
+                }}
+                title="Minere novas empresas no Google Maps com copy pronta e adicione diretamente ao Funil CRM"
+              >
+                <MapPin size={15} color="#FBBF24" />
+                <span className="desktop-only">Prospectar no Maps</span>
+                <span className="mobile-only">Prospectar</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -1089,6 +1182,29 @@ export default function MatrizDashboard() {
                   Gerencie o fluxo de atendimento da <strong>{currentOrg.name}</strong>. Os leads avançam sozinhos conforme interagem com o agente de IA.
                 </p>
                 <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => {
+                      setProspectorModalOpen(true);
+                      setProspectorError('');
+                      setProspectorSuccessMsg('');
+                    }}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                      color: '#fff',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      border: 'none',
+                      boxShadow: '0 2px 10px rgba(99, 102, 241, 0.3)',
+                    }}
+                  >
+                    <MapPin size={15} color="#FBBF24" /> Prospectar no Maps
+                  </button>
                   <button
                     onClick={() => setNewLeadModalOpen(true)}
                     style={{
@@ -2283,6 +2399,338 @@ export default function MatrizDashboard() {
         </div>
       )}
 
+      {/* MODAL PROSPECTAR LEADS GOOGLE MAPS */}
+      {prospectorModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 115,
+            padding: '16px',
+          }}
+          onClick={() => {
+            if (!isProspecting) setProspectorModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '500px',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid rgba(99, 102, 241, 0.35)',
+              borderRadius: '16px',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(99, 102, 241, 0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+                  }}
+                >
+                  <MapPin size={20} color="#FBBF24" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                    Prospectar no Google Maps
+                  </h3>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
+                    Minere empresas reais com WhatsApp e copy pronta para o CRM
+                  </p>
+                </div>
+              </div>
+              {!isProspecting && (
+                <button
+                  onClick={() => setProspectorModalOpen(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    fontSize: '1.2rem',
+                    padding: '2px',
+                  }}
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
+
+            {/* Alertas de Erro / Sucesso */}
+            {prospectorError && (
+              <div
+                style={{
+                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  fontSize: '0.78rem',
+                  color: '#FCA5A5',
+                }}
+              >
+                ⚠️ {prospectorError}
+              </div>
+            )}
+
+            {prospectorSuccessMsg && (
+              <div
+                style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  fontSize: '0.8rem',
+                  color: '#6EE7B7',
+                  fontWeight: 600,
+                }}
+              >
+                {prospectorSuccessMsg}
+              </div>
+            )}
+
+            {/* Estado de Carregamento Ativo (Radar / Mineração) */}
+            {isProspecting ? (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '28px 16px',
+                  gap: '16px',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      borderRadius: '50%',
+                      border: '3px solid rgba(99, 102, 241, 0.2)',
+                      borderTopColor: '#6366F1',
+                      animation: 'spin 1s linear infinite',
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Sparkles size={22} color="#FBBF24" />
+                  </div>
+                </div>
+
+                <div>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>
+                    Minerando Empresas no Google Maps...
+                  </h4>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', maxWidth: '340px', margin: 0, lineHeight: '1.4' }}>
+                    Extraindo contatos, checando presença de site e gerando diagnósticos para <strong>{prospectorNiche}</strong> em <strong>{prospectorCity}</strong>.
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    fontSize: '0.72rem',
+                    color: '#818CF8',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    padding: '6px 14px',
+                    borderRadius: '99px',
+                    border: '1px solid rgba(99, 102, 241, 0.25)',
+                  }}
+                >
+                  ⏳ Aguarde alguns instantes (executando em segundo plano)
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleRunProspector} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
+                    1. Nicho ou Perfil de Empresa
+                  </label>
+                  <input
+                    required
+                    value={prospectorNiche}
+                    onChange={(e) => setProspectorNiche(e.target.value)}
+                    placeholder="Ex: Clínicas Odontológicas, Salões de Beleza, Contabilidade..."
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
+                      color: '#fff',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
+                    2. Cidade e Estado
+                  </label>
+                  <input
+                    required
+                    value={prospectorCity}
+                    onChange={(e) => setProspectorCity(e.target.value)}
+                    placeholder="Ex: Campinas SP, Sorocaba SP, São Paulo SP..."
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
+                      color: '#fff',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
+                      Quantidade de Leads
+                    </label>
+                    <select
+                      value={prospectorLimit}
+                      onChange={(e) => setProspectorLimit(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'var(--bg-surface-elevated)',
+                        border: '1px solid var(--border-subtle)',
+                        color: '#fff',
+                        fontSize: '0.85rem',
+                        outline: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value={10}>10 empresas</option>
+                      <option value={15}>15 empresas (Recomendado)</option>
+                      <option value={20}>20 empresas</option>
+                      <option value={30}>30 empresas</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
+                      Destino dos Leads
+                    </label>
+                    <div
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid var(--border-subtle)',
+                        color: '#34D399',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Kanban ({currentOrg.name})
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filtro Sem Site */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: prospectorOnlyNoSite ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+                    border: prospectorOnlyNoSite ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid var(--border-subtle)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={prospectorOnlyNoSite}
+                    onChange={(e) => setProspectorOnlyNoSite(e.target.checked)}
+                    style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#F59E0B' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>
+                      Apenas empresas SEM site próprio
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      Ideal para ofertar Hospedagem cPanel + Registro de Domínio
+                    </div>
+                  </div>
+                </label>
+
+                {/* Ações */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setProspectorModalOpen(false)}
+                    style={{
+                      padding: '9px 16px',
+                      borderRadius: '8px',
+                      backgroundColor: 'transparent',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      border: 'none',
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '9px 18px',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                      color: '#fff',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: 'none',
+                      boxShadow: '0 2px 10px rgba(99, 102, 241, 0.4)',
+                    }}
+                  >
+                    <Sparkles size={15} color="#FBBF24" /> Iniciar Mineração no Maps
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* MODAL GERENCIAMENTO DE MÓDULOS DO WORKSPACE */}
       {moduleModalOpen && (
         <div
@@ -2752,6 +3200,54 @@ export default function MatrizDashboard() {
                 })}
               </div>
             </div>
+
+            {/* Copy / Mensagem de Abordagem Sugerida */}
+            {selectedLeadDetails.lastMessage && (
+              <div style={{ marginBottom: '18px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    Copy de Abordagem Sugerida:
+                  </label>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedLeadDetails.lastMessage);
+                      setCopiedMessage(true);
+                      setTimeout(() => setCopiedMessage(false), 2000);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: copiedMessage ? '#10B981' : '#38BDF8',
+                      fontSize: '0.72rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: 0,
+                    }}
+                  >
+                    {copiedMessage ? <CheckCheck size={13} /> : <Copy size={13} />}
+                    {copiedMessage ? 'Copiado!' : 'Copiar Copy'}
+                  </button>
+                </div>
+                <div
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    fontSize: '0.78rem',
+                    color: '#E2E8F0',
+                    lineHeight: '1.45',
+                    whiteSpace: 'pre-wrap',
+                    maxHeight: '130px',
+                    overflowY: 'auto',
+                  }}
+                >
+                  {selectedLeadDetails.lastMessage}
+                </div>
+              </div>
+            )}
 
             {/* Tags do Lead */}
             <div style={{ marginBottom: '20px' }}>
