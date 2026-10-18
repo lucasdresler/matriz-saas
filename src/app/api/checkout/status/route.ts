@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { asaasService } from '@/lib/asaas';
 import { whmService } from '@/lib/whm';
+import { notificationService } from '@/lib/notifications';
 import { SAAS_PLANS } from '@/types/pricing';
 
 export async function GET(request: Request) {
@@ -31,6 +32,20 @@ export async function GET(request: Request) {
             contactemail: email || `contato@${domain}`,
             planId: plan.id,
             customerName: name || undefined,
+          });
+
+          // Disparar notificação operacional da equipe AllLogic e boas-vindas ao cliente
+          await notificationService.notifyNewHostingOrder({
+            customerName: name || 'Cliente AllLogic',
+            cpfCnpj: 'Consultar no Asaas',
+            email: email || `contato@${domain}`,
+            phone: '',
+            domain,
+            planName: plan.name,
+            cycle: 'PIX Instantâneo',
+            amount: payment.value || 0,
+            billingMethod: 'PIX',
+            provisioning,
           });
         } catch (provErr: any) {
           console.error('[API Checkout Status] Erro ao provisionar WHM pós-PIX:', provErr);

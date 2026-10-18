@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { asaasService } from '@/lib/asaas';
 import { SAAS_PLANS } from '@/types/pricing';
 import { whmService } from '@/lib/whm';
+import { notificationService } from '@/lib/notifications';
 
 export async function POST(request: Request) {
   try {
@@ -104,6 +105,21 @@ export async function POST(request: Request) {
             contactemail: email,
             planId: plan.id,
             customerName: name,
+          });
+
+          // Disparar notificação operacional da equipe AllLogic e boas-vindas ao cliente
+          await notificationService.notifyNewHostingOrder({
+            customerName: name,
+            companyName,
+            cpfCnpj,
+            email,
+            phone,
+            domain,
+            planName: plan.name,
+            cycle,
+            amount,
+            billingMethod: 'Cartão de Crédito',
+            provisioning,
           });
         } catch (provisionErr: any) {
           console.error('[API Checkout] Erro no provisionamento WHM pós-cartão:', provisionErr);
