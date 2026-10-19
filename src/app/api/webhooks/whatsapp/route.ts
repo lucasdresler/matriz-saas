@@ -33,7 +33,6 @@ export async function POST(req: NextRequest) {
       message,
       sender = 'lead',
       isGroup = false,
-      isSaved = false,
       mediaType = 'text',
       mediaUrl = null,
       secret,
@@ -66,46 +65,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Telefone inválido' }, { status: 400 });
     }
 
-    // Regra 2: Contatos salvos na agenda do telefone NUNCA devem aparecer no Hub
-    let isSavedContact = isSaved === true;
-
-    // Se não veio explicitamente marcado como salvo ou não-salvo, consultar Evolution API
-    if (!isSavedContact) {
-      try {
-        const evoUrl = process.env.EVOLUTION_API_URL || 'https://evolution.alllogiconline.com.br';
-        const evoKey = '2b138828125e9650036c54b84df09d66783e138053a3291bc165f54fdf17406a';
-        const remoteJid = rawDigits.startsWith('55') ? `${rawDigits}@s.whatsapp.net` : `55${rawDigits}@s.whatsapp.net`;
-
-        const checkRes = await fetch(`${evoUrl}/chat/findContacts/agillex-homologacao`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': evoKey,
-          },
-          body: JSON.stringify({
-            where: { remoteJid },
-          }),
-        });
-
-        if (checkRes.ok) {
-          const contacts = await checkRes.json();
-          if (Array.isArray(contacts) && contacts.length > 0 && contacts[0]?.isSaved === true) {
-            isSavedContact = true;
-          }
-        }
-      } catch (checkErr) {
-        console.warn('[WhatsApp Webhook] Falha ao checar findContacts:', checkErr);
-      }
-    }
-
-    if (isSavedContact) {
-      return NextResponse.json({
-        success: false,
-        ignored: true,
-        reason: 'saved_contact_ignored',
-        message: 'Contatos já salvos na agenda são ignorados para separar contatos pessoais da empresa.',
-      });
-    }
 
     // Obter ID da organização padrão
     const orgRes = await query('SELECT id FROM organizations LIMIT 1;');
