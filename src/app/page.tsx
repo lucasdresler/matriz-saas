@@ -180,6 +180,7 @@ export default function MatrizDashboard() {
   // Estados de Interatividade
   const [selectedLeadId, setSelectedLeadId] = useState<string>('lead-v1');
   const [chatInput, setChatInput] = useState('');
+  const [chatSearch, setChatSearch] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [selectedLeadDetails, setSelectedLeadDetails] = useState<Lead | null>(null);
   const [isEditingLead, setIsEditingLead] = useState(false);
@@ -1803,8 +1804,8 @@ export default function MatrizDashboard() {
           {activeTab === 'livechat' && (
             <div className={`livechat-grid ${mobileChatView === 'chat' ? 'livechat-chat-active' : 'livechat-list-active'}`}>
               {/* Coluna Esquerda: Lista de Conversas do WhatsApp */}
-              <div className="livechat-sidebar" style={{ borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface-elevated)' }}>
+              <div className="livechat-sidebar" style={{ borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface-elevated)', flexShrink: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                     <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>Conversas Ativas</span>
                     <span style={{ fontSize: '0.7rem', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1816,6 +1817,8 @@ export default function MatrizDashboard() {
                     <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '10px' }} />
                     <input
                       type="text"
+                      value={chatSearch}
+                      onChange={(e) => setChatSearch(e.target.value)}
                       placeholder="Buscar por nome ou telefone..."
                       style={{
                         width: '100%',
@@ -1830,8 +1833,18 @@ export default function MatrizDashboard() {
                   </div>
                 </div>
 
-                <div style={{ flex: 1, overflowY: 'auto' }}>
-                  {orgLeads.map((lead) => (
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                  {orgLeads
+                    .filter((lead) => {
+                      if (!chatSearch.trim()) return true;
+                      const q = chatSearch.toLowerCase();
+                      return (
+                        (lead.name && lead.name.toLowerCase().includes(q)) ||
+                        (lead.phone && lead.phone.includes(q)) ||
+                        (lead.lastMessage && lead.lastMessage.toLowerCase().includes(q))
+                      );
+                    })
+                    .map((lead) => (
                     <div
                       key={lead.id}
                       onClick={() => setSelectedLeadId(lead.id)}

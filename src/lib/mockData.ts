@@ -166,6 +166,16 @@ export const initialKnowledgeDocs: KnowledgeDoc[] = [
     uploadedAt: '18/10/2026',
     status: 'indexed',
   },
+  {
+    id: 'doc-alllogic-2',
+    orgId: 'org-alllogic',
+    title: 'FAQ Oficial & Matriz de Quebra de Objeções - AllLogic Online.md',
+    fileName: 'FAQ-E-OBJECOES-COMERCIAIS.md',
+    fileSize: '1.2 MB',
+    chunks: 48,
+    uploadedAt: 'Hoje',
+    status: 'indexed',
+  },
 ];
 
 // Clientes SaaS Ativos da Plataforma (Inicia limpo para a gestão real de assinantes)
