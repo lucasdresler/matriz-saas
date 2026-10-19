@@ -2238,10 +2238,7 @@ export default function MatrizDashboard() {
                         </p>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                          <Clock size={13} color="#60A5FA" /> {srv.durationMinutes} minutos
-                        </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <button
                             onClick={() => handleOpenEditService(srv)}
@@ -2490,7 +2487,11 @@ export default function MatrizDashboard() {
                       >
                         <div>
                           <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{srv.name}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{srv.durationMinutes} min de atendimento</div>
+                          {srv.description && (
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px', maxWidth: '600px' }}>
+                              {srv.description.length > 95 ? `${srv.description.slice(0, 95)}...` : srv.description}
+                            </div>
+                          )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div style={{ fontWeight: 700, color: '#34D399', fontSize: '0.9rem' }}>
@@ -4483,50 +4484,25 @@ export default function MatrizDashboard() {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
-                    Valor (R$) *
-                  </label>
-                  <input
-                    required
-                    value={servicePrice}
-                    onChange={(e) => setServicePrice(e.target.value)}
-                    placeholder="Ex: 89,00"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      backgroundColor: 'var(--bg-surface-elevated)',
-                      border: '1px solid var(--border-subtle)',
-                      color: '#fff',
-                      fontSize: '0.85rem',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
-                    Duração (Minutos) *
-                  </label>
-                  <input
-                    type="number"
-                    min="5"
-                    step="5"
-                    required
-                    value={serviceDuration}
-                    onChange={(e) => setServiceDuration(e.target.value)}
-                    placeholder="Ex: 30"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      backgroundColor: 'var(--bg-surface-elevated)',
-                      border: '1px solid var(--border-subtle)',
-                      color: '#fff',
-                      fontSize: '0.85rem',
-                    }}
-                  />
-                </div>
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
+                  Preço (R$) *
+                </label>
+                <input
+                  required
+                  value={servicePrice}
+                  onChange={(e) => setServicePrice(e.target.value)}
+                  placeholder="Ex: 89,00"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    color: '#fff',
+                    fontSize: '0.85rem',
+                  }}
+                />
               </div>
 
               <div>
