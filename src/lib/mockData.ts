@@ -5,7 +5,7 @@ export const initialOrganizations: Organization[] = [
   {
     id: 'org-alllogic',
     name: 'AllLogic Online',
-    slug: 'alllogic-online',
+    slug: 'alllogic',
     category: 'Engenharia de Soluções Digitais',
     plan: 'Enterprise',
     logoColor: '#1F6FFF',
