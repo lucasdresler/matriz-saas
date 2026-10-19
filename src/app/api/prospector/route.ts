@@ -31,6 +31,35 @@ const APPOINTMENT_KEYWORDS = [
 ];
 
 /**
+ * Formata o nome da cidade com iniciais maiúsculas (Title Case),
+ * preservando preposições em minúsculas e siglas de UF em maiúsculas.
+ */
+function formatCityName(raw: string): string {
+  if (!raw) return '';
+  let cleaned = raw.trim().replace(/,\s*brasil$/i, '');
+  const lowerPrepositions = new Set(['de', 'da', 'do', 'das', 'dos', 'em', 'e']);
+  const stateAbbreviations = new Set([
+    'ac', 'al', 'ap', 'am', 'ba', 'ce', 'df', 'es', 'go', 'ma',
+    'mt', 'ms', 'mg', 'pa', 'pb', 'pr', 'pe', 'pi', 'rj', 'rn',
+    'rs', 'ro', 'rr', 'sc', 'sp', 'se', 'to'
+  ]);
+
+  return cleaned
+    .split(/\s+/)
+    .map((word, idx) => {
+      const lower = word.toLowerCase();
+      if (stateAbbreviations.has(lower)) {
+        return lower.toUpperCase();
+      }
+      if (idx > 0 && lowerPrepositions.has(lower)) {
+        return lower;
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
+/**
  * Motor Nativo Google Maps (HTTP leve, sem dependência de Chrome/Selenium)
  * Extrai empresas reais com telefone, categoria, site, endereço e avaliações.
  */
@@ -147,9 +176,9 @@ async function fetchGoogleMapsLeads(
     const nicheLower = `${nicho} ${category}`.toLowerCase();
     const isAppointment = APPOINTMENT_KEYWORDS.some((k) => nicheLower.includes(k));
 
-    let oferta = 'Hospedagem cPanel + Registro de Domínio';
-    let diagnostico = 'Presença Digital: Oportunidade de criar domínio oficial .com.br, site de alta velocidade e e-mails profissionais.';
-    let copy = `Olá, equipe da ${name}! Tudo bem?\n\nNotamos o destaque de vocês em ${cidade} e identificamos uma oportunidade de fortalecer sua autoridade criando o domínio oficial e o site profissional da sua empresa com hospedagem cPanel da AllLogic Online.\n\nPodemos enviar uma demonstração rápida sem compromisso?`;
+    let oferta = 'Presença Digital & Site Profissional';
+    let diagnostico = 'Presença Digital: Criação de página moderna no celular com botão direto para WhatsApp para atrair mais atendimentos particulares.';
+    let copy = `Olá, equipe da ${name}! Tudo bem?!\n\nHoje a maioria das pessoas pesquisa no Google antes de agendar, e ter uma página própria transmite confiança, levando o paciente direto para o seu WhatsApp em 1 clique. Criamos páginas modernas para aumentarem a procura por atendimentos particulares.\n\nPosso lhes enviar uma demonstração rápida de como ficaria a presença de vocês no celular sem compromisso?`;
 
     if (hasOwnSite) {
       oferta = 'Agillex Agenda (Agendamento Online 24/7)';
@@ -161,7 +190,7 @@ async function fetchGoogleMapsLeads(
       Nome: name,
       Nicho_Buscado: nicho,
       Categoria_Google: category,
-      Cidade_Pesquisada: cidade,
+      Cidade_Pesquisada: formatCityName(cidade),
       Telefone: rawPhone || 'A confirmar',
       WhatsApp_Link: waLink,
       Tipo_Linha: lineType,
@@ -234,9 +263,9 @@ async function fetchFallbackLeads(nicho: string, cidade: string, limit: number):
     const nicheLower = `${nicho} ${category}`.toLowerCase();
     const isAppointment = APPOINTMENT_KEYWORDS.some((k) => nicheLower.includes(k));
 
-    let oferta = 'Hospedagem cPanel + Registro de Domínio';
-    let diagnostico = 'Presença Digital: Oportunidade de criar site oficial .com.br e e-mails corporativos.';
-    let copy = `Olá, equipe da ${name}! Tudo bem?\n\nNotamos o destaque de vocês em ${cidade} e identificamos uma oportunidade de fortalecer sua autoridade criando o domínio oficial e o site profissional da sua empresa com hospedagem cPanel da AllLogic Online.\n\nPodemos enviar uma demonstração rápida sem compromisso?`;
+    let oferta = 'Presença Digital & Site Profissional';
+    let diagnostico = 'Presença Digital: Criação de página moderna no celular com botão direto para WhatsApp para atrair mais atendimentos particulares.';
+    let copy = `Olá, equipe da ${name}! Tudo bem?!\n\nHoje a maioria das pessoas pesquisa no Google antes de agendar, e ter uma página própria transmite confiança, levando o paciente direto para o seu WhatsApp em 1 clique. Criamos páginas modernas para aumentarem a procura por atendimentos particulares.\n\nPosso lhes enviar uma demonstração rápida de como ficaria a presença de vocês no celular sem compromisso?`;
 
     if (isAppointment) {
       oferta = 'Agillex Agenda (Agendamento Online 24/7)';
@@ -248,7 +277,7 @@ async function fetchFallbackLeads(nicho: string, cidade: string, limit: number):
       Nome: name,
       Nicho_Buscado: nicho,
       Categoria_Google: category,
-      Cidade_Pesquisada: cidade,
+      Cidade_Pesquisada: formatCityName(cidade),
       Telefone: 'A confirmar',
       WhatsApp_Link: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${cidade}`)}`,
       Tipo_Linha: 'A confirmar',
@@ -354,13 +383,13 @@ export async function POST(request: Request) {
         status: 'novo' as const,
         tags: [
           'Google Maps',
-          cidade.trim(),
+          formatCityName(cidade),
           isSemSite ? 'Sem Site' : 'Com Site',
           item.Categoria_Google || nicho.trim()
         ].filter(Boolean),
-        serviceInterest: item.Oferta_Recomendada || 'Hospedagem cPanel + Domínio',
+        serviceInterest: item.Oferta_Recomendada || 'Presença Digital & Site Profissional',
         diagnostic: item.Diagnostico_Comercial || '',
-        lastMessage: item.Mensagem_Abordagem_WhatsApp || `Oportunidade mapeada em ${cidade}.`,
+        lastMessage: item.Mensagem_Abordagem_WhatsApp || `Oportunidade mapeada em ${formatCityName(cidade)}.`,
         lastMessageTime: 'Agora',
         aiPaused: false,
         unreadCount: 0,
