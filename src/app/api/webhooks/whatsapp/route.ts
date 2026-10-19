@@ -111,12 +111,12 @@ export async function POST(req: NextRequest) {
     const orgRes = await query('SELECT id FROM organizations LIMIT 1;');
     const orgId = orgRes.rows[0]?.id || 'a0000000-0000-0000-0000-000000000001';
 
-    // Buscar se o lead já existe pelo final do telefone (últimos 8 dígitos)
+    // Buscar se o lead já existe pelo final do telefone (últimos 8 dígitos) desconsiderando formatação
     const suffix = rawDigits.slice(-8);
     const existingLeadRes = await query(
       `SELECT id, organization_id, status, tags, unread_count 
        FROM leads 
-       WHERE phone LIKE $1 OR phone LIKE $2
+       WHERE regexp_replace(phone, '\\D', '', 'g') LIKE $1 OR regexp_replace(phone, '\\D', '', 'g') LIKE $2
        LIMIT 1;`,
       [`%${suffix}`, `%${rawDigits}%`]
     );

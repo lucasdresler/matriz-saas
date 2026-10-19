@@ -380,6 +380,7 @@ export default function MatrizDashboard() {
       if (selectedLeadId === leadId) {
         setSelectedLeadId('');
       }
+      fetch(`/api/leads?id=${leadId}`, { method: 'DELETE' }).catch(() => {});
     }
   };
 
@@ -452,6 +453,11 @@ export default function MatrizDashboard() {
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
     setSelectedLeadDetails(updated);
     setIsEditingLead(false);
+    fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead: updated }),
+    }).catch(() => {});
   };
 
   // Ativação / Desativação de Módulos (Simulação de Upgrade e Contratação Modular)
@@ -513,9 +519,18 @@ export default function MatrizDashboard() {
 
   // Mover lead de status no Kanban
   const moveLeadStatus = (leadId: string, newStatus: LeadStatus) => {
-    setLeads((prev) =>
-      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
-    );
+    setLeads((prev) => {
+      const nextLeads = prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l));
+      const target = nextLeads.find((l) => l.id === leadId);
+      if (target) {
+        fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lead: target }),
+        }).catch(() => {});
+      }
+      return nextLeads;
+    });
   };
 
   // Enviar Mensagem no Live Chat
