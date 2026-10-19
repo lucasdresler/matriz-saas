@@ -1088,61 +1088,6 @@ export default function MatrizDashboard() {
                 <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#60A5FA' }}>Agente IA Ativo</span>
               </div>
             )}
-
-            {/* Botão Novo Lead (Se módulo CRM contratado) */}
-            {currentOrg.modules?.crm && (
-              <button
-                onClick={() => setNewLeadModalOpen(true)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '7px 12px',
-                  borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #1F6FFF, #1754C7)',
-                  color: '#fff',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  boxShadow: '0 2px 10px rgba(31, 111, 255, 0.35)',
-                  whiteSpace: 'nowrap',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <Plus size={15} /> <span className="desktop-only">Novo Lead</span><span className="mobile-only">Lead</span>
-              </button>
-            )}
-
-            {/* Botão Prospectar no Maps (Se módulo CRM contratado) */}
-            {currentOrg.modules?.crm && (
-              <button
-                onClick={() => {
-                  setProspectorModalOpen(true);
-                  setProspectorError('');
-                  setProspectorSuccessMsg('');
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '7px 12px',
-                  borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #C9A227, #9B7B1B)',
-                  color: '#fff',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  boxShadow: '0 2px 12px rgba(201, 162, 39, 0.35)',
-                  whiteSpace: 'nowrap',
-                  cursor: 'pointer',
-                  border: 'none',
-                }}
-                title="Minere novas empresas no Google Maps com copy pronta e adicione diretamente ao Funil CRM"
-              >
-                <MapPin size={15} color="#fff" />
-                <span className="desktop-only">Prospectar no Maps</span>
-                <span className="mobile-only">Prospectar</span>
-              </button>
-            )}
           </div>
         </header>
 
