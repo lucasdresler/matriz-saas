@@ -193,6 +193,95 @@ export default function MatrizDashboard() {
   const [rescheduleSuccess, setRescheduleSuccess] = useState<boolean>(false);
   const [copiedMessage, setCopiedMessage] = useState<boolean>(false);
 
+  // Estados para Gestão de Serviços Oferecidos
+  const [serviceModalOpen, setServiceModalOpen] = useState(false);
+  const [editingService, setEditingService] = useState<ServiceItem | null>(null);
+  const [serviceName, setServiceName] = useState('');
+  const [servicePrice, setServicePrice] = useState('');
+  const [serviceDuration, setServiceDuration] = useState('30');
+  const [serviceDesc, setServiceDesc] = useState('');
+  const [serviceSaving, setServiceSaving] = useState(false);
+
+  // Carregar Serviços do Backend
+  useEffect(() => {
+    fetch('/api/services')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.services) && data.services.length > 0) {
+          setServices(data.services);
+        }
+      })
+      .catch((err) => console.warn('Erro ao carregar serviços:', err));
+  }, []);
+
+  const handleOpenNewService = () => {
+    setEditingService(null);
+    setServiceName('');
+    setServicePrice('');
+    setServiceDuration('30');
+    setServiceDesc('');
+    setServiceModalOpen(true);
+  };
+
+  const handleOpenEditService = (srv: ServiceItem) => {
+    setEditingService(srv);
+    setServiceName(srv.name);
+    setServicePrice(String(srv.price));
+    setServiceDuration(String(srv.durationMinutes || 30));
+    setServiceDesc(srv.description || '');
+    setServiceModalOpen(true);
+  };
+
+  const handleSaveService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!serviceName.trim()) return;
+    setServiceSaving(true);
+    try {
+      const payload = {
+        id: editingService?.id,
+        name: serviceName.trim(),
+        price: parseFloat(servicePrice.replace(/[^\d.,]/g, '').replace(',', '.')) || 0,
+        durationMinutes: parseInt(serviceDuration, 10) || 30,
+        description: serviceDesc.trim(),
+      };
+      const res = await fetch('/api/services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data?.success) {
+        const savedId = data.serviceId || editingService?.id || 'srv-' + Date.now();
+        const updatedItem: ServiceItem = {
+          id: savedId,
+          orgId: activeOrgId,
+          name: payload.name,
+          price: payload.price,
+          durationMinutes: payload.durationMinutes,
+          description: payload.description,
+        };
+        setServices((prev) => {
+          if (editingService) {
+            return prev.map((s) => (s.id === editingService.id ? updatedItem : s));
+          }
+          return [...prev, updatedItem];
+        });
+        setServiceModalOpen(false);
+      }
+    } catch (err) {
+      console.error('Erro ao salvar serviço:', err);
+    } finally {
+      setServiceSaving(false);
+    }
+  };
+
+  const handleDeleteService = async (srvId: string, srvName: string) => {
+    if (confirm(`Deseja realmente excluir o serviço "${srvName}"?`)) {
+      setServices((prev) => prev.filter((s) => s.id !== srvId));
+      fetch(`/api/services?id=${srvId}`, { method: 'DELETE' }).catch(() => {});
+    }
+  };
+
   // Estados do Prospector Google Maps
   const [prospectorModalOpen, setProspectorModalOpen] = useState(false);
   const [prospectorNiche, setProspectorNiche] = useState('');
@@ -235,6 +324,12 @@ export default function MatrizDashboard() {
 
       if (data.leads && data.leads.length > 0) {
         setLeads((prev) => [...data.leads, ...prev]);
+        // Persistir imediatamente no banco de dados na nuvem para nunca sumir
+        fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ syncAll: data.leads }),
+        }).catch(() => {});
         setProspectorSuccessMsg(`✓ ${data.leads.length} leads minerados e adicionados ao Kanban com sucesso!`);
         setTimeout(() => {
           setProspectorModalOpen(false);
@@ -2065,12 +2160,32 @@ export default function MatrizDashboard() {
                       Serviços que seus clientes encontram ao agendar pelo link web ou pelo WhatsApp.
                     </p>
                   </div>
-                  <span style={{ fontSize: '0.75rem', color: '#60A5FA', background: 'rgba(59, 130, 246, 0.1)', padding: '4px 10px', borderRadius: '6px', fontWeight: 600 }}>
-                    {orgServices.length} serviços cadastrados
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <button
+                      onClick={handleOpenNewService}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        background: 'linear-gradient(135deg, #1F6FFF, #1754C7)',
+                        border: 'none',
+                        color: '#fff',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                      }}
+                    >
+                      <Plus size={14} /> Novo Serviço
+                    </button>
+                    <span style={{ fontSize: '0.75rem', color: '#60A5FA', background: 'rgba(59, 130, 246, 0.1)', padding: '4px 10px', borderRadius: '6px', fontWeight: 600 }}>
+                      {orgServices.length} serviços cadastrados
+                    </span>
+                  </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
                   {orgServices.map((srv) => (
                     <div
                       key={srv.id}
@@ -2087,11 +2202,11 @@ export default function MatrizDashboard() {
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                           <h4 style={{ fontSize: '0.92rem', fontWeight: 600, color: '#fff' }}>{srv.name}</h4>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#34D399' }}>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#34D399' }}>
                             R$ {srv.price.toFixed(2).replace('.', ',')}
                           </span>
                         </div>
-                        <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: '12px' }}>
+                        <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: '14px' }}>
                           {srv.description}
                         </p>
                       </div>
@@ -2100,9 +2215,44 @@ export default function MatrizDashboard() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
                           <Clock size={13} color="#60A5FA" /> {srv.durationMinutes} minutos
                         </div>
-                        <span style={{ fontSize: '0.66rem', color: '#34D399', background: 'rgba(16, 185, 129, 0.12)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
-                          Online
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <button
+                            onClick={() => handleOpenEditService(srv)}
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(31, 111, 255, 0.1)',
+                              border: '1px solid rgba(31, 111, 255, 0.25)',
+                              color: '#60A5FA',
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                            title="Editar este serviço"
+                          >
+                            <Pencil size={12} /> Editar
+                          </button>
+                          <button
+                            onClick={() => handleDeleteService(srv.id, srv.name)}
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid rgba(239, 68, 68, 0.2)',
+                              color: '#F87171',
+                              fontSize: '0.72rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                            title="Excluir este serviço"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -2290,24 +2440,8 @@ export default function MatrizDashboard() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                     <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>Serviços & Preços Cadastrados</h3>
                     <button
-                      onClick={() => {
-                        const sName = prompt('Nome do serviço:');
-                        const sPrice = prompt('Valor (R$):');
-                        if (sName && sPrice) {
-                          setServices((prev) => [
-                            ...prev,
-                            {
-                              id: 's-' + Date.now(),
-                              orgId: activeOrgId,
-                              name: sName,
-                              price: Number(sPrice),
-                              durationMinutes: 45,
-                              description: 'Cadastrado pelo usuário',
-                            },
-                          ]);
-                        }
-                      }}
-                      style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 600 }}
+                      onClick={handleOpenNewService}
+                      style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 600, background: 'transparent', border: 'none', cursor: 'pointer' }}
                     >
                       + Novo Serviço
                     </button>
@@ -2331,8 +2465,24 @@ export default function MatrizDashboard() {
                           <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{srv.name}</div>
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{srv.durationMinutes} min de atendimento</div>
                         </div>
-                        <div style={{ fontWeight: 700, color: '#34D399', fontSize: '0.9rem' }}>
-                          R$ {srv.price}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ fontWeight: 700, color: '#34D399', fontSize: '0.9rem' }}>
+                            R$ {srv.price.toFixed(2).replace('.', ',')}
+                          </div>
+                          <button
+                            onClick={() => handleOpenEditService(srv)}
+                            style={{ padding: '4px 6px', background: 'transparent', border: 'none', color: '#60A5FA', cursor: 'pointer' }}
+                            title="Editar serviço"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteService(srv.id, srv.name)}
+                            style={{ padding: '4px 6px', background: 'transparent', border: 'none', color: '#F87171', cursor: 'pointer' }}
+                            title="Excluir serviço"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -4228,6 +4378,192 @@ export default function MatrizDashboard() {
                 Gerenciar disponibilidade avançada no painel da Agenda <ExternalLink size={12} />
               </a>
             </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL GERENCIAR SERVIÇO */}
+      {serviceModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 115,
+            padding: '16px',
+          }}
+          onClick={() => {
+            if (!serviceSaving) setServiceModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              backgroundColor: 'var(--bg-surface)',
+              borderRadius: '16px',
+              border: '1px solid var(--border-subtle)',
+              padding: '24px',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ padding: '8px', borderRadius: '8px', backgroundColor: 'rgba(31, 111, 255, 0.15)', color: '#60A5FA' }}>
+                  <Calendar size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff' }}>
+                    {editingService ? 'Editar Serviço' : 'Novo Serviço'}
+                  </h3>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    Defina o nome, valor e detalhes do serviço da sua empresa.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setServiceModalOpen(false)}
+                style={{ padding: '6px', color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveService} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
+                  Nome do Serviço *
+                </label>
+                <input
+                  required
+                  value={serviceName}
+                  onChange={(e) => setServiceName(e.target.value)}
+                  placeholder="Ex: Agillex Agenda & Agendamento Online"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    color: '#fff',
+                    fontSize: '0.85rem',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
+                    Valor (R$) *
+                  </label>
+                  <input
+                    required
+                    value={servicePrice}
+                    onChange={(e) => setServicePrice(e.target.value)}
+                    placeholder="Ex: 89,00"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
+                      color: '#fff',
+                      fontSize: '0.85rem',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
+                    Duração (Minutos) *
+                  </label>
+                  <input
+                    type="number"
+                    min="5"
+                    step="5"
+                    required
+                    value={serviceDuration}
+                    onChange={(e) => setServiceDuration(e.target.value)}
+                    placeholder="Ex: 30"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
+                      color: '#fff',
+                      fontSize: '0.85rem',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>
+                  Descrição Comercial (Usada pela IA para responder aos clientes)
+                </label>
+                <textarea
+                  rows={3}
+                  value={serviceDesc}
+                  onChange={(e) => setServiceDesc(e.target.value)}
+                  placeholder="Ex: Implantação completa do sistema de agendamento online integrado ao WhatsApp e Google Calendar..."
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    lineHeight: 1.4,
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  disabled={serviceSaving}
+                  onClick={() => setServiceModalOpen(false)}
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={serviceSaving}
+                  style={{
+                    padding: '9px 20px',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #1F6FFF, #1754C7)',
+                    border: 'none',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  {serviceSaving ? <Loader2 size={14} className="spin-slow" /> : <Check size={14} />}
+                  Salvar Serviço
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

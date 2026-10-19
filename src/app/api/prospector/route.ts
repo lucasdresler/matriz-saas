@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { execFile } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import { query } from '@/lib/db';
 
 interface RawProspectorLead {
   Nome: string;
@@ -371,6 +372,32 @@ export async function POST(request: Request) {
         createdAt: 'Hoje',
       };
     });
+
+    // Gravar leads automaticamente no PostgreSQL para nunca sumirem
+    try {
+      const orgRes = await query('SELECT id FROM organizations LIMIT 1;');
+      const targetOrgId = orgRes.rows[0]?.id || 'a0000000-0000-0000-0000-000000000001';
+      for (const ml of mappedLeads) {
+        await query(
+          `INSERT INTO leads (
+             organization_id, name, phone, email, status, tags, service_interest, last_message, unread_count, created_at, updated_at
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, NOW(), NOW())
+           ON CONFLICT DO NOTHING;`,
+          [
+            targetOrgId,
+            ml.name,
+            ml.phone,
+            ml.email || null,
+            'novo',
+            ml.tags || [],
+            ml.serviceInterest || '',
+            ml.lastMessage || '',
+          ]
+        );
+      }
+    } catch (dbErr) {
+      console.warn('[Prospector API] Erro ao gravar leads no banco:', dbErr);
+    }
 
     return NextResponse.json({
       success: true,
