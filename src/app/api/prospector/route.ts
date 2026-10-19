@@ -378,22 +378,62 @@ export async function POST(request: Request) {
       const orgRes = await query('SELECT id FROM organizations LIMIT 1;');
       const targetOrgId = orgRes.rows[0]?.id || 'a0000000-0000-0000-0000-000000000001';
       for (const ml of mappedLeads) {
-        await query(
-          `INSERT INTO leads (
-             organization_id, name, phone, email, status, tags, service_interest, last_message, unread_count, created_at, updated_at
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, NOW(), NOW())
-           ON CONFLICT DO NOTHING;`,
-          [
-            targetOrgId,
-            ml.name,
-            ml.phone,
-            ml.email || null,
-            'novo',
-            ml.tags || [],
-            ml.serviceInterest || '',
-            ml.lastMessage || '',
-          ]
-        );
+        const cleanPhone = (ml.phone || '').replace(/\D/g, '');
+        let existingId: string | null = null;
+
+        if (cleanPhone && cleanPhone.length >= 8) {
+          const existRes = await query(
+            `SELECT id FROM leads WHERE organization_id = $1 AND phone LIKE $2 LIMIT 1;`,
+            [targetOrgId, `%${cleanPhone.slice(-8)}%`]
+          );
+          if (existRes.rows.length > 0) {
+            existingId = existRes.rows[0].id;
+          }
+        }
+
+        if (!existingId && ml.name) {
+          const existRes = await query(
+            `SELECT id FROM leads WHERE organization_id = $1 AND LOWER(TRIM(name)) = LOWER(TRIM($2)) LIMIT 1;`,
+            [targetOrgId, ml.name]
+          );
+          if (existRes.rows.length > 0) {
+            existingId = existRes.rows[0].id;
+          }
+        }
+
+        if (existingId) {
+          ml.id = existingId;
+          await query(
+            `UPDATE leads 
+             SET last_message = COALESCE(NULLIF(last_message, ''), $1),
+                 tags = array_cat(tags, $2::text[]),
+                 estimated_value = $3,
+                 updated_at = NOW()
+             WHERE id = $4;`,
+            [ml.lastMessage || '', ml.tags || [], ml.estimatedValue || 0, existingId]
+          );
+        } else {
+          const insRes = await query(
+            `INSERT INTO leads (
+               organization_id, name, phone, email, status, tags, service_interest, last_message, unread_count, estimated_value, created_at, updated_at
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, NOW(), NOW())
+             RETURNING id;`,
+            [
+              targetOrgId,
+              ml.name,
+              ml.phone || 'A confirmar',
+              ml.email || null,
+              'novo',
+              ml.tags || [],
+              ml.serviceInterest || '',
+              ml.lastMessage || '',
+              ml.estimatedValue || 0,
+            ]
+          );
+          if (insRes.rows[0]?.id) {
+            ml.id = insRes.rows[0].id;
+          }
+        }
       }
     } catch (dbErr) {
       console.warn('[Prospector API] Erro ao gravar leads no banco:', dbErr);

@@ -97,9 +97,9 @@ export async function POST(req: NextRequest) {
       for (const item of syncAll) {
         await query(
           `INSERT INTO leads (
-             id, organization_id, name, phone, email, status, tags, service_interest, last_message, unread_count, created_at, updated_at
+             id, organization_id, name, phone, email, status, tags, service_interest, last_message, unread_count, estimated_value, created_at, updated_at
            ) VALUES (
-             COALESCE($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()
+             COALESCE($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
            )
            ON CONFLICT (id) DO UPDATE SET
              name = EXCLUDED.name,
@@ -109,6 +109,7 @@ export async function POST(req: NextRequest) {
              tags = EXCLUDED.tags,
              service_interest = EXCLUDED.service_interest,
              last_message = EXCLUDED.last_message,
+             estimated_value = EXCLUDED.estimated_value,
              updated_at = NOW();`,
           [
             item.id && item.id.includes('-') && item.id.length === 36 ? item.id : null,
@@ -121,6 +122,7 @@ export async function POST(req: NextRequest) {
             item.serviceInterest || '',
             item.lastMessage || '',
             item.unreadCount || 0,
+            item.estimatedValue || 0,
           ]
         );
       }
@@ -135,9 +137,9 @@ export async function POST(req: NextRequest) {
 
     const res = await query(
       `INSERT INTO leads (
-         id, organization_id, name, phone, email, status, tags, service_interest, last_message, unread_count, created_at, updated_at
+         id, organization_id, name, phone, email, status, tags, service_interest, last_message, unread_count, estimated_value, created_at, updated_at
        ) VALUES (
-         COALESCE($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()
+         COALESCE($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
        )
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,
@@ -147,6 +149,7 @@ export async function POST(req: NextRequest) {
          tags = EXCLUDED.tags,
          service_interest = EXCLUDED.service_interest,
          last_message = EXCLUDED.last_message,
+         estimated_value = EXCLUDED.estimated_value,
          updated_at = NOW()
        RETURNING id;`,
       [
@@ -160,6 +163,7 @@ export async function POST(req: NextRequest) {
         lead.serviceInterest || '',
         lead.lastMessage || '',
         lead.unreadCount || 0,
+        lead.estimatedValue || 0,
       ]
     );
 
