@@ -51,7 +51,10 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      services: servicesRes.rows,
+      services: servicesRes.rows.map((s: any) => ({
+        ...s,
+        orgId: 'org-alllogic',
+      })),
     });
   } catch (error: any) {
     console.error('[Services API] Erro ao buscar serviços:', error);

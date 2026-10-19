@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 
     const leads: Lead[] = leadsRes.rows.map((r: any) => ({
       id: r.id,
-      orgId: r.orgId || 'org-alllogic',
+      orgId: 'org-alllogic',
       name: r.name,
       phone: r.phone,
       email: r.email || undefined,

@@ -76,7 +76,12 @@ export default function MatrizDashboard() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.map((l: Lead) => ({
+              ...l,
+              orgId: (!l.orgId || l.orgId === 'a0000000-0000-0000-0000-000000000001') ? 'org-alllogic' : l.orgId,
+            }));
+          }
         } catch (e) {}
       }
     }
@@ -128,11 +133,17 @@ export default function MatrizDashboard() {
                 });
 
                 // Preserva leads locais não sincronizados ainda
-                const merged: Lead[] = [...data.leads];
+                const merged: Lead[] = data.leads.map((l: Lead) => ({
+                  ...l,
+                  orgId: (!l.orgId || l.orgId === 'a0000000-0000-0000-0000-000000000001') ? 'org-alllogic' : l.orgId,
+                }));
                 prevLeads.forEach((localLead) => {
                   const phoneDigits = localLead.phone.replace(/\D/g, '').slice(-8);
                   if (!backendMap.has(localLead.id) && (!phoneDigits || !backendMap.has(phoneDigits))) {
-                    merged.push(localLead);
+                    merged.push({
+                      ...localLead,
+                      orgId: (!localLead.orgId || localLead.orgId === 'a0000000-0000-0000-0000-000000000001') ? 'org-alllogic' : localLead.orgId,
+                    });
                   }
                 });
                 return merged;
@@ -208,7 +219,11 @@ export default function MatrizDashboard() {
       .then((r) => r.json())
       .then((data) => {
         if (data?.success && Array.isArray(data.services) && data.services.length > 0) {
-          setServices(data.services);
+          const normalized = data.services.map((s: ServiceItem) => ({
+            ...s,
+            orgId: (!s.orgId || s.orgId === 'a0000000-0000-0000-0000-000000000001') ? 'org-alllogic' : s.orgId,
+          }));
+          setServices(normalized);
         }
       })
       .catch((err) => console.warn('Erro ao carregar serviços:', err));
@@ -446,10 +461,22 @@ export default function MatrizDashboard() {
   };
 
   const currentOrg = organizations.find((o) => o.id === activeOrgId) || organizations[0];
-  const orgLeads = leads.filter((l) => l.orgId === activeOrgId);
-  const orgAppointments = appointments.filter((a) => a.orgId === activeOrgId);
-  const orgServices = services.filter((s) => s.orgId === activeOrgId);
-  const orgDocs = knowledgeDocs.filter((d) => d.orgId === activeOrgId);
+  const isOrgMatch = (itemOrgId?: string) => {
+    if (!itemOrgId) return true;
+    if (itemOrgId === activeOrgId) return true;
+    if (
+      activeOrgId === 'org-alllogic' &&
+      (itemOrgId === 'a0000000-0000-0000-0000-000000000001' || itemOrgId === 'org-alllogic')
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const orgLeads = leads.filter((l) => isOrgMatch(l.orgId));
+  const orgAppointments = appointments.filter((a) => isOrgMatch(a.orgId));
+  const orgServices = services.filter((s) => isOrgMatch(s.orgId));
+  const orgDocs = knowledgeDocs.filter((d) => isOrgMatch(d.orgId));
 
   // Filtro de Busca em Tempo Real no Funil Kanban
   const filteredLeads = orgLeads.filter((l) => {
