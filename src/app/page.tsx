@@ -46,7 +46,9 @@ import {
   Loader2,
   Trash2,
   Download,
-  Pencil
+  Pencil,
+  Save,
+  AlertTriangle
 } from 'lucide-react';
 import {
   initialOrganizations,
@@ -229,6 +231,79 @@ export default function MatrizDashboard() {
       })
       .catch((err) => console.warn('Erro ao carregar serviços:', err));
   }, []);
+
+  // Estados para Configuração do Cérebro da IA & RAG (n8n & Banco)
+  const [systemPrompt, setSystemPrompt] = useState<string>('');
+  const [toneOfVoice, setToneOfVoice] = useState<string>('amigavel');
+  const [followupDelay, setFollowupDelay] = useState<string>('120');
+  const [agentSaving, setAgentSaving] = useState(false);
+  const [agentLoading, setAgentLoading] = useState(false);
+  const [agentFeedback, setAgentFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Carregar Configurações do Agente do Backend (/api/agent-config)
+  useEffect(() => {
+    let isMounted = true;
+    setAgentLoading(true);
+    fetch(`/api/agent-config?orgId=${activeOrgId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!isMounted) return;
+        if (data?.success) {
+          if (data.system_prompt) setSystemPrompt(data.system_prompt);
+          if (data.tone_of_voice) setToneOfVoice(data.tone_of_voice);
+          if (data.followup_delay_minutes) setFollowupDelay(String(data.followup_delay_minutes));
+        }
+      })
+      .catch((err) => console.warn('Erro ao carregar configurações do agente:', err))
+      .finally(() => {
+        if (isMounted) setAgentLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [activeOrgId]);
+
+  const handleSaveAgentConfig = async () => {
+    if (!systemPrompt || systemPrompt.trim() === '') {
+      alert('O Prompt de Sistema não pode ficar vazio.');
+      return;
+    }
+
+    setAgentSaving(true);
+    setAgentFeedback(null);
+    try {
+      const res = await fetch('/api/agent-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orgId: activeOrgId,
+          systemPrompt: systemPrompt.trim(),
+          toneOfVoice,
+          followupDelay: parseInt(followupDelay, 10) || 120,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data?.success) {
+        setAgentFeedback({
+          type: 'success',
+          message: 'Instruções salvas com sucesso no banco e ativas para o agente!',
+        });
+      } else {
+        setAgentFeedback({
+          type: 'error',
+          message: data?.error || 'Erro ao salvar configurações no servidor.',
+        });
+      }
+    } catch (err: any) {
+      setAgentFeedback({
+        type: 'error',
+        message: err.message || 'Falha de conexão ao salvar configurações.',
+      });
+    } finally {
+      setAgentSaving(false);
+      setTimeout(() => setAgentFeedback(null), 6000);
+    }
+  };
 
   const handleOpenNewService = () => {
     setEditingService(null);
@@ -2389,22 +2464,32 @@ export default function MatrizDashboard() {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     <div>
-                      <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
-                        Prompt de Sistema (System Prompt)
-                      </label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          Prompt de Sistema (System Prompt & Diretrizes Oficiais)
+                        </label>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          {agentLoading ? 'Carregando do banco...' : `${systemPrompt.length} caracteres`}
+                        </span>
+                      </div>
                       <textarea
-                        rows={5}
-                        defaultValue={`Você é o assistente virtual da ${currentOrg.name}. Seu objetivo é tirar dúvidas sobre serviços, prazos e valores com cordialidade, conduzindo o cliente gentilmente até o agendamento de uma consulta/reunião. Seja objetivo, não use menus tipo 'digite 1' e converse como um humano simpático.`}
+                        rows={14}
+                        value={systemPrompt}
+                        onChange={(e) => setSystemPrompt(e.target.value)}
+                        placeholder="Carregando diretrizes oficiais do n8n / banco de dados..."
+                        disabled={agentLoading}
                         style={{
                           width: '100%',
-                          padding: '10px 12px',
+                          padding: '12px 14px',
                           borderRadius: '8px',
                           backgroundColor: 'var(--bg-surface-elevated)',
                           border: '1px solid var(--border-subtle)',
                           color: '#fff',
                           fontSize: '0.82rem',
-                          fontFamily: 'inherit',
-                          lineHeight: 1.4,
+                          fontFamily: 'monospace, inherit',
+                          lineHeight: 1.5,
+                          resize: 'vertical',
+                          opacity: agentLoading ? 0.6 : 1,
                         }}
                       />
                     </div>
@@ -2415,7 +2500,9 @@ export default function MatrizDashboard() {
                           Tom de Voz
                         </label>
                         <select
-                          defaultValue="amigavel"
+                          value={toneOfVoice}
+                          onChange={(e) => setToneOfVoice(e.target.value)}
+                          disabled={agentLoading}
                           style={{
                             width: '100%',
                             padding: '9px 12px',
@@ -2426,7 +2513,7 @@ export default function MatrizDashboard() {
                             fontSize: '0.82rem',
                           }}
                         >
-                          <option value="amigavel">Amigável & Humanizado</option>
+                          <option value="amigavel">Amigável & Humanizado (Fran)</option>
                           <option value="formal">Formal & Executivo</option>
                           <option value="vendedor">Comercial & Focado em Fechamento</option>
                         </select>
@@ -2437,7 +2524,9 @@ export default function MatrizDashboard() {
                           Tempo de Follow-up se o lead sumir
                         </label>
                         <select
-                          defaultValue="120"
+                          value={followupDelay}
+                          onChange={(e) => setFollowupDelay(e.target.value)}
+                          disabled={agentLoading}
                           style={{
                             width: '100%',
                             padding: '9px 12px',
@@ -2455,20 +2544,58 @@ export default function MatrizDashboard() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => alert('Configurações do agente salvas com sucesso!')}
-                      style={{
-                        padding: '10px 16px',
-                        borderRadius: '8px',
-                        backgroundColor: '#10B981',
-                        color: '#fff',
-                        fontWeight: 600,
-                        fontSize: '0.82rem',
-                        alignSelf: 'flex-start',
-                      }}
-                    >
-                      Salvar Instruções da IA
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={handleSaveAgentConfig}
+                        disabled={agentSaving || agentLoading}
+                        style={{
+                          padding: '10px 18px',
+                          borderRadius: '8px',
+                          backgroundColor: agentSaving ? '#059669' : '#10B981',
+                          color: '#fff',
+                          fontWeight: 600,
+                          fontSize: '0.82rem',
+                          cursor: agentSaving || agentLoading ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          border: 'none',
+                          transition: 'background-color 0.2s',
+                        }}
+                      >
+                        {agentSaving ? (
+                          <>
+                            <RefreshCw size={14} className="animate-spin" />
+                            <span>Gravando no Banco...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save size={14} />
+                            <span>Salvar Instruções da IA</span>
+                          </>
+                        )}
+                      </button>
+
+                      {agentFeedback && (
+                        <div
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: '6px',
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            backgroundColor: agentFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            color: agentFeedback.type === 'success' ? '#34D399' : '#F87171',
+                            border: `1px solid ${agentFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          {agentFeedback.type === 'success' ? <Check size={14} /> : <AlertTriangle size={14} />}
+                          <span>{agentFeedback.message}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
