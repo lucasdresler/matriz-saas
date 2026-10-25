@@ -414,7 +414,7 @@ export default function MatrizDashboard() {
       }
 
       if (data.leads && data.leads.length > 0) {
-        setLeads((prev) => [...data.leads, ...prev]);
+        setLeads((prev) => [...prev, ...data.leads]);
         // Persistir imediatamente no banco de dados na nuvem para nunca sumir
         fetch('/api/leads', {
           method: 'POST',
@@ -471,7 +471,7 @@ export default function MatrizDashboard() {
             createdAt: 'Hoje',
             avatar: '',
           }));
-          setLeads((prev) => [...importedLeads, ...prev]);
+          setLeads((prev) => [...prev, ...importedLeads]);
           alert(`✓ ${importedLeads.length} leads importados do arquivo com sucesso!`);
           return;
         }
@@ -519,7 +519,7 @@ export default function MatrizDashboard() {
         }
 
         if (importedLeads.length > 0) {
-          setLeads((prev) => [...importedLeads, ...prev]);
+          setLeads((prev) => [...prev, ...importedLeads]);
           alert(`✓ ${importedLeads.length} leads importados com sucesso para o seu CRM!`);
         }
       } catch (err: any) {
@@ -717,13 +717,27 @@ export default function MatrizDashboard() {
   }, [activeOrgId]);
 
   // Conversas ativas no WhatsApp:
-  // Apenas leads que possuem mensagens reais no WhatsApp
-  // OU o lead que o operador selecionou ativamente para abrir chat e conversar
-  const activeChatLeads = orgLeads.filter((lead) => {
-    const hasMessages = Boolean(messages[lead.id] && messages[lead.id].length > 0);
-    const isExplicitDraft = lead.id === selectedLeadId && activeTab === 'livechat' && Boolean(selectedLeadId);
-    return hasMessages || isExplicitDraft;
-  });
+  // As conversas mais antigas no topo e as NOVAS conversas EM BAIXO
+  const activeChatLeads = orgLeads
+    .filter((lead) => {
+      const hasMessages = Boolean(messages[lead.id] && messages[lead.id].length > 0);
+      const isExplicitDraft = lead.id === selectedLeadId && activeTab === 'livechat' && Boolean(selectedLeadId);
+      return hasMessages || isExplicitDraft;
+    })
+    .sort((a, b) => {
+      const aHasMsgs = Boolean(messages[a.id] && messages[a.id].length > 0);
+      const bHasMsgs = Boolean(messages[b.id] && messages[b.id].length > 0);
+      // Rascunho sem mensagens iniciado agora fica no fim (em baixo)
+      if (aHasMsgs && !bHasMsgs) return -1;
+      if (!aHasMsgs && bHasMsgs) return 1;
+
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (timeA !== timeB) {
+        return timeA - timeB; // Mais antigas no topo, novas em baixo
+      }
+      return a.id.localeCompare(b.id);
+    });
 
   const selectedLead =
     orgLeads.find((l) => l.id === selectedLeadId) ||
@@ -1742,7 +1756,16 @@ export default function MatrizDashboard() {
                   { id: 'aguardando_followup', title: 'Follow-up Automático', color: '#C9A227', desc: 'Contato parou de falar' },
                   { id: 'agendado', title: 'Agendado / Fechado', color: '#10B981', desc: 'Horário ou Negócio confirmado' },
                 ].map((col) => {
-                  const colLeads = filteredLeads.filter((l) => l.status === col.id);
+                  const colLeads = filteredLeads
+                    .filter((l) => l.status === col.id)
+                    .sort((a, b) => {
+                      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                      if (timeA !== timeB) {
+                        return timeA - timeB; // Mais antigos no topo, novos em baixo
+                      }
+                      return a.id.localeCompare(b.id);
+                    });
                   return (
                     <div
                       key={col.id}
@@ -3162,9 +3185,9 @@ export default function MatrizDashboard() {
                     lastMessageTime: 'Agora',
                     aiPaused: false,
                     unreadCount: 0,
-                    createdAt: 'Hoje',
+                    createdAt: new Date().toISOString(),
                   };
-                  setLeads((prev) => [newLead, ...prev]);
+                  setLeads((prev) => [...prev, newLead]);
                   setSelectedLeadId(newLead.id);
                   setNewLeadModalOpen(false);
                 }

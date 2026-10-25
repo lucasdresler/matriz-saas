@@ -18,12 +18,13 @@ export async function GET(req: NextRequest) {
         COALESCE(service_interest, '') as "serviceInterest",
         COALESCE(last_message, '') as "lastMessage",
         to_char(last_message_at AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI') as "lastMessageTime",
+        last_message_at as "lastMessageAt",
         ai_paused as "aiPaused",
         unread_count as "unreadCount",
         estimated_value as "estimatedValue",
         created_at as "createdAt"
       FROM leads
-      ORDER BY last_message_at DESC NULLS LAST, created_at DESC;
+      ORDER BY created_at ASC;
     `);
 
     const messagesRes = await query(`
@@ -51,6 +52,7 @@ export async function GET(req: NextRequest) {
       serviceInterest: r.serviceInterest || 'Atendimento WhatsApp',
       lastMessage: r.lastMessage || '',
       lastMessageTime: r.lastMessageTime || '',
+      lastMessageAt: r.lastMessageAt ? new Date(r.lastMessageAt).toISOString() : undefined,
       aiPaused: Boolean(r.aiPaused),
       unreadCount: Number(r.unreadCount || 0),
       estimatedValue: Number(r.estimatedValue || 0),

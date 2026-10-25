@@ -38,6 +38,7 @@ export interface Lead {
   serviceInterest: string;
   lastMessage: string;
   lastMessageTime: string;
+  lastMessageAt?: string;
   aiPaused: boolean;
   unreadCount: number;
   estimatedValue?: number;
