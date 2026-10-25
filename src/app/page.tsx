@@ -823,6 +823,7 @@ export default function MatrizDashboard() {
           l.id === targetLead.id
             ? {
                 ...l,
+                status: l.status === 'novo' ? 'em_atendimento' : l.status,
                 lastMessageAt: nowIso,
               }
             : l
@@ -866,6 +867,7 @@ export default function MatrizDashboard() {
         l.id === selectedLead.id
           ? {
               ...l,
+              status: l.status === 'novo' ? 'em_atendimento' : l.status,
               lastMessage: userText,
               lastMessageTime: timestamp,
               lastMessageAt: nowIso,

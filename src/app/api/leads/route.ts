@@ -105,10 +105,13 @@ export async function POST(req: NextRequest) {
         [orgId, message.leadId, message.sender || 'human', message.content, message.type || 'text']
       );
 
-      // Também sincroniza a última mensagem do lead
+      // Também sincroniza a última mensagem do lead e avança de 'novo' para 'em_atendimento'
       await query(
         `UPDATE leads 
-         SET last_message = $1, last_message_at = NOW(), updated_at = NOW() 
+         SET last_message = $1, 
+             last_message_at = NOW(), 
+             status = CASE WHEN status = 'novo' THEN 'em_atendimento' ELSE status END,
+             updated_at = NOW() 
          WHERE id = $2::uuid;`,
         [message.content, message.leadId]
       );
