@@ -731,6 +731,36 @@ export default function MatrizDashboard() {
     });
   };
 
+  // Disparar início de contato via WhatsApp e registrar a abordagem no Live Chat
+  const handleInitiateWhatsAppContact = (targetLead: Lead) => {
+    if (!targetLead) return;
+    const leadMsgs = messages[targetLead.id] || [];
+    if (targetLead.lastMessage && leadMsgs.length === 0) {
+      const newMsgId = 'msg-' + Date.now();
+      const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const newMsg: ChatMessage = {
+        id: newMsgId,
+        leadId: targetLead.id,
+        sender: 'human',
+        content: targetLead.lastMessage,
+        timestamp,
+        status: 'delivered',
+        type: 'text',
+      };
+
+      setMessages((prev) => ({
+        ...prev,
+        [targetLead.id]: [newMsg],
+      }));
+
+      fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: newMsg }),
+      }).catch(() => {});
+    }
+  };
+
   // Enviar Mensagem no Live Chat
   const handleSendMessage = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -755,6 +785,13 @@ export default function MatrizDashboard() {
     }));
 
     setChatInput('');
+
+    // Persistir mensagem enviada no PostgreSQL
+    fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: newMsg }),
+    }).catch(() => {});
 
     // Se a mensagem foi do lead e a IA estiver ativa, simular resposta inteligente da IA
     if (!selectedLead.aiPaused) {
@@ -1779,7 +1816,10 @@ export default function MatrizDashboard() {
                                   href={`https://wa.me/${(lead.phone || '').replace(/\D/g, '').startsWith('55') ? (lead.phone || '').replace(/\D/g, '') : '55' + (lead.phone || '').replace(/\D/g, '')}${lead.lastMessage ? `?text=${encodeURIComponent(lead.lastMessage)}` : ''}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleInitiateWhatsAppContact(lead);
+                                  }}
                                   style={{
                                     fontSize: '0.74rem',
                                     color: '#25D366',
@@ -2089,7 +2129,7 @@ export default function MatrizDashboard() {
                             </div>
                           )}
 
-                          <div style={{ fontSize: '0.86rem', lineHeight: 1.4 }}>{m.content}</div>
+                          <div style={{ fontSize: '0.86rem', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>{m.content}</div>
 
                           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '4px', marginTop: '4px', fontSize: '0.62rem', color: 'rgba(255, 255, 255, 0.6)' }}>
                             <span>{m.timestamp}</span>
@@ -3695,6 +3735,7 @@ export default function MatrizDashboard() {
                 href={`https://wa.me/${(selectedLeadDetails.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLeadDetails.phone || '').replace(/\D/g, '') : '55' + (selectedLeadDetails.phone || '').replace(/\D/g, '')}${selectedLeadDetails.lastMessage ? `?text=${encodeURIComponent(selectedLeadDetails.lastMessage)}` : ''}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => handleInitiateWhatsAppContact(selectedLeadDetails)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

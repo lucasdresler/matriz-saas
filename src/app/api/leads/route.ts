@@ -86,11 +86,32 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { lead, syncAll } = body;
+    const { lead, syncAll, message } = body;
 
     // Obter ID da organização padrão
     const orgRes = await query('SELECT id FROM organizations LIMIT 1;');
     const orgId = orgRes.rows[0]?.id || 'a0000000-0000-0000-0000-000000000001';
+
+    // Gravar mensagem avulsa de chat (ex: abordagem inicial no WhatsApp ou resposta no Live Chat)
+    if (message && message.leadId && message.content) {
+      const msgRes = await query(
+        `INSERT INTO chat_messages (
+           organization_id, lead_id, sender, content, message_type, status, created_at
+         ) VALUES ($1, $2::uuid, $3, $4, $5, 'delivered', NOW())
+         RETURNING id;`,
+        [orgId, message.leadId, message.sender || 'human', message.content, message.type || 'text']
+      );
+
+      // Também sincroniza a última mensagem do lead
+      await query(
+        `UPDATE leads 
+         SET last_message = $1, last_message_at = NOW(), updated_at = NOW() 
+         WHERE id = $2::uuid;`,
+        [message.content, message.leadId]
+      );
+
+      return NextResponse.json({ success: true, messageId: msgRes.rows[0]?.id });
+    }
 
     // Suporte para sincronização em lote (ex: leads minerados do prospector)
     if (syncAll && Array.isArray(syncAll)) {
