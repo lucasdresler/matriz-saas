@@ -716,8 +716,21 @@ export default function MatrizDashboard() {
     }
   }, [activeOrgId]);
 
+  // Função para calcular o momento de atividade mais recente de um lead
+  const getLeadRecencyTime = (l: Lead) => {
+    if (l.lastMessageAt) {
+      const t = new Date(l.lastMessageAt).getTime();
+      if (!isNaN(t) && t > 0) return t;
+    }
+    if (l.createdAt) {
+      const t = new Date(l.createdAt).getTime();
+      if (!isNaN(t) && t > 0) return t;
+    }
+    return 0;
+  };
+
   // Conversas ativas no WhatsApp:
-  // As conversas mais antigas no topo e as NOVAS conversas EM BAIXO
+  // As conversas mais antigas no topo e as MAIS RECENTES (novas) EM BAIXO
   const activeChatLeads = orgLeads
     .filter((lead) => {
       const hasMessages = Boolean(messages[lead.id] && messages[lead.id].length > 0);
@@ -727,20 +740,21 @@ export default function MatrizDashboard() {
     .sort((a, b) => {
       const aHasMsgs = Boolean(messages[a.id] && messages[a.id].length > 0);
       const bHasMsgs = Boolean(messages[b.id] && messages[b.id].length > 0);
-      // Rascunho sem mensagens iniciado agora fica no fim (em baixo)
+      // Rascunho sem mensagens iniciado agora fica no fim absoluto (em baixo)
       if (aHasMsgs && !bHasMsgs) return -1;
       if (!aHasMsgs && bHasMsgs) return 1;
 
-      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      const timeA = getLeadRecencyTime(a);
+      const timeB = getLeadRecencyTime(b);
       if (timeA !== timeB) {
-        return timeA - timeB; // Mais antigas no topo, novas em baixo
+        return timeA - timeB; // Mais antigas no topo, mais recentes (novas) em baixo
       }
       return a.id.localeCompare(b.id);
     });
 
   const selectedLead =
     orgLeads.find((l) => l.id === selectedLeadId) ||
+    activeChatLeads[activeChatLeads.length - 1] ||
     activeChatLeads[0] ||
     orgLeads[0] ||
     null;
@@ -766,8 +780,9 @@ export default function MatrizDashboard() {
 
   // Mover lead de status no Kanban
   const moveLeadStatus = (leadId: string, newStatus: LeadStatus) => {
+    const nowIso = new Date().toISOString();
     setLeads((prev) => {
-      const nextLeads = prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l));
+      const nextLeads = prev.map((l) => (l.id === leadId ? { ...l, status: newStatus, lastMessageAt: nowIso } : l));
       const target = nextLeads.find((l) => l.id === leadId);
       if (target) {
         fetch('/api/leads', {
@@ -797,10 +812,22 @@ export default function MatrizDashboard() {
         type: 'text',
       };
 
+      const nowIso = new Date().toISOString();
       setMessages((prev) => ({
         ...prev,
         [targetLead.id]: [newMsg],
       }));
+
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.id === targetLead.id
+            ? {
+                ...l,
+                lastMessageAt: nowIso,
+              }
+            : l
+        )
+      );
 
       fetch('/api/leads', {
         method: 'POST',
@@ -828,10 +855,24 @@ export default function MatrizDashboard() {
       status: 'sent',
     };
 
+    const nowIso = new Date().toISOString();
     setMessages((prev) => ({
       ...prev,
       [selectedLead.id]: [...(prev[selectedLead.id] || []), newMsg],
     }));
+
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === selectedLead.id
+          ? {
+              ...l,
+              lastMessage: userText,
+              lastMessageTime: timestamp,
+              lastMessageAt: nowIso,
+            }
+          : l
+      )
+    );
 
     setChatInput('');
 
@@ -871,10 +912,24 @@ export default function MatrizDashboard() {
           type: shouldBook ? 'appointment_booked' : 'text',
         };
 
+        const nowIso = new Date().toISOString();
         setMessages((prev) => ({
           ...prev,
           [selectedLead.id]: [...(prev[selectedLead.id] || []), aiMsg],
         }));
+
+        setLeads((prev) =>
+          prev.map((l) =>
+            l.id === selectedLead.id
+              ? {
+                  ...l,
+                  lastMessage: aiReplyText,
+                  lastMessageTime: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                  lastMessageAt: nowIso,
+                }
+              : l
+          )
+        );
 
         setIsAiThinking(false);
 
@@ -1759,10 +1814,10 @@ export default function MatrizDashboard() {
                   const colLeads = filteredLeads
                     .filter((l) => l.status === col.id)
                     .sort((a, b) => {
-                      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                      const timeA = getLeadRecencyTime(a);
+                      const timeB = getLeadRecencyTime(b);
                       if (timeA !== timeB) {
-                        return timeA - timeB; // Mais antigos no topo, novos em baixo
+                        return timeA - timeB; // Mais antigos no topo, mais recentes/novos em baixo
                       }
                       return a.id.localeCompare(b.id);
                     });

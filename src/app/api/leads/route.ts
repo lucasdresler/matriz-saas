@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
         estimated_value as "estimatedValue",
         created_at as "createdAt"
       FROM leads
-      ORDER BY created_at ASC;
+      ORDER BY COALESCE(last_message_at, created_at) ASC, created_at ASC, id ASC;
     `);
 
     const messagesRes = await query(`
