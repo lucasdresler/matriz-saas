@@ -180,7 +180,7 @@ export default function MatrizDashboard() {
   const [saasClients] = useState<SaaSClient[]>(initialSaaSClients);
 
   // Estados de Interatividade
-  const [selectedLeadId, setSelectedLeadId] = useState<string>('lead-v1');
+  const [selectedLeadId, setSelectedLeadId] = useState<string>('');
   const [chatInput, setChatInput] = useState('');
   const [chatSearch, setChatSearch] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -534,6 +534,15 @@ export default function MatrizDashboard() {
   const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas') => {
     setActiveTab(tab);
     setMobileSidebarOpen(false);
+    if (tab === 'livechat') {
+      const currentHasMsgs = selectedLeadId && Boolean(messages[selectedLeadId]?.length > 0);
+      if (!currentHasMsgs) {
+        const firstActive = orgLeads.find((l) => Boolean(messages[l.id] && messages[l.id].length > 0));
+        if (firstActive) {
+          setSelectedLeadId(firstActive.id);
+        }
+      }
+    }
   };
 
   const currentOrg = organizations.find((o) => o.id === activeOrgId) || organizations[0];
@@ -699,14 +708,40 @@ export default function MatrizDashboard() {
 
   // Atualizar lead selecionado ao mudar de workspace
   useEffect(() => {
-    const firstOrgLead = orgLeads[0];
-    if (firstOrgLead) {
-      setSelectedLeadId(firstOrgLead.id);
+    const firstActive = orgLeads.find((l) => Boolean(messages[l.id] && messages[l.id].length > 0));
+    if (firstActive) {
+      setSelectedLeadId(firstActive.id);
+    } else if (orgLeads[0]) {
+      setSelectedLeadId(orgLeads[0].id);
     }
   }, [activeOrgId]);
 
-  const selectedLead = leads.find((l) => l.id === selectedLeadId) || orgLeads[0];
+  // Conversas ativas no WhatsApp:
+  // Apenas leads que possuem mensagens reais no WhatsApp
+  // OU o lead que o operador selecionou ativamente para abrir chat e conversar
+  const activeChatLeads = orgLeads.filter((lead) => {
+    const hasMessages = Boolean(messages[lead.id] && messages[lead.id].length > 0);
+    const isExplicitDraft = lead.id === selectedLeadId && activeTab === 'livechat' && Boolean(selectedLeadId);
+    return hasMessages || isExplicitDraft;
+  });
+
+  const selectedLead =
+    orgLeads.find((l) => l.id === selectedLeadId) ||
+    activeChatLeads[0] ||
+    orgLeads[0] ||
+    null;
+
   const currentLeadMessages = selectedLead ? (messages[selectedLead.id] || []) : [];
+
+  // Selecionar primeira conversa ativa se nenhuma estiver selecionada ao entrar no Live Chat
+  useEffect(() => {
+    if (activeTab === 'livechat' && !selectedLeadId) {
+      const firstActive = orgLeads.find((l) => Boolean(messages[l.id] && messages[l.id].length > 0));
+      if (firstActive) {
+        setSelectedLeadId(firstActive.id);
+      }
+    }
+  }, [activeTab, selectedLeadId, messages, orgLeads]);
 
   // Alternar pausa da IA para um lead (Human Handoff)
   const toggleAiForLead = (leadId: string) => {
@@ -862,7 +897,7 @@ export default function MatrizDashboard() {
   // KPIs calculados
   const totalLeadsCount = orgLeads.length;
   const scheduledCount = orgLeads.filter((l) => l.status === 'agendado').length;
-  const inAiChatCount = orgLeads.filter((l) => l.status === 'em_atendimento' || l.status === 'novo').length;
+  const inAiChatCount = orgLeads.filter((l) => l.status === 'em_atendimento').length;
   const followupCount = orgLeads.filter((l) => l.status === 'aguardando_followup').length;
   const totalMrr = saasClients.reduce((acc, curr) => acc + curr.mrr, 0);
 
@@ -1937,7 +1972,12 @@ export default function MatrizDashboard() {
               <div className="livechat-sidebar" style={{ borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
                 <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface-elevated)', flexShrink: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>Conversas Ativas</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#fff' }}>Conversas Ativas</span>
+                      <span style={{ fontSize: '0.72rem', color: '#A7F3D0', backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: '1px 7px', borderRadius: '10px', fontWeight: 600 }}>
+                        {activeChatLeads.length}
+                      </span>
+                    </div>
                     <span style={{ fontSize: '0.7rem', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} />
                       Online
@@ -1964,45 +2004,86 @@ export default function MatrizDashboard() {
                 </div>
 
                 <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                  {orgLeads
-                    .filter((lead) => {
+                  {(() => {
+                    const filteredChatLeads = activeChatLeads.filter((lead) => {
                       if (!chatSearch.trim()) return true;
                       const q = chatSearch.toLowerCase();
+                      const leadMsgs = messages[lead.id] || [];
+                      const lastChatMsg = leadMsgs[leadMsgs.length - 1];
+                      const lastContent = lastChatMsg ? lastChatMsg.content : (lead.lastMessage || '');
                       return (
                         (lead.name && lead.name.toLowerCase().includes(q)) ||
                         (lead.phone && lead.phone.includes(q)) ||
-                        (lead.lastMessage && lead.lastMessage.toLowerCase().includes(q))
+                        lastContent.toLowerCase().includes(q)
                       );
-                    })
-                    .map((lead) => (
-                    <div
-                      key={lead.id}
-                      onClick={() => setSelectedLeadId(lead.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '12px 16px',
-                        borderBottom: '1px solid var(--border-subtle)',
-                        backgroundColor: lead.id === selectedLeadId ? 'rgba(16, 185, 129, 0.08)' : 'transparent',
-                        borderLeft: lead.id === selectedLeadId ? '3px solid #10B981' : '3px solid transparent',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                        {lead.name.charAt(0)}
-                      </div>
-                      <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontWeight: 600, fontSize: '0.86rem', color: '#fff' }}>{lead.name}</span>
-                          <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{lead.lastMessageTime}</span>
+                    });
+
+                    if (filteredChatLeads.length === 0) {
+                      return (
+                        <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          <MessageSquare size={32} style={{ margin: '0 auto 12px', opacity: 0.35, display: 'block' }} />
+                          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>
+                            {chatSearch.trim() ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ativa no WhatsApp'}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', lineHeight: 1.45, maxWidth: '240px', margin: '0 auto' }}>
+                            {chatSearch.trim()
+                              ? `Nenhum resultado para "${chatSearch}". Tente buscar por outro termo.`
+                              : 'As conversas iniciadas ou recebidas via WhatsApp aparecerão aqui. Você também pode iniciar um atendimento selecionando um lead no Funil CRM.'}
+                          </div>
                         </div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {lead.lastMessage}
+                      );
+                    }
+
+                    return filteredChatLeads.map((lead) => {
+                      const leadMsgs = messages[lead.id] || [];
+                      const lastChatMsg = leadMsgs[leadMsgs.length - 1];
+                      const displayMsg = lastChatMsg ? lastChatMsg.content : (lead.lastMessage || 'Conversa iniciada');
+                      const displayTime = lastChatMsg ? lastChatMsg.timestamp : (lead.lastMessageTime || '');
+                      const isUnread = Boolean(lead.unreadCount && lead.unreadCount > 0);
+                      const isSelected = selectedLead && lead.id === selectedLead.id;
+
+                      return (
+                        <div
+                          key={lead.id}
+                          onClick={() => {
+                            setSelectedLeadId(lead.id);
+                            setMobileChatView('chat');
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '12px 16px',
+                            borderBottom: '1px solid var(--border-subtle)',
+                            backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.08)' : 'transparent',
+                            borderLeft: isSelected ? '3px solid #10B981' : '3px solid transparent',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.15s ease',
+                          }}
+                        >
+                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                            {lead.name.charAt(0)}
+                          </div>
+                          <div style={{ flex: 1, overflow: 'hidden' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontWeight: 600, fontSize: '0.86rem', color: '#fff' }}>{lead.name}</span>
+                              <span style={{ fontSize: '0.68rem', color: isUnread ? '#10B981' : 'var(--text-muted)', fontWeight: isUnread ? 700 : 400 }}>{displayTime}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
+                              <div style={{ fontSize: '0.74rem', color: isUnread ? '#fff' : 'var(--text-muted)', fontWeight: isUnread ? 600 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, marginRight: '8px' }}>
+                                {displayMsg}
+                              </div>
+                              {isUnread && (
+                                <span style={{ backgroundColor: '#10B981', color: '#fff', fontSize: '0.65rem', fontWeight: 700, borderRadius: '99px', padding: '1px 6px', minWidth: '18px', textAlign: 'center' }}>
+                                  {lead.unreadCount}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    });
+                  })()}
                 </div>
               </div>
 
@@ -2213,8 +2294,14 @@ export default function MatrizDashboard() {
                   </form>
                 </div>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                  Selecione uma conversa para visualizar
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', backgroundColor: '#0B141A' }}>
+                  <div style={{ textAlign: 'center', padding: '40px 20px', maxWidth: '320px' }}>
+                    <MessageSquare size={48} style={{ margin: '0 auto 16px', opacity: 0.3, display: 'block' }} />
+                    <div style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>Nenhuma conversa selecionada</div>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                      Selecione uma conversa na barra lateral para visualizar e interagir no WhatsApp.
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
