@@ -1810,13 +1810,15 @@ export default function MatrizDashboard() {
                                   }}
                                   style={{
                                     fontSize: '0.72rem',
-                                    color: 'var(--text-muted)',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    color: '#93C5FD',
+                                    padding: '3px 8px',
+                                    borderRadius: '5px',
+                                    backgroundColor: 'rgba(31, 111, 255, 0.15)',
+                                    border: '1px solid rgba(31, 111, 255, 0.3)',
                                     cursor: 'pointer',
+                                    fontWeight: 500,
                                   }}
-                                  title="Avançar etapa no funil"
+                                  title="Avançar para a próxima coluna do funil"
                                 >
                                   Mover &rarr;
                                 </button>
@@ -3916,9 +3918,7 @@ export default function MatrizDashboard() {
                     <button
                       key={stage.id}
                       onClick={() => {
-                        setLeads((prev) =>
-                          prev.map((l) => (l.id === selectedLeadDetails.id ? { ...l, status: stage.id } : l))
-                        );
+                        moveLeadStatus(selectedLeadDetails.id, stage.id);
                         setSelectedLeadDetails((prev) => (prev ? { ...prev, status: stage.id } : null));
                       }}
                       style={{
