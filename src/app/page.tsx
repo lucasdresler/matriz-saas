@@ -1928,7 +1928,7 @@ export default function MatrizDashboard() {
                                   <MessageSquare size={13} /> Chat
                                 </button>
                                 <a
-                                  href={`https://wa.me/${(lead.phone || '').replace(/\D/g, '').startsWith('55') ? (lead.phone || '').replace(/\D/g, '') : '55' + (lead.phone || '').replace(/\D/g, '')}${lead.lastMessage ? `?text=${encodeURIComponent(lead.lastMessage)}` : ''}`}
+                                  href={`https://api.whatsapp.com/send?phone=${(lead.phone || '').replace(/\D/g, '').startsWith('55') ? (lead.phone || '').replace(/\D/g, '') : '55' + (lead.phone || '').replace(/\D/g, '')}${lead.lastMessage ? `&text=${encodeURIComponent(lead.lastMessage)}` : ''}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => {
@@ -2213,7 +2213,7 @@ export default function MatrizDashboard() {
                     {/* BOTÃO DE CONTROLE: HUMAN HANDOFF & WHATSAPP DIRETO */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <a
-                        href={`https://wa.me/${(selectedLead.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLead.phone || '').replace(/\D/g, '') : '55' + (selectedLead.phone || '').replace(/\D/g, '')}${selectedLead.lastMessage ? `?text=${encodeURIComponent(selectedLead.lastMessage)}` : ''}`}
+                        href={`https://api.whatsapp.com/send?phone=${(selectedLead.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLead.phone || '').replace(/\D/g, '') : '55' + (selectedLead.phone || '').replace(/\D/g, '')}${selectedLead.lastMessage ? `&text=${encodeURIComponent(selectedLead.lastMessage)}` : ''}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => handleInitiateWhatsAppContact(selectedLead)}
@@ -3921,7 +3921,7 @@ export default function MatrizDashboard() {
             {/* Ações Diretas: WhatsApp */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '18px' }}>
               <a
-                href={`https://wa.me/${(selectedLeadDetails.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLeadDetails.phone || '').replace(/\D/g, '') : '55' + (selectedLeadDetails.phone || '').replace(/\D/g, '')}${selectedLeadDetails.lastMessage ? `?text=${encodeURIComponent(selectedLeadDetails.lastMessage)}` : ''}`}
+                href={`https://api.whatsapp.com/send?phone=${(selectedLeadDetails.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLeadDetails.phone || '').replace(/\D/g, '') : '55' + (selectedLeadDetails.phone || '').replace(/\D/g, '')}${selectedLeadDetails.lastMessage ? `&text=${encodeURIComponent(selectedLeadDetails.lastMessage)}` : ''}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => handleInitiateWhatsAppContact(selectedLeadDetails)}
