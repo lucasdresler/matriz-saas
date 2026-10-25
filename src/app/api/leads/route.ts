@@ -7,24 +7,24 @@ export async function GET(req: NextRequest) {
   try {
     const leadsRes = await query(`
       SELECT 
-        id,
-        organization_id as "orgId",
-        name,
-        phone,
-        email,
-        COALESCE(avatar_url, '') as avatar,
-        status,
-        COALESCE(tags, ARRAY[]::text[]) as tags,
-        COALESCE(service_interest, '') as "serviceInterest",
-        COALESCE(last_message, '') as "lastMessage",
-        to_char(last_message_at AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI') as "lastMessageTime",
-        last_message_at as "lastMessageAt",
-        ai_paused as "aiPaused",
-        unread_count as "unreadCount",
-        estimated_value as "estimatedValue",
-        created_at as "createdAt"
-      FROM leads
-      ORDER BY COALESCE(last_message_at, created_at) ASC, created_at ASC, id ASC;
+        l.id,
+        l.organization_id as "orgId",
+        l.name,
+        l.phone,
+        l.email,
+        COALESCE(l.avatar_url, '') as avatar,
+        l.status,
+        COALESCE(l.tags, ARRAY[]::text[]) as tags,
+        COALESCE(l.service_interest, '') as "serviceInterest",
+        COALESCE(l.last_message, '') as "lastMessage",
+        to_char(COALESCE((SELECT MAX(created_at) FROM chat_messages WHERE lead_id = l.id), l.last_message_at, l.created_at) AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI') as "lastMessageTime",
+        COALESCE((SELECT MAX(created_at) FROM chat_messages WHERE lead_id = l.id), l.last_message_at, l.created_at) as "lastMessageAt",
+        l.ai_paused as "aiPaused",
+        l.unread_count as "unreadCount",
+        l.estimated_value as "estimatedValue",
+        l.created_at as "createdAt"
+      FROM leads l
+      ORDER BY COALESCE((SELECT MAX(created_at) FROM chat_messages WHERE lead_id = l.id), l.last_message_at, l.created_at) ASC, l.created_at ASC, l.id ASC;
     `);
 
     const messagesRes = await query(`
