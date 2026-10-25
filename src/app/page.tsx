@@ -1719,7 +1719,20 @@ export default function MatrizDashboard() {
                               <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{lead.lastMessageTime}</span>
                             </div>
 
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
+                            <div
+                              style={{
+                                fontSize: '0.75rem',
+                                color: 'var(--text-secondary)',
+                                lineHeight: 1.4,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                wordBreak: 'break-word',
+                              }}
+                              title={lead.lastMessage}
+                            >
                               {lead.lastMessage}
                             </div>
 
