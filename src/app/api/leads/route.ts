@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { Lead, ChatMessage } from '@/types';
+import { notificationService } from '@/lib/notifications';
 
 export async function GET(req: NextRequest) {
   try {
@@ -109,6 +110,19 @@ export async function POST(req: NextRequest) {
          WHERE id = $2::uuid;`,
         [message.content, message.leadId]
       );
+
+      // Tentar entregar via WhatsApp (Evolution API) se for mensagem de atendente humano
+      if ((message.sender === 'human' || !message.sender) && message.leadId) {
+        try {
+          const leadPhoneRes = await query('SELECT phone FROM leads WHERE id = $1::uuid LIMIT 1;', [message.leadId]);
+          const phone = leadPhoneRes.rows[0]?.phone;
+          if (phone) {
+            notificationService.sendWhatsAppText(phone, message.content).catch(() => {});
+          }
+        } catch {
+          // Continua normalmente se a Evolution API não estiver pareada
+        }
+      }
 
       return NextResponse.json({ success: true, messageId: msgRes.rows[0]?.id });
     }

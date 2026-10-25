@@ -103,7 +103,7 @@ Qualquer dúvida, estamos 100% à sua disposição!`;
   /**
    * Envia mensagem de texto via Evolution API se houver instância ativa
    */
-  private async sendWhatsAppText(phone: string, text: string): Promise<boolean> {
+  public async sendWhatsAppText(phone: string, text: string): Promise<boolean> {
     try {
       const cleanPhone = phone.replace(/\D/g, '');
       const number = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;

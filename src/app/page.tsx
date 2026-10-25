@@ -773,7 +773,7 @@ export default function MatrizDashboard() {
     const newMsg: ChatMessage = {
       id: newMsgId,
       leadId: selectedLead.id,
-      sender: selectedLead.aiPaused ? 'human' : 'lead',
+      sender: 'human',
       content: userText,
       timestamp,
       status: 'sent',
@@ -2049,8 +2049,30 @@ export default function MatrizDashboard() {
                       </div>
                     </div>
 
-                    {/* BOTÃO DE CONTROLE: HUMAN HANDOFF (PAUSAR / RETOMAR IA) */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {/* BOTÃO DE CONTROLE: HUMAN HANDOFF & WHATSAPP DIRETO */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <a
+                        href={`https://wa.me/${(selectedLead.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLead.phone || '').replace(/\D/g, '') : '55' + (selectedLead.phone || '').replace(/\D/g, '')}${selectedLead.lastMessage ? `?text=${encodeURIComponent(selectedLead.lastMessage)}` : ''}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => handleInitiateWhatsAppContact(selectedLead)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '7px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: '#25D366',
+                          color: '#fff',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                        }}
+                        title="Abrir WhatsApp Web para envio oficial"
+                      >
+                        <Phone size={13} /> Abrir no WhatsApp
+                      </a>
+
                       <button
                         onClick={() => toggleAiForLead(selectedLead.id)}
                         style={{
@@ -2162,7 +2184,7 @@ export default function MatrizDashboard() {
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      placeholder={selectedLead.aiPaused ? 'Digite como atendente humano...' : 'Simule uma mensagem do cliente no WhatsApp...'}
+                      placeholder="Digite uma mensagem como atendente humano..."
                       style={{
                         flex: 1,
                         padding: '10px 14px',
