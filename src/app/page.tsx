@@ -795,6 +795,13 @@ export default function MatrizDashboard() {
     });
   };
 
+  // Gerar link direto para o WhatsApp Web (evita popup do xdg-open e tela intermediária de download)
+  const getWhatsAppWebUrl = (phone?: string, text?: string) => {
+    const raw = (phone || '').replace(/\D/g, '');
+    const cleanPhone = raw.startsWith('55') ? raw : '55' + raw;
+    return `https://web.whatsapp.com/send?phone=${cleanPhone}${text ? `&text=${encodeURIComponent(text)}` : ''}`;
+  };
+
   // Disparar início de contato via WhatsApp e registrar a abordagem no Live Chat
   const handleInitiateWhatsAppContact = (targetLead: Lead) => {
     if (!targetLead) return;
@@ -1928,8 +1935,8 @@ export default function MatrizDashboard() {
                                   <MessageSquare size={13} /> Chat
                                 </button>
                                 <a
-                                  href={`https://api.whatsapp.com/send?phone=${(lead.phone || '').replace(/\D/g, '').startsWith('55') ? (lead.phone || '').replace(/\D/g, '') : '55' + (lead.phone || '').replace(/\D/g, '')}${lead.lastMessage ? `&text=${encodeURIComponent(lead.lastMessage)}` : ''}`}
-                                  target="whatsapp_chat"
+                                  href={getWhatsAppWebUrl(lead.phone, lead.lastMessage)}
+                                  target="whatsapp_web"
                                   rel="noopener"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -2213,8 +2220,8 @@ export default function MatrizDashboard() {
                     {/* BOTÃO DE CONTROLE: HUMAN HANDOFF & WHATSAPP DIRETO */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <a
-                        href={`https://api.whatsapp.com/send?phone=${(selectedLead.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLead.phone || '').replace(/\D/g, '') : '55' + (selectedLead.phone || '').replace(/\D/g, '')}${selectedLead.lastMessage ? `&text=${encodeURIComponent(selectedLead.lastMessage)}` : ''}`}
-                        target="whatsapp_chat"
+                        href={getWhatsAppWebUrl(selectedLead.phone, selectedLead.lastMessage)}
+                        target="whatsapp_web"
                         rel="noopener"
                         onClick={() => handleInitiateWhatsAppContact(selectedLead)}
                         style={{
@@ -3921,8 +3928,8 @@ export default function MatrizDashboard() {
             {/* Ações Diretas: WhatsApp */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '18px' }}>
               <a
-                href={`https://api.whatsapp.com/send?phone=${(selectedLeadDetails.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLeadDetails.phone || '').replace(/\D/g, '') : '55' + (selectedLeadDetails.phone || '').replace(/\D/g, '')}${selectedLeadDetails.lastMessage ? `&text=${encodeURIComponent(selectedLeadDetails.lastMessage)}` : ''}`}
-                target="whatsapp_chat"
+                href={getWhatsAppWebUrl(selectedLeadDetails.phone, selectedLeadDetails.lastMessage)}
+                target="whatsapp_web"
                 rel="noopener"
                 onClick={() => handleInitiateWhatsAppContact(selectedLeadDetails)}
                 style={{
