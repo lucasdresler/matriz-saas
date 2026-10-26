@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
         l.organization_id as "orgId",
         l.name,
         l.phone,
+        l.whatsapp,
         l.email,
         COALESCE(l.avatar_url, '') as avatar,
         l.status,
@@ -45,6 +46,7 @@ export async function GET(req: NextRequest) {
       orgId: 'org-alllogic',
       name: r.name,
       phone: r.phone,
+      whatsapp: r.whatsapp || undefined,
       email: r.email || undefined,
       avatar: r.avatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces`,
       status: r.status,
@@ -119,8 +121,8 @@ export async function POST(req: NextRequest) {
       // Tentar entregar via WhatsApp (Evolution API) se for mensagem de atendente humano
       if ((message.sender === 'human' || !message.sender) && message.leadId) {
         try {
-          const leadPhoneRes = await query('SELECT phone FROM leads WHERE id = $1::uuid LIMIT 1;', [message.leadId]);
-          const phone = leadPhoneRes.rows[0]?.phone;
+          const leadPhoneRes = await query('SELECT phone, whatsapp FROM leads WHERE id = $1::uuid LIMIT 1;', [message.leadId]);
+          const phone = leadPhoneRes.rows[0]?.whatsapp || leadPhoneRes.rows[0]?.phone;
           if (phone) {
             notificationService.sendWhatsAppText(phone, message.content).catch(() => {});
           }
@@ -137,13 +139,14 @@ export async function POST(req: NextRequest) {
       for (const item of syncAll) {
         await query(
           `INSERT INTO leads (
-             id, organization_id, name, phone, email, status, tags, service_interest, last_message, unread_count, estimated_value, created_at, updated_at
+             id, organization_id, name, phone, whatsapp, email, status, tags, service_interest, last_message, unread_count, estimated_value, created_at, updated_at
            ) VALUES (
-             COALESCE($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
+             COALESCE($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
            )
            ON CONFLICT (id) DO UPDATE SET
              name = EXCLUDED.name,
              phone = EXCLUDED.phone,
+             whatsapp = COALESCE(EXCLUDED.whatsapp, leads.whatsapp),
              email = EXCLUDED.email,
              status = EXCLUDED.status,
              tags = EXCLUDED.tags,
@@ -156,6 +159,7 @@ export async function POST(req: NextRequest) {
             orgId,
             item.name,
             item.phone,
+            item.whatsapp || null,
             item.email || null,
             item.status || 'novo',
             item.tags || [],
@@ -177,13 +181,14 @@ export async function POST(req: NextRequest) {
 
     const res = await query(
       `INSERT INTO leads (
-         id, organization_id, name, phone, email, status, tags, service_interest, last_message, unread_count, estimated_value, created_at, updated_at
+         id, organization_id, name, phone, whatsapp, email, status, tags, service_interest, last_message, unread_count, estimated_value, created_at, updated_at
        ) VALUES (
-         COALESCE($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
+         COALESCE($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
        )
        ON CONFLICT (id) DO UPDATE SET
          name = EXCLUDED.name,
          phone = EXCLUDED.phone,
+         whatsapp = EXCLUDED.whatsapp,
          email = EXCLUDED.email,
          status = EXCLUDED.status,
          tags = EXCLUDED.tags,
@@ -197,6 +202,7 @@ export async function POST(req: NextRequest) {
         orgId,
         lead.name,
         lead.phone,
+        lead.whatsapp || null,
         lead.email || null,
         lead.status || 'novo',
         lead.tags || [],

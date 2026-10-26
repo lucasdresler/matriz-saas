@@ -31,6 +31,7 @@ export interface Lead {
   orgId: string;
   name: string;
   phone: string;
+  whatsapp?: string;
   email?: string;
   avatar: string;
   status: LeadStatus;

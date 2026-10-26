@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS public.leads (
     organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     phone VARCHAR(50) NOT NULL,
+    whatsapp VARCHAR(50),
     email VARCHAR(255),
     avatar_url TEXT,
     status VARCHAR(50) DEFAULT 'novo', -- 'novo', 'em_atendimento', 'aguardando_followup', 'agendado', 'concluido', 'perdido'

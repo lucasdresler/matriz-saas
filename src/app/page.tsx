@@ -188,6 +188,7 @@ export default function MatrizDashboard() {
   const [isEditingLead, setIsEditingLead] = useState(false);
   const [editLeadName, setEditLeadName] = useState('');
   const [editLeadPhone, setEditLeadPhone] = useState('');
+  const [editLeadWhatsapp, setEditLeadWhatsapp] = useState('');
   const [editLeadEmail, setEditLeadEmail] = useState('');
   const [editLeadService, setEditLeadService] = useState('');
   const [editLeadValue, setEditLeadValue] = useState<string>('');
@@ -405,6 +406,8 @@ export default function MatrizDashboard() {
           limite: prospectorLimit,
           semSite: prospectorOnlyNoSite,
           orgId: activeOrgId,
+          clientExcludedPhones: leads.map((l) => l.phone).filter(Boolean),
+          clientExcludedNames: leads.map((l) => l.name).filter(Boolean),
         }),
       });
 
@@ -414,20 +417,37 @@ export default function MatrizDashboard() {
       }
 
       if (data.leads && data.leads.length > 0) {
-        setLeads((prev) => [...prev, ...data.leads]);
+        setLeads((prev) => {
+          const existingIds = new Set(prev.map((l) => l.id));
+          const existingPhones = new Set(
+            prev.map((l) => (l.phone || '').replace(/\D/g, '').slice(-8)).filter((p) => p.length >= 8)
+          );
+          const newOnly = data.leads.filter((l: Lead) => {
+            const p8 = (l.phone || '').replace(/\D/g, '').slice(-8);
+            if (p8 && existingPhones.has(p8)) return false;
+            return !existingIds.has(l.id);
+          });
+          return [...prev, ...newOnly];
+        });
+
         // Persistir imediatamente no banco de dados na nuvem para nunca sumir
         fetch('/api/leads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ syncAll: data.leads }),
         }).catch(() => {});
-        setProspectorSuccessMsg(`✓ ${data.leads.length} leads minerados e adicionados ao Kanban com sucesso!`);
+
+        const msg = data.ignoredCount && data.ignoredCount > 0
+          ? `✓ ${data.leads.length} novos leads minerados! (${data.ignoredCount} empresas já mineradas foram ignoradas).`
+          : `✓ ${data.leads.length} novos leads minerados e adicionados ao Kanban com sucesso!`;
+
+        setProspectorSuccessMsg(msg);
         setTimeout(() => {
           setProspectorModalOpen(false);
           setProspectorSuccessMsg('');
           setProspectorNiche('');
           setProspectorCity('');
-        }, 2200);
+        }, 2600);
       } else {
         setProspectorError('Nenhum resultado foi encontrado para os critérios informados.');
       }
@@ -638,6 +658,7 @@ export default function MatrizDashboard() {
     setIsEditingLead(false);
     setEditLeadName(lead.name || '');
     setEditLeadPhone(lead.phone || '');
+    setEditLeadWhatsapp(lead.whatsapp || '');
     setEditLeadEmail(lead.email || '');
     setEditLeadService(lead.serviceInterest || '');
     setEditLeadValue(lead.estimatedValue ? String(lead.estimatedValue) : '');
@@ -652,6 +673,7 @@ export default function MatrizDashboard() {
       ...selectedLeadDetails,
       name: editLeadName.trim() || selectedLeadDetails.name,
       phone: editLeadPhone.trim() || selectedLeadDetails.phone,
+      whatsapp: editLeadWhatsapp.trim() || undefined,
       email: editLeadEmail.trim() || undefined,
       serviceInterest: editLeadService.trim() || selectedLeadDetails.serviceInterest,
       estimatedValue: !isNaN(Number(parsedValue)) ? Number(parsedValue) : selectedLeadDetails.estimatedValue,
@@ -1878,6 +1900,13 @@ export default function MatrizDashboard() {
                               <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{lead.lastMessageTime}</span>
                             </div>
 
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                              <span>📞 {lead.phone}</span>
+                              {lead.whatsapp && lead.whatsapp !== lead.phone && (
+                                <span style={{ color: '#25D366', fontWeight: 600 }}>💬 WA: {lead.whatsapp}</span>
+                              )}
+                            </div>
+
                             <div
                               style={{
                                 fontSize: '0.75rem',
@@ -1935,7 +1964,7 @@ export default function MatrizDashboard() {
                                   <MessageSquare size={13} /> Chat
                                 </button>
                                 <a
-                                  href={getWhatsAppWebUrl(lead.phone, lead.lastMessage)}
+                                  href={getWhatsAppWebUrl(lead.whatsapp || lead.phone, lead.lastMessage)}
                                   target="whatsapp_web"
                                   rel="noopener"
                                   onClick={(e) => {
@@ -2212,7 +2241,9 @@ export default function MatrizDashboard() {
                       <div>
                         <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#fff' }}>{selectedLead.name}</div>
                         <div style={{ fontSize: '0.72rem', color: 'rgba(255, 255, 255, 0.6)' }}>
-                          {selectedLead.phone} · <span style={{ color: '#34D399' }}>{selectedLead.serviceInterest}</span>
+                          {selectedLead.whatsapp && selectedLead.whatsapp !== selectedLead.phone
+                            ? `${selectedLead.phone} · WA: ${selectedLead.whatsapp}`
+                            : selectedLead.phone} · <span style={{ color: '#34D399' }}>{selectedLead.serviceInterest}</span>
                         </div>
                       </div>
                     </div>
@@ -2220,7 +2251,7 @@ export default function MatrizDashboard() {
                     {/* BOTÃO DE CONTROLE: HUMAN HANDOFF & WHATSAPP DIRETO */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <a
-                        href={getWhatsAppWebUrl(selectedLead.phone, selectedLead.lastMessage)}
+                        href={getWhatsAppWebUrl(selectedLead.whatsapp || selectedLead.phone, selectedLead.lastMessage)}
                         target="whatsapp_web"
                         rel="noopener"
                         onClick={() => handleInitiateWhatsAppContact(selectedLead)}
@@ -3233,6 +3264,7 @@ export default function MatrizDashboard() {
                 const formData = new FormData(e.currentTarget);
                 const name = formData.get('name') as string;
                 const phone = formData.get('phone') as string;
+                const whatsapp = (formData.get('whatsapp') as string)?.trim() || undefined;
                 const service = formData.get('service') as string;
 
                 if (name && phone) {
@@ -3241,6 +3273,7 @@ export default function MatrizDashboard() {
                     orgId: activeOrgId,
                     name,
                     phone,
+                    whatsapp,
                     avatar: '',
                     status: 'novo',
                     tags: ['Manual', 'WhatsApp'],
@@ -3263,8 +3296,12 @@ export default function MatrizDashboard() {
                 <input required name="name" placeholder="Ex: Rodrigo Tavares" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.85rem' }} />
               </div>
               <div>
-                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Telefone WhatsApp</label>
-                <input required name="phone" placeholder="+55 11 99999-8888" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.85rem' }} />
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Telefone Principal (Fixo / Geral)</label>
+                <input required name="phone" placeholder="Ex: (11) 4782-2686" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.85rem' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.78rem', color: '#34D399', fontWeight: 600, display: 'block', marginBottom: '4px' }}>WhatsApp Direto (Opcional se diferente)</label>
+                <input name="whatsapp" placeholder="Ex: (11) 99999-8888" style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#fff', fontSize: '0.85rem' }} />
               </div>
               <div>
                 <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Serviço de Interesse</label>
@@ -3568,6 +3605,26 @@ export default function MatrizDashboard() {
                     </div>
                   </div>
                 </label>
+
+                {/* Badge Informativo de Proteção Anti-Duplicidade */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+                    border: '1px solid rgba(56, 189, 248, 0.2)',
+                    fontSize: '0.74rem',
+                    color: '#93C5FD',
+                  }}
+                >
+                  <ShieldCheck size={14} style={{ color: '#38BDF8', flexShrink: 0 }} />
+                  <span>
+                    <strong>Anti-Duplicidade Ativo:</strong> Empresas e contatos já minerados ou cadastrados no CRM serão identificados e ignorados automaticamente.
+                  </span>
+                </div>
 
                 {/* Ações */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
@@ -3928,7 +3985,7 @@ export default function MatrizDashboard() {
             {/* Ações Diretas: WhatsApp */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '18px' }}>
               <a
-                href={getWhatsAppWebUrl(selectedLeadDetails.phone, selectedLeadDetails.lastMessage)}
+                href={getWhatsAppWebUrl(selectedLeadDetails.whatsapp || selectedLeadDetails.phone, selectedLeadDetails.lastMessage)}
                 target="whatsapp_web"
                 rel="noopener"
                 onClick={() => handleInitiateWhatsAppContact(selectedLeadDetails)}
@@ -4000,13 +4057,25 @@ export default function MatrizDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>Telefone WhatsApp:</label>
+                  <label style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>Telefone Principal (Fixo / Recepção):</label>
                   <input
                     type="text"
                     value={editLeadPhone}
                     onChange={(e) => setEditLeadPhone(e.target.value)}
+                    placeholder="Ex: (11) 4782-2686"
                     style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.82rem' }}
                   />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.74rem', color: '#34D399', fontWeight: 600, display: 'block', marginBottom: '3px' }}>WhatsApp Direto (Celular do Contato):</label>
+                  <input
+                    type="text"
+                    value={editLeadWhatsapp}
+                    onChange={(e) => setEditLeadWhatsapp(e.target.value)}
+                    placeholder="Ex: (11) 99999-8888 (se for diferente do telefone)"
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(16, 185, 129, 0.35)', color: '#fff', fontSize: '0.82rem' }}
+                  />
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Caso a clínica utilize um celular diferente do fixo para o WhatsApp.</span>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.74rem', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>E-mail (opcional):</label>
@@ -4075,8 +4144,14 @@ export default function MatrizDashboard() {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Telefone:</span>
+                  <span style={{ color: 'var(--text-muted)' }}>Telefone Principal:</span>
                   <span style={{ color: '#fff', fontWeight: 600 }}>{selectedLeadDetails.phone}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>WhatsApp Direto:</span>
+                  <span style={{ color: selectedLeadDetails.whatsapp ? '#25D366' : 'var(--text-muted)', fontWeight: selectedLeadDetails.whatsapp ? 600 : 400 }}>
+                    {selectedLeadDetails.whatsapp ? `💬 ${selectedLeadDetails.whatsapp}` : 'Mesmo do telefone'}
+                  </span>
                 </div>
                 {selectedLeadDetails.email && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
