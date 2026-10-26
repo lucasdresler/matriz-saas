@@ -1929,8 +1929,8 @@ export default function MatrizDashboard() {
                                 </button>
                                 <a
                                   href={`https://api.whatsapp.com/send?phone=${(lead.phone || '').replace(/\D/g, '').startsWith('55') ? (lead.phone || '').replace(/\D/g, '') : '55' + (lead.phone || '').replace(/\D/g, '')}${lead.lastMessage ? `&text=${encodeURIComponent(lead.lastMessage)}` : ''}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                  target="whatsapp_chat"
+                                  rel="noopener"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleInitiateWhatsAppContact(lead);
@@ -2214,8 +2214,8 @@ export default function MatrizDashboard() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <a
                         href={`https://api.whatsapp.com/send?phone=${(selectedLead.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLead.phone || '').replace(/\D/g, '') : '55' + (selectedLead.phone || '').replace(/\D/g, '')}${selectedLead.lastMessage ? `&text=${encodeURIComponent(selectedLead.lastMessage)}` : ''}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target="whatsapp_chat"
+                        rel="noopener"
                         onClick={() => handleInitiateWhatsAppContact(selectedLead)}
                         style={{
                           display: 'flex',
@@ -3922,8 +3922,8 @@ export default function MatrizDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '18px' }}>
               <a
                 href={`https://api.whatsapp.com/send?phone=${(selectedLeadDetails.phone || '').replace(/\D/g, '').startsWith('55') ? (selectedLeadDetails.phone || '').replace(/\D/g, '') : '55' + (selectedLeadDetails.phone || '').replace(/\D/g, '')}${selectedLeadDetails.lastMessage ? `&text=${encodeURIComponent(selectedLeadDetails.lastMessage)}` : ''}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                target="whatsapp_chat"
+                rel="noopener"
                 onClick={() => handleInitiateWhatsAppContact(selectedLeadDetails)}
                 style={{
                   display: 'flex',
