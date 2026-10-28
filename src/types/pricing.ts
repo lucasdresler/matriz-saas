@@ -21,10 +21,10 @@ export interface PlanConfig {
 }
 
 export const SAAS_PLANS: Record<string, PlanConfig> = {
-  // --- Agillex Atendimento ---
+  // --- Agillex Atende ---
   'starter': {
     id: 'starter',
-    name: 'Atendimento Starter',
+    name: 'Atende Starter',
     module: 'atendimento',
     badge: 'Autônomos e Pequenos Negócios',
     tagline: 'Ideal para profissionais autônomos, estúdios e consultórios.',
@@ -42,7 +42,7 @@ export const SAAS_PLANS: Record<string, PlanConfig> = {
   },
   'pro': {
     id: 'pro',
-    name: 'Atendimento Pro',
+    name: 'Atende Pro',
     module: 'atendimento',
     badge: 'Mais Escolhido',
     tagline: 'Para clínicas, escritórios e empresas com equipe e maior fluxo.',

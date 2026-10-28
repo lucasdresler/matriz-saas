@@ -107,7 +107,7 @@ export interface SaaSClient {
   name: string;
   company: string;
   email: string;
-  plan: 'Starter' | 'Pro' | 'Agência VIP' | 'Agillex Agenda' | 'Agillex Atendimento';
+  plan: 'Starter' | 'Pro' | 'Agência VIP' | 'Agillex Agenda' | 'Agillex Atende';
   mrr: number;
   status: 'active' | 'trial' | 'overdue';
   instancesCount: number;

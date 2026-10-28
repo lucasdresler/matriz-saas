@@ -1203,12 +1203,12 @@ export default function MatrizDashboard() {
             </div>
           )}
 
-          {/* MÓDULO 2: AGILLEX ATENDIMENTO (Quando Contratado) */}
+          {/* MÓDULO 2: AGILLEX ATENDE (Quando Contratado) */}
           {currentOrg.modules?.atendimento && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '2px' }}>
                 <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#34D399', fontWeight: 700, letterSpacing: '0.05em' }}>
-                  Agillex Atendimento
+                  Agillex Atende
                 </span>
                 <span style={{ fontSize: '0.6rem', color: '#10B981', fontWeight: 600 }}>IA ONLINE</span>
               </div>
@@ -3766,7 +3766,7 @@ export default function MatrizDashboard() {
                 </button>
               </div>
 
-              {/* Módulo Agillex Atendimento */}
+              {/* Módulo Agillex Atende */}
               <div
                 style={{
                   display: 'flex',
@@ -3794,7 +3794,7 @@ export default function MatrizDashboard() {
                     <MessageSquare size={20} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>Agillex Atendimento (IA)</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>Agillex Atende (IA)</div>
                     <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
                       WhatsApp 24/7 com IA generativa, RAG e Live Chat (R$ 149/mês)
                     </div>

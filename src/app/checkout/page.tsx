@@ -33,8 +33,8 @@ const MODULE_HEADER_CONTENT: Record<
       'Atendimento IA 24/7 no WhatsApp, Agendamento Online, CRM Kanban e Agillex Pay unificados em uma única plataforma.',
   },
   atendimento: {
-    title: 'Contratação Segura do Agillex Atendimento (IA)',
-    trialTitle: 'Ativação Segura do Agillex Atendimento (IA)',
+    title: 'Contratação Segura do Agillex Atende (IA)',
+    trialTitle: 'Ativação Segura do Agillex Atende (IA)',
     subtitle:
       'Atendente inteligente com IA humanizada no WhatsApp oficial 24/7, áudios e transbordo humano em 1 clique.',
   },
@@ -381,7 +381,7 @@ function CheckoutContent() {
                           className="site-navigation__dropdown-link"
                           role="menuitem"
                         >
-                          Agillex Atendimento
+                          Agillex Atende
                         </a>
                       </li>
                     </ul>
@@ -680,7 +680,7 @@ function CheckoutContent() {
                     className={`checkout-module-btn ${selectedModule === 'atendimento' ? 'checkout-module-btn--active' : ''}`}
                   >
                     <MessageSquare size={16} />
-                    <span>Agillex Atendimento (IA)</span>
+                    <span>Agillex Atende (IA)</span>
                   </button>
 
                   <button
@@ -1246,7 +1246,7 @@ function CheckoutContent() {
                             href="https://alllogiconline.com.br/agillex-atendimento"
                             role="menuitem"
                           >
-                            Agillex Atendimento
+                            Agillex Atende
                           </a>
                         </li>
                       </ul>

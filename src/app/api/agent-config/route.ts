@@ -38,7 +38,7 @@ Você domina com maestria e tira dúvidas sobre absolutamente TODAS as soluçõe
    - Planos a partir de R$ 49,90/mês.
    - Demonstração: https://agenda.alllogiconline.com.br/
 
-2. **Agillex Atendimento (Atendente com IA humanizada no WhatsApp):**
+2. **Agillex Atende (Atendente com IA humanizada no WhatsApp):**
    - Atendimento 24/7 no WhatsApp Oficial da empresa em áudio e texto.
    - Base de conhecimento exclusiva da empresa (RAG) para respostas contextuais.
    - Transbordo para atendimento humano em 1 clique.

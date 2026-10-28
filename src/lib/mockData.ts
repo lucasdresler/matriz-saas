@@ -43,7 +43,7 @@ export const initialServices: ServiceItem[] = [
   {
     id: 'srv-2',
     orgId: 'org-alllogic',
-    name: 'Agillex Atendimento Starter',
+    name: 'Agillex Atende Starter',
     price: 99.9,
     durationMinutes: 30,
     description: 'Atendente inteligente com IA humanizada no WhatsApp Oficial para até 500 atendimentos/mês, compreensão de áudio e texto, base de conhecimento RAG exclusiva e transbordo humano em 1 clique.',
@@ -51,7 +51,7 @@ export const initialServices: ServiceItem[] = [
   {
     id: 'srv-3',
     orgId: 'org-alllogic',
-    name: 'Agillex Atendimento Pro',
+    name: 'Agillex Atende Pro',
     price: 179.9,
     durationMinutes: 30,
     description: 'Atendente inteligente com IA humanizada no WhatsApp Oficial para até 2.000 conversas/mês, respostas contextuais avançadas, áudio de voz, base RAG e transbordo humano em 1 clique.',
