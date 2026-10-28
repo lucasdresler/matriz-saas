@@ -22,6 +22,42 @@ import {
 import { SAAS_PLANS, PlanConfig, ModuleType, BillingCycle, BillingMethod } from '@/types/pricing';
 import './checkout.css';
 
+const MODULE_HEADER_CONTENT: Record<
+  ModuleType,
+  { title: string; trialTitle: string; subtitle: string }
+> = {
+  combo: {
+    title: 'Contratação Segura do Combo Agillex Hub Pro',
+    trialTitle: 'Ativação Segura do Combo Agillex Hub Pro',
+    subtitle:
+      'Atendimento IA 24/7 no WhatsApp, Agendamento Online, CRM Kanban e Agillex Pay unificados em uma única plataforma.',
+  },
+  atendimento: {
+    title: 'Contratação Segura do Agillex Atendimento (IA)',
+    trialTitle: 'Ativação Segura do Agillex Atendimento (IA)',
+    subtitle:
+      'Atendente inteligente com IA humanizada no WhatsApp oficial 24/7, áudios e transbordo humano em 1 clique.',
+  },
+  agenda: {
+    title: 'Contratação Segura do Agillex Agenda',
+    trialTitle: 'Ativação Segura do Agillex Agenda',
+    subtitle:
+      'Sistema de agendamento online 24/7 sincronizado com Google Calendar, página pública exclusiva e lembretes no WhatsApp.',
+  },
+  hospedagem: {
+    title: 'Contratação Segura de Hospedagem',
+    trialTitle: 'Contratação Segura de Hospedagem',
+    subtitle:
+      'Ativação automatizada de cPanel, certificado SSL incluso e suporte técnico de alta disponibilidade.',
+  },
+  dominio: {
+    title: 'Contratação Segura de Domínio Oficial',
+    trialTitle: 'Contratação Segura de Domínio Oficial',
+    subtitle:
+      'Registro e apontamento da identidade oficial da sua empresa com gestão DNS inclusa.',
+  },
+};
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
 
@@ -615,14 +651,12 @@ function CheckoutContent() {
               <div className="checkout-header-area">
                 <span className="checkout-eyebrow">CHECKOUT OFICIAL ALLLOGIC ONLINE</span>
                 <h1 className="checkout-title">
-                  {selectedModule === 'hospedagem'
-                    ? 'Contratação Segura de Hospedagem'
-                    : 'Ativação Segura do Agillex Hub'}
+                  {isTrial
+                    ? MODULE_HEADER_CONTENT[selectedModule]?.trialTitle
+                    : MODULE_HEADER_CONTENT[selectedModule]?.title}
                 </h1>
                 <p className="checkout-subtitle">
-                  {selectedModule === 'hospedagem'
-                    ? 'Ativação automatizada de cPanel, certificado SSL incluso e suporte técnico de alta disponibilidade.'
-                    : 'Configure seus dados corporativos e escolha o formato ideal para sua operação.'}
+                  {MODULE_HEADER_CONTENT[selectedModule]?.subtitle}
                 </p>
 
                 {/* Seletor de Módulos (Tabs) */}
