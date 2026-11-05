@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { whmService } from '@/lib/whm';
+import { agillexCobrancaService } from '@/lib/cobranca';
 
 export async function POST(request: Request) {
   try {
@@ -22,12 +23,47 @@ export async function POST(request: Request) {
       billingType: payment?.billingType,
     });
 
+    const customerPhone = payment?.mobilePhone || payment?.phone || '';
+    const customerName = payment?.customerName || payment?.clientName || 'Cliente';
+
     switch (event) {
+      case 'PAYMENT_CREATED':
+      case 'PAYMENT_DUEDATE_WARNING': {
+        const stage = event === 'PAYMENT_CREATED' ? 'preventivo' : 'vencimento';
+        console.log(`[Asaas Webhook] Disparando régua preventiva/vencimento (${stage}) para fatura: ${payment?.id}`);
+
+        if (customerPhone && payment?.id) {
+          await agillexCobrancaService.processNotification({
+            customerName,
+            customerPhone,
+            paymentId: payment.id,
+            value: payment.value || 0,
+            dueDate: payment.dueDate,
+            description: payment.description || 'Assinatura AllLogic',
+            stage,
+          });
+        }
+        break;
+      }
+
       case 'PAYMENT_CONFIRMED':
-      case 'PAYMENT_RECEIVED':
+      case 'PAYMENT_RECEIVED': {
         console.log(`[Asaas Webhook] Pagamento liquidado com sucesso: ${payment?.id}`);
 
-        // Provisionamento automático de hospedagem se o pagamento for de plano de hospedagem
+        // 1. Notificação de confirmação e agradecimento via WhatsApp
+        if (customerPhone && payment?.id) {
+          await agillexCobrancaService.processNotification({
+            customerName,
+            customerPhone,
+            paymentId: payment.id,
+            value: payment.value || 0,
+            dueDate: payment.dueDate,
+            description: payment.description || 'Serviço AllLogic',
+            stage: 'confirmado',
+          });
+        }
+
+        // 2. Provisionamento automático de hospedagem se o pagamento for de plano de hospedagem
         if (payment?.description && payment.description.includes('Hospedagem AllLogic')) {
           const domainMatch = payment.description.match(/Domínio:\s*([a-zA-Z0-9.-]+)/);
           const domain = domainMatch ? domainMatch[1].trim() : '';
@@ -45,11 +81,23 @@ export async function POST(request: Request) {
           }
         }
         break;
+      }
 
-      case 'PAYMENT_OVERDUE':
-        console.log(`[Asaas Webhook] Pagamento em atraso: ${payment?.id}`);
-        // Aqui marca o status para 'overdue' e pode disparar alerta amigável
+      case 'PAYMENT_OVERDUE': {
+        console.log(`[Asaas Webhook] Pagamento em atraso: ${payment?.id}. Disparando régua de recuperação amigável...`);
+        if (customerPhone && payment?.id) {
+          await agillexCobrancaService.processNotification({
+            customerName,
+            customerPhone,
+            paymentId: payment.id,
+            value: payment.value || 0,
+            dueDate: payment.dueDate,
+            description: payment.description || 'Fatura AllLogic',
+            stage: 'recuperacao',
+          });
+        }
         break;
+      }
 
       case 'PAYMENT_REFUNDED':
         console.log(`[Asaas Webhook] Pagamento estornado: ${payment?.id}`);

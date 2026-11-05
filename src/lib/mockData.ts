@@ -1,4 +1,4 @@
-import { Organization, Lead, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, WhatsappInstance } from '@/types';
+import { Organization, Lead, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, WhatsappInstance, CobrancaRule, CobrancaNotificationLog } from '@/types';
 
 // Organização Oficial de Trabalho da AllLogic Online
 export const initialOrganizations: Organization[] = [
@@ -17,6 +17,7 @@ export const initialOrganizations: Organization[] = [
       agenda: true,
       atendimento: true,
       crm: true,
+      cobranca: true,
     },
   },
 ];
@@ -79,6 +80,14 @@ export const initialServices: ServiceItem[] = [
     price: 169.9,
     durationMinutes: 30,
     description: 'Agendamento online para estabelecimentos de maior porte com múltiplos atendimentos simultâneos e gestão de escalas de até 10 colaboradores com lembretes automáticos no WhatsApp.',
+  },
+  {
+    id: 'srv-cobranca',
+    orgId: 'org-alllogic',
+    name: 'Agillex Cobrança Inteligente Pix',
+    price: 89.9,
+    durationMinutes: 30,
+    description: 'Régua inteligente de cobrança e notificação ativa no WhatsApp com Pix Copia e Cola integrado ao Asaas. Reduz até 78% da inadimplência com lembrete preventivo, alerta no vencimento e recuperação amigável.',
   },
   {
     id: 'srv-7',
@@ -202,3 +211,69 @@ export const initialWhatsappInstance: WhatsappInstance = {
   provider: 'Evolution API (Docker)',
   lastPing: 'Agora mesmo',
 };
+
+// Regras padrão da Régua Inteligente Agillex Cobrança
+export const initialCobrancaRules: CobrancaRule[] = [
+  {
+    id: 'rule-preventivo',
+    stage: 'preventivo',
+    title: 'Aviso Preventivo (D-2)',
+    timingLabel: '2 dias antes do vencimento',
+    active: true,
+    template: 'Olá, *{nome}*! Tudo bem? Passando para lembrar que sua fatura de *{descricao}* no valor de *R$ {valor}* vence em *{vencimento}*.\n\nPara facilitar seu pagamento, aqui está a chave Pix Copia e Cola:\n`{pixCopiaECola}`\n\nQualquer dúvida, conte conosco! ✨',
+  },
+  {
+    id: 'rule-vencimento',
+    stage: 'vencimento',
+    title: 'Dia do Vencimento (D0)',
+    timingLabel: 'No dia do vencimento às 09:00',
+    active: true,
+    template: 'Olá, *{nome}*! Hoje é o dia do vencimento da sua fatura *{descricao}* no valor de *R$ {valor}*.\n\nPague via Pix de forma instantânea sem juros:\n`{pixCopiaECola}`\n\nCaso já tenha realizado o pagamento, por favor desconsidere este aviso. Obrigado!',
+  },
+  {
+    id: 'rule-recuperacao',
+    stage: 'recuperacao',
+    title: 'Recuperação Amigável (D+2)',
+    timingLabel: '2 dias após o vencimento',
+    active: true,
+    template: 'Olá, *{nome}*! Notamos que sua fatura de *{descricao}* (vencida em {vencimento}) ainda consta em aberto.\n\nSabemos que a correria do dia a dia acontece! Para regularizar agora sem complicação, utilize o Pix abaixo:\n`{pixCopiaECola}`\n\nSe já realizou ou precisa de alguma ajuda, nos dê um alô por aqui.',
+  },
+  {
+    id: 'rule-confirmado',
+    stage: 'confirmado',
+    title: 'Confirmação Instantânea (D0 pós-pago)',
+    timingLabel: 'Imediato após liquidação do Pix',
+    active: true,
+    template: 'Obrigado, *{nome}*! 🟢 Recebemos com sucesso a confirmação do seu pagamento de *R$ {valor}* referente a *{descricao}*.\n\nSeu serviço continua ativo e garantido. Tenha um excelente dia!',
+  },
+];
+
+// Histórico de notificações disparadas pela régua
+export const initialCobrancaLogs: CobrancaNotificationLog[] = [
+  {
+    id: 'log-1',
+    orgId: 'org-alllogic',
+    customerName: 'Studio Bella Vita',
+    customerPhone: '5511999887766',
+    paymentId: 'pay_9823412',
+    value: 99.9,
+    stage: 'confirmado',
+    channel: 'whatsapp',
+    status: 'sent',
+    sentAt: 'Hoje às 14:32',
+    description: 'Agillex Agenda Pro — Mensalidade',
+  },
+  {
+    id: 'log-2',
+    orgId: 'org-alllogic',
+    customerName: 'Dr. Roberto Cardoso',
+    customerPhone: '5511988776655',
+    paymentId: 'pay_7621453',
+    value: 249.9,
+    stage: 'preventivo',
+    channel: 'whatsapp',
+    status: 'sent',
+    sentAt: 'Hoje às 09:15',
+    description: 'Agillex Hub Pro (Atendimento + CRM)',
+  },
+];

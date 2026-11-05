@@ -48,7 +48,9 @@ import {
   Download,
   Pencil,
   Save,
-  AlertTriangle
+  AlertTriangle,
+  Receipt,
+  BadgePercent
 } from 'lucide-react';
 import {
   initialOrganizations,
@@ -59,8 +61,10 @@ import {
   initialKnowledgeDocs,
   initialSaaSClients,
   initialWhatsappInstance,
+  initialCobrancaRules,
+  initialCobrancaLogs,
 } from '@/lib/mockData';
-import { Organization, Lead, LeadStatus, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient } from '@/types';
+import { Organization, Lead, LeadStatus, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, CobrancaRule, CobrancaNotificationLog, CobrancaStage } from '@/types';
 
 export default function MatrizDashboard() {
   // Estado Multi-Tenant (Organização Ativa)
@@ -69,7 +73,18 @@ export default function MatrizDashboard() {
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
 
   // Navegação Principal (Inicia direto no Funil CRM para o trabalho diário)
-  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas'>('kanban');
+  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca'>('kanban');
+
+  // Estados do Agillex Cobrança (Régua Inteligente Asaas Pix)
+  const [cobrancaRules, setCobrancaRules] = useState<CobrancaRule[]>(initialCobrancaRules);
+  const [cobrancaLogs, setCobrancaLogs] = useState<CobrancaNotificationLog[]>(initialCobrancaLogs);
+  const [simName, setSimName] = useState('Dresler Ferreira');
+  const [simPhone, setSimPhone] = useState('11966381915');
+  const [simValue, setSimValue] = useState('149.90');
+  const [simDesc, setSimDesc] = useState('Hospedagem & Agillex Hub Pro');
+  const [simStage, setSimStage] = useState<CobrancaStage>('preventivo');
+  const [simLoading, setSimLoading] = useState(false);
+  const [simResult, setSimResult] = useState<{ success: boolean; text?: string } | null>(null);
 
   // Estados dos Dados com Persistência em localStorage
   const [leads, setLeads] = useState<Lead[]>(() => {
@@ -551,7 +566,7 @@ export default function MatrizDashboard() {
   };
 
   // Organização Atual
-  const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas') => {
+  const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca') => {
     setActiveTab(tab);
     setMobileSidebarOpen(false);
     if (tab === 'livechat') {
@@ -562,6 +577,54 @@ export default function MatrizDashboard() {
           setSelectedLeadId(firstActive.id);
         }
       }
+    }
+  };
+
+  const toggleCobrancaRule = (ruleId: string) => {
+    setCobrancaRules((prev) =>
+      prev.map((r) => (r.id === ruleId ? { ...r, active: !r.active } : r))
+    );
+  };
+
+  const handleSendCobrancaTest = async () => {
+    setSimLoading(true);
+    setSimResult(null);
+    try {
+      const res = await fetch('/api/cobranca/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: simName,
+          customerPhone: simPhone,
+          value: simValue,
+          description: simDesc,
+          stage: simStage,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSimResult({ success: true, text: data.feedback });
+        const newLog: CobrancaNotificationLog = {
+          id: `log-${Date.now()}`,
+          orgId: activeOrgId,
+          customerName: simName,
+          customerPhone: simPhone,
+          paymentId: `sim_${Date.now()}`,
+          value: parseFloat(simValue.replace(',', '.')) || 0,
+          stage: simStage,
+          channel: 'whatsapp',
+          status: data.delivered ? 'sent' : 'simulated',
+          sentAt: 'Agora mesmo',
+          description: simDesc,
+        };
+        setCobrancaLogs((prev) => [newLog, ...prev]);
+      } else {
+        setSimResult({ success: false, text: data.error || 'Falha ao processar notificação' });
+      }
+    } catch (err: any) {
+      setSimResult({ success: false, text: err.message || 'Erro de comunicação' });
+    } finally {
+      setSimLoading(false);
     }
   };
 
@@ -1328,6 +1391,41 @@ export default function MatrizDashboard() {
             </div>
           )}
 
+          {/* MÓDULO 4: AGILLEX COBRANÇA */}
+          {currentOrg.modules?.cobranca && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '2px' }}>
+                <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#10B981', fontWeight: 700, letterSpacing: '0.05em' }}>
+                  Agillex Cobrança
+                </span>
+                <span style={{ fontSize: '0.6rem', color: '#10B981', fontWeight: 600, background: 'rgba(16, 185, 129, 0.1)', padding: '1px 5px', borderRadius: '4px' }}>PIX ASAAS</span>
+              </div>
+
+              <button
+                onClick={() => handleTabChange('cobranca')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: activeTab === 'cobranca' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                  color: activeTab === 'cobranca' ? '#34D399' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'cobranca' ? 600 : 400,
+                  border: activeTab === 'cobranca' ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid transparent',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Receipt size={18} />
+                  <span style={{ fontSize: '0.86rem' }}>Régua Inteligente & Pix</span>
+                </div>
+                <span style={{ fontSize: '0.65rem', background: '#059669', color: '#fff', padding: '1px 6px', borderRadius: '99px', fontWeight: 700 }}>
+                  R$ 1,99
+                </span>
+              </button>
+            </div>
+          )}
+
           {/* ADMIN MASTER */}
           <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
             <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, padding: '0 8px', marginBottom: '4px', letterSpacing: '0.05em' }}>
@@ -1425,6 +1523,7 @@ export default function MatrizDashboard() {
                 {activeTab === 'ai_brain' && 'Cérebro IA & RAG'}
                 {activeTab === 'whatsapp' && 'Conexão WhatsApp'}
                 {activeTab === 'saas' && 'Painel SaaS & MRR'}
+                {activeTab === 'cobranca' && 'Agillex Cobrança Inteligente'}
               </h1>
               <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '10px' }}>
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -3221,6 +3320,617 @@ export default function MatrizDashboard() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* MÓDULO 4: AGILLEX COBRANÇA */}
+          {activeTab === 'cobranca' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* Header do Módulo */}
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-subtle)',
+                  padding: '24px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '20px',
+                  flexWrap: 'wrap',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(20, 24, 33, 0.95) 100%)',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <div
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '10px',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#34D399',
+                      }}
+                    >
+                      <Receipt size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                        Agillex Cobrança Inteligente
+                      </h2>
+                      <p style={{ fontSize: '0.8rem', color: '#10B981', margin: 0, fontWeight: 600 }}>
+                        Régua Ativa WhatsApp Oficial + Pix Copia e Cola via Asaas API (Taxa Fixa R$ 1,99)
+                      </p>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', maxWidth: '720px', lineHeight: '1.5', margin: 0 }}>
+                    Automatize 100% da sua régua de cobrança: lembretes preventivos antes do vencimento, alertas no dia da fatura e recuperação cordial de inadimplência direto no WhatsApp com o código Pix pronto para pagar.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      fontSize: '0.78rem',
+                      color: '#34D399',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+                    Webhook Asaas Conectado
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      fontSize: '0.78rem',
+                      color: '#60A5FA',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Zap size={14} />
+                    Pix Copia e Cola Instantâneo
+                  </div>
+                </div>
+              </div>
+
+              {/* Cards de Métricas e KPIs */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '18px 20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Faturas Monitoradas</span>
+                    <Receipt size={18} style={{ color: '#60A5FA' }} />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+                    48
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#60A5FA', marginTop: '6px', fontWeight: 600 }}>
+                    ↑ 100% monitoradas via régua
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '18px 20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Taxa de Liquidação Pix</span>
+                    <BadgePercent size={18} style={{ color: '#10B981' }} />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#34D399', letterSpacing: '-0.02em' }}>
+                    94.2%
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#10B981', marginTop: '6px', fontWeight: 600 }}>
+                    ★ Alta adesão pelo WhatsApp
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '18px 20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Recuperado no Mês</span>
+                    <TrendingUp size={18} style={{ color: '#34D399' }} />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+                    R$ 4.890,00
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#34D399', marginTop: '6px', fontWeight: 600 }}>
+                    Sem protesto ou desgaste
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '18px 20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Queda na Inadimplência</span>
+                    <ShieldCheck size={18} style={{ color: '#F59E0B' }} />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FBBF24', letterSpacing: '-0.02em' }}>
+                    -78%
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#F59E0B', marginTop: '6px', fontWeight: 600 }}>
+                    Comparado a boleto tradicional
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid Principal: Régua Ativa (Esquerda) vs Simulador de Disparo (Direita) */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '20px' }}>
+                {/* Coluna 1: Etapas da Régua */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Clock size={18} style={{ color: '#10B981' }} />
+                      Etapas da Régua Inteligente
+                    </h3>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      Total de 4 gatilhos automáticos
+                    </span>
+                  </div>
+
+                  {cobrancaRules.map((rule) => (
+                    <div
+                      key={rule.id}
+                      style={{
+                        backgroundColor: 'var(--bg-surface)',
+                        borderRadius: '10px',
+                        border: rule.active ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)',
+                        padding: '16px',
+                        opacity: rule.active ? 1 : 0.6,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
+                              {rule.title}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '0.68rem',
+                                padding: '2px 8px',
+                                borderRadius: '99px',
+                                fontWeight: 600,
+                                backgroundColor:
+                                  rule.stage === 'preventivo' ? 'rgba(59, 130, 246, 0.15)' :
+                                  rule.stage === 'vencimento' ? 'rgba(245, 158, 11, 0.15)' :
+                                  rule.stage === 'recuperacao' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                color:
+                                  rule.stage === 'preventivo' ? '#60A5FA' :
+                                  rule.stage === 'vencimento' ? '#FBBF24' :
+                                  rule.stage === 'recuperacao' ? '#F87171' : '#34D399',
+                              }}
+                            >
+                              {rule.timingLabel}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSimStage(rule.stage);
+                            }}
+                            style={{
+                              fontSize: '0.7rem',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                              color: 'var(--text-secondary)',
+                              border: '1px solid var(--border-subtle)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Carregar no Teste
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleCobrancaRule(rule.id)}
+                            style={{
+                              fontSize: '0.72rem',
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              backgroundColor: rule.active ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                              color: rule.active ? '#34D399' : 'var(--text-muted)',
+                              border: rule.active ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-subtle)',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {rule.active ? 'Ativa' : 'Pausada'}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          fontSize: '0.8rem',
+                          color: '#E2E8F0',
+                          lineHeight: '1.5',
+                          whiteSpace: 'pre-wrap',
+                          fontFamily: 'system-ui, sans-serif',
+                        }}
+                      >
+                        {rule.template}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Coluna 2: Simulador de Disparo e Live Preview */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Sparkles size={18} style={{ color: '#FBBF24' }} />
+                      Simulador de Disparo WhatsApp
+                    </h3>
+                    <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: 600 }}>
+                      Teste Instantâneo
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                        Nome do Titular
+                      </label>
+                      <input
+                        value={simName}
+                        onChange={(e) => setSimName(e.target.value)}
+                        placeholder="Ex: João Silva"
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'var(--bg-surface-elevated)',
+                          border: '1px solid var(--border-subtle)',
+                          color: '#fff',
+                          fontSize: '0.82rem',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                        WhatsApp com DDD
+                      </label>
+                      <input
+                        value={simPhone}
+                        onChange={(e) => setSimPhone(e.target.value)}
+                        placeholder="Ex: 11999998888"
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'var(--bg-surface-elevated)',
+                          border: '1px solid var(--border-subtle)',
+                          color: '#fff',
+                          fontSize: '0.82rem',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                        Valor da Fatura (R$)
+                      </label>
+                      <input
+                        value={simValue}
+                        onChange={(e) => setSimValue(e.target.value)}
+                        placeholder="Ex: 149.90"
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'var(--bg-surface-elevated)',
+                          border: '1px solid var(--border-subtle)',
+                          color: '#fff',
+                          fontSize: '0.82rem',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                        Etapa da Régua
+                      </label>
+                      <select
+                        value={simStage}
+                        onChange={(e) => setSimStage(e.target.value as CobrancaStage)}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'var(--bg-surface-elevated)',
+                          border: '1px solid var(--border-subtle)',
+                          color: '#fff',
+                          fontSize: '0.82rem',
+                        }}
+                      >
+                        <option value="preventivo">Aviso Preventivo (D-2)</option>
+                        <option value="vencimento">Dia do Vencimento (D0)</option>
+                        <option value="recuperacao">Recuperação Amigável (D+2)</option>
+                        <option value="confirmado">Confirmação Instantânea (D0)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      Descrição do Serviço / Fatura
+                    </label>
+                    <input
+                      value={simDesc}
+                      onChange={(e) => setSimDesc(e.target.value)}
+                      placeholder="Ex: Agillex Atende Pro (Mensalidade)"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'var(--bg-surface-elevated)',
+                        border: '1px solid var(--border-subtle)',
+                        color: '#fff',
+                        fontSize: '0.82rem',
+                      }}
+                    />
+                  </div>
+
+                  {/* Prévia do WhatsApp (Balão de Conversa) */}
+                  <div>
+                    <label style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px', letterSpacing: '0.05em' }}>
+                      Prévia Visual no WhatsApp do Cliente
+                    </label>
+                    <div
+                      style={{
+                        backgroundColor: '#0b141a',
+                        borderRadius: '10px',
+                        padding: '16px',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        minHeight: '140px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          backgroundColor: '#005c4b',
+                          color: '#e9edef',
+                          borderRadius: '8px 8px 0px 8px',
+                          padding: '12px 14px',
+                          fontSize: '0.82rem',
+                          lineHeight: '1.45',
+                          maxWidth: '92%',
+                          marginLeft: 'auto',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        {(() => {
+                          const activeRule = cobrancaRules.find((r) => r.stage === simStage);
+                          const template = activeRule?.template || '';
+                          return template
+                            .replace(/{nome}/g, simName || 'Cliente')
+                            .replace(/{valor}/g, simValue)
+                            .replace(/{vencimento}/g, 'Hoje')
+                            .replace(/{descricao}/g, simDesc)
+                            .replace(/{pixCopiaECola}/g, '00020101021226840014br.gov.bcb.pix2562alllogic-pix-exemplopay5204000053039865802BR5920AllLogic Online6009Sao Paulo62070503***6304ABCD');
+                        })()}
+                        <div style={{ textAlign: 'right', fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.6)', marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                          <span>14:32</span>
+                          <CheckCheck size={14} style={{ color: '#53bdeb' }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Feedback do Envio */}
+                  {simResult && (
+                    <div
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        backgroundColor: simResult.success ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                        border: simResult.success ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                        fontSize: '0.8rem',
+                        color: simResult.success ? '#34D399' : '#F87171',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      {simResult.success ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+                      <span>{simResult.text}</span>
+                    </div>
+                  )}
+
+                  {/* Botão de Disparo */}
+                  <button
+                    type="button"
+                    onClick={handleSendCobrancaTest}
+                    disabled={simLoading || !simPhone}
+                    style={{
+                      width: '100%',
+                      padding: '11px',
+                      borderRadius: '8px',
+                      backgroundColor: '#10B981',
+                      color: '#fff',
+                      fontSize: '0.86rem',
+                      fontWeight: 700,
+                      border: 'none',
+                      cursor: simLoading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      opacity: simLoading ? 0.7 : 1,
+                      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                    }}
+                  >
+                    {simLoading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Disparando WhatsApp...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={18} />
+                        Disparar Mensagem via WhatsApp
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tabela de Histórico e Atividades Recentes da Régua */}
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-subtle)',
+                  padding: '20px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                      Registro de Notificações Recentes
+                    </h3>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                      Logs em tempo real dos disparos realizados via Webhook Asaas e Régua Automática
+                    </p>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', padding: '4px 10px', borderRadius: '99px' }}>
+                    {cobrancaLogs.length} eventos registrados
+                  </span>
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Cliente</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>WhatsApp</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Descrição / Fatura</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Valor</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Etapa</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Status</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Data / Hora</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cobrancaLogs.map((log) => (
+                        <tr key={log.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                          <td style={{ padding: '12px 14px', color: '#fff', fontWeight: 600 }}>
+                            {log.customerName}
+                          </td>
+                          <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>
+                            {log.customerPhone}
+                          </td>
+                          <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>
+                            {log.description || 'Assinatura AllLogic'}
+                          </td>
+                          <td style={{ padding: '12px 14px', color: '#34D399', fontWeight: 700 }}>
+                            R$ {log.value.toFixed(2).replace('.', ',')}
+                          </td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                padding: '2px 8px',
+                                borderRadius: '99px',
+                                fontWeight: 600,
+                                backgroundColor:
+                                  log.stage === 'preventivo' ? 'rgba(59, 130, 246, 0.15)' :
+                                  log.stage === 'vencimento' ? 'rgba(245, 158, 11, 0.15)' :
+                                  log.stage === 'recuperacao' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                color:
+                                  log.stage === 'preventivo' ? '#60A5FA' :
+                                  log.stage === 'vencimento' ? '#FBBF24' :
+                                  log.stage === 'recuperacao' ? '#F87171' : '#34D399',
+                              }}
+                            >
+                              {log.stage === 'preventivo' ? 'Aviso Preventivo' :
+                               log.stage === 'vencimento' ? 'Vencimento Hoje' :
+                               log.stage === 'recuperacao' ? 'Recuperação' : 'Confirmado'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                padding: '2px 8px',
+                                borderRadius: '99px',
+                                fontWeight: 600,
+                                backgroundColor: log.status === 'sent' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                                color: log.status === 'sent' ? '#34D399' : '#60A5FA',
+                              }}
+                            >
+                              {log.status === 'sent' ? 'Entregue' : 'Simulado'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 14px', color: 'var(--text-muted)' }}>
+                            {log.sentAt}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}

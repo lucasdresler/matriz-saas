@@ -10,6 +10,33 @@ export interface OrganizationModules {
   agenda: boolean;
   atendimento: boolean;
   crm: boolean;
+  cobranca?: boolean;
+}
+
+export type CobrancaStage = 'preventivo' | 'vencimento' | 'recuperacao' | 'confirmado';
+
+export interface CobrancaRule {
+  id: string;
+  stage: CobrancaStage;
+  title: string;
+  timingLabel: string;
+  active: boolean;
+  template: string;
+}
+
+export interface CobrancaNotificationLog {
+  id: string;
+  orgId: string;
+  customerName: string;
+  customerPhone: string;
+  paymentId: string;
+  value: number;
+  stage: CobrancaStage;
+  channel: 'whatsapp';
+  status: 'sent' | 'failed' | 'simulated';
+  sentAt: string;
+  pixPayload?: string;
+  description?: string;
 }
 
 export interface Organization {
