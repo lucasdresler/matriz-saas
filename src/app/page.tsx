@@ -50,7 +50,10 @@ import {
   Save,
   AlertTriangle,
   Receipt,
-  BadgePercent
+  BadgePercent,
+  Star,
+  Award,
+  Shield
 } from 'lucide-react';
 import {
   initialOrganizations,
@@ -63,8 +66,10 @@ import {
   initialWhatsappInstance,
   initialCobrancaRules,
   initialCobrancaLogs,
+  initialReputacaoConfig,
+  initialReputacaoFeedbacks,
 } from '@/lib/mockData';
-import { Organization, Lead, LeadStatus, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, CobrancaRule, CobrancaNotificationLog, CobrancaStage } from '@/types';
+import { Organization, Lead, LeadStatus, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, CobrancaRule, CobrancaNotificationLog, CobrancaStage, ReputacaoFeedback, ReputacaoConfig } from '@/types';
 
 export default function MatrizDashboard() {
   // Estado Multi-Tenant (Organização Ativa)
@@ -73,7 +78,7 @@ export default function MatrizDashboard() {
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
 
   // Navegação Principal (Inicia direto no Funil CRM para o trabalho diário)
-  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca'>('kanban');
+  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao'>('kanban');
 
   // Estados do Agillex Cobrança (Régua Inteligente Asaas Pix)
   const [cobrancaRules, setCobrancaRules] = useState<CobrancaRule[]>(initialCobrancaRules);
@@ -85,6 +90,23 @@ export default function MatrizDashboard() {
   const [simStage, setSimStage] = useState<CobrancaStage>('preventivo');
   const [simLoading, setSimLoading] = useState(false);
   const [simResult, setSimResult] = useState<{ success: boolean; text?: string } | null>(null);
+
+  // Estados do Agillex Reputação (Acelerador Google 5★)
+  const [reputacaoConfig, setReputacaoConfig] = useState<ReputacaoConfig>(initialReputacaoConfig);
+  const [reputacaoFeedbacks, setReputacaoFeedbacks] = useState<ReputacaoFeedback[]>(initialReputacaoFeedbacks);
+  const [repSimRating, setRepSimRating] = useState<number>(5);
+  const [repSimName, setRepSimName] = useState('Lucas Dresler');
+  const [repSimPhone, setRepSimPhone] = useState('11966381915');
+  const [repSimService, setRepSimService] = useState('Agillex Atende Pro');
+  const [repSimLoading, setRepSimLoading] = useState(false);
+  const [repSimResult, setRepSimResult] = useState<{ success: boolean; text?: string } | null>(null);
+  // Gerador de Resposta IA para Reviews
+  const [reviewAuthor, setReviewAuthor] = useState('Gabriel Siqueira');
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [reviewComment, setReviewComment] = useState('Melhor atendimento e suporte técnico que já contratei! A automação no WhatsApp dobrou nossas vendas.');
+  const [aiGeneratedReply, setAiGeneratedReply] = useState<string>('Olá, Gabriel Siqueira! Muito obrigado pela avaliação de 5 estrelas e pela confiança na AllLogic Online. É uma honra apoiar sua empresa com soluções digitais e inteligência artificial aqui em São Paulo e em todo o Brasil. Conte sempre com a nossa equipe!');
+  const [aiReplyLoading, setAiReplyLoading] = useState(false);
+  const [replyCopied, setReplyCopied] = useState(false);
 
   // Estados dos Dados com Persistência em localStorage
   const [leads, setLeads] = useState<Lead[]>(() => {
@@ -566,7 +588,7 @@ export default function MatrizDashboard() {
   };
 
   // Organização Atual
-  const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca') => {
+  const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao') => {
     setActiveTab(tab);
     setMobileSidebarOpen(false);
     if (tab === 'livechat') {
@@ -625,6 +647,71 @@ export default function MatrizDashboard() {
       setSimResult({ success: false, text: err.message || 'Erro de comunicação' });
     } finally {
       setSimLoading(false);
+    }
+  };
+
+  const handleSendReputacaoSurvey = async () => {
+    setRepSimLoading(true);
+    setRepSimResult(null);
+    try {
+      const res = await fetch('/api/reputacao/survey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: repSimName,
+          customerPhone: repSimPhone,
+          serviceName: repSimService,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setRepSimResult({ success: true, text: data.feedback });
+        const isPromoter = repSimRating >= 4;
+        const newFeedback: ReputacaoFeedback = {
+          id: `rep-${Date.now()}`,
+          orgId: activeOrgId,
+          customerName: repSimName,
+          customerPhone: repSimPhone,
+          rating: repSimRating,
+          category: isPromoter ? 'promotor' : (repSimRating === 3 ? 'neutro' : 'detrator'),
+          googleReviewClicked: isPromoter,
+          createdAt: 'Agora mesmo',
+          status: isPromoter ? 'publicado' : 'resolvido',
+          serviceName: repSimService,
+          comment: isPromoter ? 'Avaliação 5 estrelas compartilhada no Google Meu Negócio!' : 'Feedback recebido e direcionado para acolhimento interno.',
+        };
+        setReputacaoFeedbacks((prev) => [newFeedback, ...prev]);
+      } else {
+        setRepSimResult({ success: false, text: data.error || 'Falha ao enviar pesquisa' });
+      }
+    } catch (err: any) {
+      setRepSimResult({ success: false, text: err.message || 'Erro de conexão' });
+    } finally {
+      setRepSimLoading(false);
+    }
+  };
+
+  const handleGenerateAiReply = async () => {
+    setAiReplyLoading(true);
+    try {
+      const res = await fetch('/api/reputacao/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          authorName: reviewAuthor,
+          rating: reviewRating,
+          comment: reviewComment,
+          serviceName: repSimService,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.reply) {
+        setAiGeneratedReply(data.reply);
+      }
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setAiReplyLoading(false);
     }
   };
 
@@ -1426,6 +1513,41 @@ export default function MatrizDashboard() {
             </div>
           )}
 
+          {/* MÓDULO 5: AGILLEX REPUTAÇÃO */}
+          {currentOrg.modules?.reputacao && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '2px' }}>
+                <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#F59E0B', fontWeight: 700, letterSpacing: '0.05em' }}>
+                  Agillex Reputação
+                </span>
+                <span style={{ fontSize: '0.6rem', color: '#FBBF24', fontWeight: 600, background: 'rgba(245, 158, 11, 0.1)', padding: '1px 5px', borderRadius: '4px' }}>GOOGLE 5★</span>
+              </div>
+
+              <button
+                onClick={() => handleTabChange('reputacao')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: activeTab === 'reputacao' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+                  color: activeTab === 'reputacao' ? '#FBBF24' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'reputacao' ? 600 : 400,
+                  border: activeTab === 'reputacao' ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid transparent',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Star size={18} />
+                  <span style={{ fontSize: '0.86rem' }}>Acelerador Google 5★</span>
+                </div>
+                <span style={{ fontSize: '0.65rem', background: '#D97706', color: '#fff', padding: '1px 6px', borderRadius: '99px', fontWeight: 700 }}>
+                  SEO IA
+                </span>
+              </button>
+            </div>
+          )}
+
           {/* ADMIN MASTER */}
           <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
             <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, padding: '0 8px', marginBottom: '4px', letterSpacing: '0.05em' }}>
@@ -1524,6 +1646,7 @@ export default function MatrizDashboard() {
                 {activeTab === 'whatsapp' && 'Conexão WhatsApp'}
                 {activeTab === 'saas' && 'Painel SaaS & MRR'}
                 {activeTab === 'cobranca' && 'Agillex Cobrança Inteligente'}
+                {activeTab === 'reputacao' && 'Agillex Reputação — Acelerador Google 5★'}
               </h1>
               <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '10px' }}>
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -3925,6 +4048,723 @@ export default function MatrizDashboard() {
                           </td>
                           <td style={{ padding: '12px 14px', color: 'var(--text-muted)' }}>
                             {log.sentAt}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MÓDULO 5: AGILLEX REPUTAÇÃO */}
+          {activeTab === 'reputacao' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* Header do Módulo */}
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-subtle)',
+                  padding: '24px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '20px',
+                  flexWrap: 'wrap',
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(20, 24, 33, 0.95) 100%)',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <div
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '10px',
+                        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#FBBF24',
+                      }}
+                    >
+                      <Star size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                        Agillex Reputação — Acelerador Google 5★
+                      </h2>
+                      <p style={{ fontSize: '0.8rem', color: '#FBBF24', margin: 0, fontWeight: 600 }}>
+                        Filtro Protetor de Reputação (NPS Inteligente) + Respostas com IA para SEO Local
+                      </p>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', maxWidth: '720px', lineHeight: '1.5', margin: 0 }}>
+                    Transforme clientes satisfeitos em promotores no Google Maps. Quem dá 4 ou 5 estrelas é direcionado para avaliar publicamente; notas de 1 a 3 são acolhidas internamente pela gerência no WhatsApp, blindando a reputação pública do seu negócio.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      fontSize: '0.78rem',
+                      color: '#34D399',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Shield size={14} />
+                    Blindagem Ativa (Anti-Detrator)
+                  </div>
+                  <a
+                    href={reputacaoConfig.googleReviewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      fontSize: '0.78rem',
+                      color: '#FBBF24',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <ExternalLink size={14} />
+                    Link Google Maps
+                  </a>
+                </div>
+              </div>
+
+              {/* Cards de Métricas e KPIs */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '18px 20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Nota Média no Google</span>
+                    <Star size={18} style={{ color: '#FBBF24' }} />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FBBF24', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    4.9 <span style={{ fontSize: '1.1rem', color: '#F59E0B' }}>★★★★★</span>
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#10B981', marginTop: '6px', fontWeight: 600 }}>
+                    ★ Reputação de Alta Autoridade
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '18px 20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Avaliações 5★ Google</span>
+                    <Award size={18} style={{ color: '#10B981' }} />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+                    124
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#10B981', marginTop: '6px', fontWeight: 600 }}>
+                    ↑ +38 avaliações neste mês
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '18px 20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Taxa de Promotores</span>
+                    <TrendingUp size={18} style={{ color: '#60A5FA' }} />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#60A5FA', letterSpacing: '-0.02em' }}>
+                    89.4%
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#60A5FA', marginTop: '6px', fontWeight: 600 }}>
+                    Respostas via WhatsApp
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '18px 20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Detratores Blindados</span>
+                    <Shield size={18} style={{ color: '#A78BFA' }} />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#C4B5FD', letterSpacing: '-0.02em' }}>
+                    11
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#A78BFA', marginTop: '6px', fontWeight: 600 }}>
+                    100% resolvidos internamente
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid Principal: Simulador da Blindagem (Esquerda) vs Gerador IA para Google (Direita) */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '20px' }}>
+                {/* Coluna 1: O Filtro Protetor de Reputação (NPS Inteligente) */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Shield size={18} style={{ color: '#FBBF24' }} />
+                      Simulador do Filtro de Blindagem
+                    </h3>
+                    <span style={{ fontSize: '0.72rem', color: '#FBBF24', fontWeight: 600 }}>
+                      NPS Inteligente
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                        Nome do Cliente
+                      </label>
+                      <input
+                        value={repSimName}
+                        onChange={(e) => setRepSimName(e.target.value)}
+                        placeholder="Ex: João da Silva"
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'var(--bg-surface-elevated)',
+                          border: '1px solid var(--border-subtle)',
+                          color: '#fff',
+                          fontSize: '0.82rem',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                        WhatsApp com DDD
+                      </label>
+                      <input
+                        value={repSimPhone}
+                        onChange={(e) => setRepSimPhone(e.target.value)}
+                        placeholder="Ex: 11999998888"
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'var(--bg-surface-elevated)',
+                          border: '1px solid var(--border-subtle)',
+                          color: '#fff',
+                          fontSize: '0.82rem',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      Serviço Concluído
+                    </label>
+                    <input
+                      value={repSimService}
+                      onChange={(e) => setRepSimService(e.target.value)}
+                      placeholder="Ex: Agillex Atende Pro"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'var(--bg-surface-elevated)',
+                        border: '1px solid var(--border-subtle)',
+                        color: '#fff',
+                        fontSize: '0.82rem',
+                      }}
+                    />
+                  </div>
+
+                  {/* Seletor Interativo de Nota de 1 a 5 estrelas */}
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+                      Selecione a Nota que o cliente respondeu no WhatsApp:
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setRepSimRating(star)}
+                          style={{
+                            flex: 1,
+                            padding: '10px 4px',
+                            borderRadius: '8px',
+                            border: repSimRating === star ? '2px solid #F59E0B' : '1px solid var(--border-subtle)',
+                            backgroundColor: repSimRating === star ? 'rgba(245, 158, 11, 0.2)' : 'var(--bg-surface-elevated)',
+                            color: repSimRating === star ? '#FBBF24' : 'var(--text-muted)',
+                            fontWeight: 700,
+                            fontSize: '0.9rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '2px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <Star size={18} fill={repSimRating >= star ? '#F59E0B' : 'none'} color="#F59E0B" />
+                          <span>{star}★</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Card Explicativo da Bifurcação do Filtro */}
+                  <div
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: repSimRating >= 4 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                      border: repSimRating >= 4 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                      fontSize: '0.78rem',
+                      lineHeight: '1.45',
+                    }}
+                  >
+                    {repSimRating >= 4 ? (
+                      <div style={{ color: '#34D399', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <span style={{ fontSize: '1rem' }}>🎉</span>
+                        <div>
+                          <strong>PROMOTOR DETECTADO ({repSimRating} Estrelas):</strong>
+                          <br />
+                          O cliente recebe uma mensagem de comemoração e o <strong>link direto para avaliar com 5 estrelas no Google Meu Negócio</strong>.
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ color: '#F87171', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <span style={{ fontSize: '1rem' }}>🛡️</span>
+                        <div>
+                          <strong>BLINDAGEM ATIVADA ({repSimRating} Estrelas - Atenção):</strong>
+                          <br />
+                          O link público do Google <strong>NUNCA</strong> é enviado. O cliente recebe acolhimento privado da gerência para resolver a insatisfação internamente, preservando sua nota 5★ no Google Maps!
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Prévia do Balão do WhatsApp */}
+                  <div>
+                    <label style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, display: 'block', marginBottom: '6px', letterSpacing: '0.05em' }}>
+                      Resposta Automática Entregue no WhatsApp:
+                    </label>
+                    <div
+                      style={{
+                        backgroundColor: '#0b141a',
+                        borderRadius: '10px',
+                        padding: '16px',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          backgroundColor: '#005c4b',
+                          color: '#e9edef',
+                          borderRadius: '8px 8px 0px 8px',
+                          padding: '12px 14px',
+                          fontSize: '0.82rem',
+                          lineHeight: '1.45',
+                          maxWidth: '92%',
+                          marginLeft: 'auto',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                        }}
+                      >
+                        {repSimRating >= 4 ? (
+                          <>
+                            Uau, que alegria! Ficamos honrados com a sua avaliação de *{repSimRating} estrelas* ({'⭐'.repeat(repSimRating)}), *{repSimName}*! 🌟🥰
+                            {'\n\n'}
+                            Você poderia nos fazer um grande favor? Dedique apenas 30 segundos para deixar essas {repSimRating} estrelas no nosso *Google Meu Negócio*! Isso ajuda pessoas como você a encontrarem nossos serviços:
+                            {'\n\n'}
+                            👉 *Toque aqui para avaliar no Google:*
+                            {'\n'}
+                            {reputacaoConfig.googleReviewUrl}
+                            {'\n\n'}
+                            Muito obrigado pela parceria e conte sempre conosco! 🚀
+                          </>
+                        ) : (
+                          <>
+                            Olá, *{repSimName}*. Sentimos muito por não termos superado suas expectativas hoje. 😔
+                            {'\n\n'}
+                            Para nós da *{reputacaoConfig.businessName}*, a sua satisfação é prioridade absoluta.
+                            {'\n\n'}
+                            Poderia nos contar brevemente o que aconteceu ou o que podemos melhorar? Nossa gerência já foi notificada e vai acompanhar seu caso pessoalmente para solucionar qualquer detalhe.
+                            {'\n\n'}
+                            Estamos 100% à sua disposição aqui pelo WhatsApp.
+                          </>
+                        )}
+                        <div style={{ textAlign: 'right', fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.6)', marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                          <span>14:45</span>
+                          <CheckCheck size={14} style={{ color: '#53bdeb' }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Feedback do Envio */}
+                  {repSimResult && (
+                    <div
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        backgroundColor: repSimResult.success ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                        border: repSimResult.success ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                        fontSize: '0.8rem',
+                        color: repSimResult.success ? '#34D399' : '#F87171',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      {repSimResult.success ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+                      <span>{repSimResult.text}</span>
+                    </div>
+                  )}
+
+                  {/* Botão de Disparo */}
+                  <button
+                    type="button"
+                    onClick={handleSendReputacaoSurvey}
+                    disabled={repSimLoading || !repSimPhone}
+                    style={{
+                      width: '100%',
+                      padding: '11px',
+                      borderRadius: '8px',
+                      backgroundColor: '#F59E0B',
+                      color: '#000',
+                      fontSize: '0.86rem',
+                      fontWeight: 700,
+                      border: 'none',
+                      cursor: repSimLoading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      opacity: repSimLoading ? 0.7 : 1,
+                      boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)',
+                    }}
+                  >
+                    {repSimLoading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Disparando Pesquisa...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={18} />
+                        Disparar Pesquisa no WhatsApp
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Coluna 2: Gerador de Respostas com IA para Google Maps (SEO Local) */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-subtle)',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Bot size={18} style={{ color: '#60A5FA' }} />
+                      Respostas com IA para Google Maps
+                    </h3>
+                    <span style={{ fontSize: '0.72rem', color: '#60A5FA', fontWeight: 600 }}>
+                      SEO Local
+                    </span>
+                  </div>
+
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Responder às avaliações no Google Meu Negócio incluindo termos de busca e localização eleva o perfil da empresa para o Top 3 do Google Maps.
+                  </p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                        Autor da Avaliação no Google
+                      </label>
+                      <input
+                        value={reviewAuthor}
+                        onChange={(e) => setReviewAuthor(e.target.value)}
+                        placeholder="Ex: Gabriel Siqueira"
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'var(--bg-surface-elevated)',
+                          border: '1px solid var(--border-subtle)',
+                          color: '#fff',
+                          fontSize: '0.82rem',
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                        Nota Concedida
+                      </label>
+                      <select
+                        value={reviewRating}
+                        onChange={(e) => setReviewRating(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: 'var(--bg-surface-elevated)',
+                          border: '1px solid var(--border-subtle)',
+                          color: '#fff',
+                          fontSize: '0.82rem',
+                        }}
+                      >
+                        <option value={5}>5 Estrelas (Excelente)</option>
+                        <option value={4}>4 Estrelas (Muito Bom)</option>
+                        <option value={3}>3 Estrelas (Regular)</option>
+                        <option value={2}>2 Estrelas (Ruim)</option>
+                        <option value={1}>1 Estrela (Péssimo)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      Comentário Deixado pelo Cliente
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder="Cole aqui o texto da avaliação recebida no Google Maps..."
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'var(--bg-surface-elevated)',
+                        border: '1px solid var(--border-subtle)',
+                        color: '#fff',
+                        fontSize: '0.82rem',
+                        resize: 'vertical',
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGenerateAiReply}
+                    disabled={aiReplyLoading || !reviewAuthor}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                      border: '1px solid rgba(59, 130, 246, 0.35)',
+                      color: '#60A5FA',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: aiReplyLoading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    {aiReplyLoading ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Escrevendo Resposta com IA...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={16} />
+                        Gerar Resposta com IA (SEO Local)
+                      </>
+                    )}
+                  </button>
+
+                  {/* Resposta Gerada pela IA */}
+                  {aiGeneratedReply && (
+                    <div
+                      style={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                        borderRadius: '10px',
+                        padding: '16px',
+                        border: '1px solid rgba(59, 130, 246, 0.25)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.74rem', color: '#60A5FA', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Resposta Sugerida para Colar no Google:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                              navigator.clipboard.writeText(aiGeneratedReply);
+                              setReplyCopied(true);
+                              setTimeout(() => setReplyCopied(false), 2500);
+                            }
+                          }}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            backgroundColor: replyCopied ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                            color: replyCopied ? '#34D399' : '#fff',
+                            border: replyCopied ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-subtle)',
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {replyCopied ? <Check size={14} /> : <Copy size={14} />}
+                          {replyCopied ? 'Copiado!' : 'Copiar Resposta'}
+                        </button>
+                      </div>
+
+                      <p style={{ fontSize: '0.82rem', color: '#E2E8F0', lineHeight: '1.5', margin: 0, fontStyle: 'italic' }}>
+                        &ldquo;{aiGeneratedReply}&rdquo;
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tabela de Feedbacks Recebidos */}
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-subtle)',
+                  padding: '20px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                      Mural de Feedbacks & Reputação
+                    </h3>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                      Respostas dos clientes pós-atendimento e status do encaminhamento ao Google Maps
+                    </p>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', padding: '4px 10px', borderRadius: '99px' }}>
+                    {reputacaoFeedbacks.length} avaliações registradas
+                  </span>
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Cliente</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Serviço</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Nota</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Classificação</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Comentário</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Destino</th>
+                        <th style={{ padding: '10px 14px', fontWeight: 600 }}>Data / Hora</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reputacaoFeedbacks.map((item) => (
+                        <tr key={item.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                          <td style={{ padding: '12px 14px', color: '#fff', fontWeight: 600 }}>
+                            {item.customerName}
+                          </td>
+                          <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>
+                            {item.serviceName || 'Geral'}
+                          </td>
+                          <td style={{ padding: '12px 14px', color: '#FBBF24', fontWeight: 700 }}>
+                            {'⭐'.repeat(item.rating)} ({item.rating}/5)
+                          </td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                padding: '2px 8px',
+                                borderRadius: '99px',
+                                fontWeight: 600,
+                                backgroundColor:
+                                  item.category === 'promotor' ? 'rgba(16, 185, 129, 0.15)' :
+                                  item.category === 'neutro' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                color:
+                                  item.category === 'promotor' ? '#34D399' :
+                                  item.category === 'neutro' ? '#FBBF24' : '#F87171',
+                              }}
+                            >
+                              {item.category === 'promotor' ? 'Promotor 5★' :
+                               item.category === 'neutro' ? 'Neutro' : 'Detrator (Blindado)'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 14px', color: '#E2E8F0', maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.comment}>
+                            {item.comment || 'Sem comentário adicional.'}
+                          </td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span
+                              style={{
+                                fontSize: '0.72rem',
+                                padding: '2px 8px',
+                                borderRadius: '99px',
+                                fontWeight: 600,
+                                backgroundColor: item.googleReviewClicked ? 'rgba(59, 130, 246, 0.15)' : 'rgba(167, 139, 250, 0.15)',
+                                color: item.googleReviewClicked ? '#60A5FA' : '#C4B5FD',
+                              }}
+                            >
+                              {item.googleReviewClicked ? 'Google Maps' : 'Atendimento Privado'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 14px', color: 'var(--text-muted)' }}>
+                            {item.createdAt}
                           </td>
                         </tr>
                       ))}

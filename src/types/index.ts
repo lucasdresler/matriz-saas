@@ -11,6 +11,30 @@ export interface OrganizationModules {
   atendimento: boolean;
   crm: boolean;
   cobranca?: boolean;
+  reputacao?: boolean;
+}
+
+export interface ReputacaoFeedback {
+  id: string;
+  orgId: string;
+  customerName: string;
+  customerPhone: string;
+  rating: number; // 1 a 5
+  category: 'promotor' | 'neutro' | 'detrator';
+  googleReviewClicked: boolean;
+  comment?: string;
+  createdAt: string;
+  status: 'novo' | 'resolvido' | 'publicado';
+  aiResponseDraft?: string;
+  serviceName?: string;
+}
+
+export interface ReputacaoConfig {
+  googleReviewUrl: string;
+  delayHours: number;
+  businessName: string;
+  city: string;
+  autoAiReply: boolean;
 }
 
 export type CobrancaStage = 'preventivo' | 'vencimento' | 'recuperacao' | 'confirmado';
