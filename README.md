@@ -1,26 +1,19 @@
-# 🚀 MATRIZ OS — Agente IA + CRM + Agendamento SaaS Multi-Tenant
+# 🚀 Agillex Hub — Plataforma Operacional Unificada (Família Agillex)
 
-Sistema completo de **Agente de IA para WhatsApp**, **CRM Funil Kanban**, **Sistema de Agendamento**, **Base de Conhecimento RAG** e **Painel SaaS Multi-Empresa**, desenvolvido para atender simultaneamente aos 3 objetivos:
-1. **Uso na Própria Empresa** (Dogfooding / Atendimento e vendas 24/7).
-2. **Prestação de Serviços / Agência** (Implementação High-Ticket para clientes com gestão centralizada).
-3. **Plataforma SaaS** (Assinaturas recorrentes self-service com cobrança mensal).
-
----
-
-## 🛠️ Tecnologias Utilizadas
-
-- **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Lucide Icons.
-- **Design System:** Dark Luxury UI inspirado em Linear, Supabase e Raycast, com micro-animações e responsividade total.
-- **Banco de Dados & Multi-Tenancy:** PostgreSQL com **Row Level Security (RLS)** via Supabase.
-- **WhatsApp Gateway:** Suporte nativo à **Evolution API** (open-source, custo de API R$ 0) e **Meta Cloud API**.
-- **Motor de IA:** Orquestração com GPT-4o / Claude / Groq, chamadas de ferramenta (*tool calling*) para agendamento e transcrição de áudios via Whisper.
+Central completa e multi-tenant que unifica:
+1. **Atendimento Inteligente com IA** no WhatsApp Oficial 24/7.
+2. **CRM Funil Kanban** e gestão de leads.
+3. **Agillex Agenda** com sincronização em tempo real com Google Calendar.
+4. **Agillex Cobrança** com régua ativa e Pix Copia e Cola.
+5. **Agillex Reputação** com filtro protetor de satisfação e IA para Google Maps.
+6. **Agillex Pay** com taxa fixa de R$ 1,99 por transação concluída via Asaas.
 
 ---
 
 ## 📂 Estrutura do Projeto
 
 ```
-matriz-saas/
+agillex-hub/
 ├── src/
 │   ├── app/
 │   │   ├── globals.css      # Design tokens, temas e animações
