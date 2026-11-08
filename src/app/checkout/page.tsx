@@ -56,6 +56,18 @@ const MODULE_HEADER_CONTENT: Record<
     subtitle:
       'Registro e apontamento da identidade oficial da sua empresa com gestão DNS inclusa.',
   },
+  cobranca: {
+    title: 'Contratação Segura do Agillex Cobrança',
+    trialTitle: 'Ativação Segura do Agillex Cobrança',
+    subtitle:
+      'Régua inteligente de cobrança ativa no WhatsApp com Pix integrado e taxa fixa imbatível de R$ 1,99.',
+  },
+  reputacao: {
+    title: 'Contratação Segura do Agillex Reputação',
+    trialTitle: 'Ativação Segura do Agillex Reputação',
+    subtitle:
+      'Acelerador de avaliações 5 estrelas no Google Maps pós-atendimento com filtro protetor de satisfação e IA.',
+  },
 };
 
 function CheckoutContent() {

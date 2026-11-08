@@ -101,6 +101,72 @@ Qualquer dúvida, estamos 100% à sua disposição!`;
   }
 
   /**
+   * Envia as boas-vindas e os dados de acesso ao cliente que iniciou o teste de 14 dias
+   */
+  async notifyTrialWelcome(data: {
+    customerName: string;
+    phone: string;
+    email: string;
+    planName: string;
+    trialEndDate: string;
+    tempPassword?: string;
+  }): Promise<void> {
+    const cleanPhone = data.phone.replace(/\D/g, '');
+    const dateFormatted = new Date(data.trialEndDate).toLocaleDateString('pt-BR');
+
+    const message = `Olá, *${data.customerName}*! Seja muito bem-vindo ao período de 14 dias de teste do *${data.planName}* pela AllLogic Online! 🚀
+
+Sua conta está liberada com todos os recursos até *${dateFormatted}*.
+
+🔑 *Seus Dados de Acesso ao Painel:*
+• *Acesso:* https://hub.alllogiconline.com.br
+• *E-mail:* ${data.email}
+${data.tempPassword ? `• *Senha Inicial:* ${data.tempPassword}\n` : ''}
+💡 Durante esses 14 dias, você pode explorar e utilizar o sistema livremente sem nenhum compromisso e sem precisar cadastrar cartão de crédito.
+
+Caso precise de qualquer orientação ou queira tirar dúvidas com nossa equipe técnica, basta responder a esta mensagem. Tenha uma excelente experiência!`;
+
+    try {
+      if (cleanPhone.length >= 10) {
+        await this.sendWhatsAppText(cleanPhone, message);
+      }
+    } catch (err: any) {
+      console.warn('[NotificationService] Falha ao enviar WhatsApp de trial para o cliente:', err.message);
+    }
+  }
+
+  /**
+   * Notifica a equipe AllLogic sobre novo lead de teste gratuito iniciado
+   */
+  async notifyNewTrialLead(data: {
+    customerName: string;
+    companyName?: string;
+    phone: string;
+    email: string;
+    planName: string;
+    trialEndDate: string;
+  }): Promise<void> {
+    const dateFormatted = new Date(data.trialEndDate).toLocaleDateString('pt-BR');
+
+    const adminMessage = `🔔 *NOVO LEAD DE TESTE GRATUITO (14 DIAS)!*
+
+📦 *Produto / Plano:* ${data.planName}
+🏢 *Empresa:* ${data.companyName || data.customerName}
+👤 *Responsável:* ${data.customerName}
+📱 *WhatsApp:* ${data.phone}
+✉️ *E-mail:* ${data.email}
+⏰ *Válido até:* ${dateFormatted}
+
+👉 Lead cadastrado no CRM e WhatsApp de boas-vindas disparado automaticamente.`;
+
+    try {
+      await this.sendWhatsAppText(this.adminPhone, adminMessage);
+    } catch (e: any) {
+      console.warn('[NotificationService] Falha ao enviar alerta de trial para a equipe:', e.message);
+    }
+  }
+
+  /**
    * Envia mensagem de texto via Evolution API se houver instância ativa
    */
   public async sendWhatsAppText(phone: string, text: string): Promise<boolean> {

@@ -1,0 +1,6 @@
+[2026-11-08T16:42:46.819Z] =====================================================
+[2026-11-08T16:42:46.825Z] 🚀 Iniciando execução da Régua dos Trials (Agillex)
+[2026-11-08T16:42:46.825Z] =====================================================
+[2026-11-08T16:42:46.843Z] ⚠️ Banco de dados local não conectado (connect ECONNREFUSED 127.0.0.1:5432). Prosseguindo em modo simulado.
+[2026-11-08T16:42:46.843Z] 📊 Total de organizações analisadas: 0
+[2026-11-08T16:42:46.843Z] ✅ Execução da régua de trials concluída com êxito.

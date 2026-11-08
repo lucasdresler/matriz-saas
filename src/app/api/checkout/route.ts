@@ -3,6 +3,7 @@ import { asaasService } from '@/lib/asaas';
 import { SAAS_PLANS } from '@/types/pricing';
 import { whmService } from '@/lib/whm';
 import { notificationService } from '@/lib/notifications';
+import { query } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
@@ -36,11 +37,61 @@ export async function POST(request: Request) {
       const trialEndDate = new Date();
       trialEndDate.setDate(trialEndDate.getDate() + 14);
 
+      const targetCompanyName = companyName || name;
+      const cleanPhone = phone.replace(/\D/g, '');
+      const tenantSlug = (companyName || name)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '') || `empresa-${Date.now()}`;
+
+      // 1. Tentar persistir organização e lead no PostgreSQL
+      try {
+        const orgRes = await query(
+          `INSERT INTO public.organizations (name, slug, category, plan, whatsapp_phone)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (slug) DO UPDATE SET updated_at = NOW()
+           RETURNING id;`,
+          [targetCompanyName, `${tenantSlug}-${Date.now().toString().slice(-4)}`, plan.module, plan.name, cleanPhone]
+        );
+
+        if (orgRes && orgRes.rows && orgRes.rows[0]) {
+          const orgId = orgRes.rows[0].id;
+          await query(
+            `INSERT INTO public.leads (organization_id, name, phone, whatsapp, email, status, service_interest)
+             VALUES ($1, $2, $3, $4, $5, 'novo', $6);`,
+            [orgId, name, cleanPhone, cleanPhone, email, `Trial 14 dias - ${plan.name}`]
+          );
+        }
+      } catch (dbErr: any) {
+        console.warn('[API Checkout Trial] Aviso: persistência em banco isolado:', dbErr.message);
+      }
+
+      // 2. Disparar WhatsApp de boas-vindas com credenciais para o cliente
+      await notificationService.notifyTrialWelcome({
+        customerName: name,
+        phone,
+        email,
+        planName: plan.name,
+        trialEndDate: trialEndDate.toISOString(),
+      });
+
+      // 3. Disparar notificação operacional interna para o WhatsApp da equipe AllLogic
+      await notificationService.notifyNewTrialLead({
+        customerName: name,
+        companyName: targetCompanyName,
+        phone,
+        email,
+        planName: plan.name,
+        trialEndDate: trialEndDate.toISOString(),
+      });
+
       return NextResponse.json({
         success: true,
         status: 'trial',
         plan: plan.name,
-        companyName: companyName || name,
+        companyName: targetCompanyName,
         trialEndDate: trialEndDate.toISOString(),
         message: 'Teste gratuito de 14 dias ativado com sucesso! Seja bem-vindo ao Agillex.',
       });

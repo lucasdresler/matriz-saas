@@ -1,4 +1,4 @@
-export type ModuleType = 'atendimento' | 'agenda' | 'combo' | 'hospedagem' | 'dominio';
+export type ModuleType = 'atendimento' | 'agenda' | 'combo' | 'hospedagem' | 'dominio' | 'cobranca' | 'reputacao';
 export type BillingCycle = 'monthly' | 'yearly';
 export type BillingMethod = 'CREDIT_CARD' | 'PIX' | 'BOLETO';
 
@@ -345,6 +345,108 @@ export const SAAS_PLANS: Record<string, PlanConfig> = {
       'Certificado SSL Grátis e Renovação Automática',
       'Gestão Técnica e Apontamento DNS Inclusos',
       'Painel de Controle cPanel Oficial em Português',
+    ],
+  },
+
+  // --- Agillex Cobrança ---
+  'cobranca-start': {
+    id: 'cobranca-start',
+    name: 'Cobrança Start',
+    module: 'cobranca',
+    badge: 'Iniciantes',
+    tagline: 'Ideal para autônomos e pequenos prestadores de serviços.',
+    priceMonthly: 49.00,
+    priceYearlyMonthly: 39.00,
+    annualTotal: 468.00,
+    features: [
+      'Até 50 cobranças ativas/mês no WhatsApp',
+      'Régua inteligente: aviso prévio, vencimento e recuperação',
+      'Pix Copia e Cola instantâneo com taxa fixa de R$ 1,99',
+      'Webhook bancário com confirmação em tempo real',
+      'Sem fidelidade ou custos ocultos',
+    ],
+  },
+  'cobranca-pro': {
+    id: 'cobranca-pro',
+    name: 'Cobrança Pro',
+    module: 'cobranca',
+    badge: 'Mais Escolhido',
+    tagline: 'Para empresas com volume consistente de recebimentos recorrentes.',
+    priceMonthly: 89.00,
+    priceYearlyMonthly: 69.00,
+    annualTotal: 828.00,
+    features: [
+      'Até 200 cobranças ativas/mês no WhatsApp',
+      'Régua inteligente completa no WhatsApp Oficial',
+      'Pix Copia e Cola com taxa fixa reduzida',
+      'Relatórios financeiros e taxa de recuperação amigável',
+      'Prioridade de suporte e configuração guiada',
+    ],
+  },
+  'cobranca-escala': {
+    id: 'cobranca-escala',
+    name: 'Cobrança Escala',
+    module: 'cobranca',
+    badge: 'Alta Performance',
+    tagline: 'Para empresas de alto fluxo que necessitam de capacidade expandida.',
+    priceMonthly: 149.00,
+    priceYearlyMonthly: 119.00,
+    annualTotal: 1428.00,
+    features: [
+      'Até 600 cobranças ativas/mês no WhatsApp',
+      'Régua inteligente multicanal com alta prioridade',
+      'Gestão avançada de inadimplência e conciliação',
+      'Suporte técnico direto via WhatsApp',
+    ],
+  },
+
+  // --- Agillex Reputação ---
+  'reputacao-start': {
+    id: 'reputacao-start',
+    name: 'Reputação Start',
+    module: 'reputacao',
+    badge: 'Iniciantes',
+    tagline: 'Perfeito para começar a acelerar avaliações 5 estrelas no Google.',
+    priceMonthly: 49.00,
+    priceYearlyMonthly: 39.00,
+    annualTotal: 468.00,
+    features: [
+      'Até 60 convites de avaliação/mês no WhatsApp',
+      'Filtro inteligente de proteção contra avaliações negativas',
+      'Direcionamento automático para Google Maps',
+      'Canal privado de tratamento de insatisfações',
+    ],
+  },
+  'reputacao-pro': {
+    id: 'reputacao-pro',
+    name: 'Reputação Pro',
+    module: 'reputacao',
+    badge: 'Mais Escolhido',
+    tagline: 'Para clínicas, salões e consultórios com fluxo ativo diário.',
+    priceMonthly: 79.00,
+    priceYearlyMonthly: 59.00,
+    annualTotal: 708.00,
+    features: [
+      'Até 250 convites de avaliação/mês no WhatsApp',
+      'Respostas automáticas no Google Maps com Inteligência Artificial',
+      'Filtro inteligente de satisfação e proteção de marca',
+      'Aceleração de SEO local para buscas no Google',
+    ],
+  },
+  'reputacao-escala': {
+    id: 'reputacao-escala',
+    name: 'Reputação Escala',
+    module: 'reputacao',
+    badge: 'Alta Performance',
+    tagline: 'Para redes, franquias ou empresas de alto volume de atendimentos.',
+    priceMonthly: 129.00,
+    priceYearlyMonthly: 99.00,
+    annualTotal: 1188.00,
+    features: [
+      'Até 800 convites de avaliação/mês no WhatsApp',
+      'Múltiplas unidades e perfis no Google Maps',
+      'IA treinada no nicho do seu negócio para respostas estratégicas',
+      'Relatórios avançados de NPS e posicionamento local',
     ],
   },
 };
