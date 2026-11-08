@@ -12,6 +12,21 @@ export interface OrganizationModules {
   crm: boolean;
   cobranca?: boolean;
   reputacao?: boolean;
+  ged?: boolean;
+}
+
+export interface GedDocument {
+  id: string;
+  orgId: string;
+  title: string;
+  fileName: string;
+  category: 'contrato' | 'certidao' | 'nota_fiscal' | 'laudo' | 'outro';
+  fileSize: string;
+  uploadedAt: string;
+  expiresAt?: string;
+  status: 'valido' | 'alerta_vencimento' | 'vencido';
+  ocrExtractedText?: string;
+  whatsappSynced?: boolean;
 }
 
 export interface ReputacaoFeedback {

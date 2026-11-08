@@ -1,4 +1,4 @@
-export type ModuleType = 'atendimento' | 'agenda' | 'combo' | 'hospedagem' | 'dominio' | 'cobranca' | 'reputacao';
+export type ModuleType = 'atendimento' | 'agenda' | 'combo' | 'hospedagem' | 'dominio' | 'cobranca' | 'reputacao' | 'ged';
 export type BillingCycle = 'monthly' | 'yearly';
 export type BillingMethod = 'CREDIT_CARD' | 'PIX' | 'BOLETO';
 
@@ -447,6 +447,62 @@ export const SAAS_PLANS: Record<string, PlanConfig> = {
       'Múltiplas unidades e perfis no Google Maps',
       'IA treinada no nicho do seu negócio para respostas estratégicas',
       'Relatórios avançados de NPS e posicionamento local',
+    ],
+  },
+
+  // --- Agillex GED (Gestão de Documentos com OCR e IA) ---
+  'ged-start': {
+    id: 'ged-start',
+    name: 'GED Start',
+    module: 'ged',
+    badge: 'Iniciantes',
+    tagline: 'Ideal para autônomos e pequenos escritórios eliminarem papéis e controlarem prazos.',
+    priceMonthly: 49.00,
+    priceYearlyMonthly: 39.00,
+    annualTotal: 468.00,
+    storage: '20 GB',
+    features: [
+      'Até 20 GB de Armazenamento Seguro em Nuvem',
+      'Leitura inteligente de documentos e fotos com OCR e IA',
+      'Alertas de vencimento de certidões e contratos no WhatsApp',
+      'Organização de pastas por cliente e categoria',
+      'Sem fidelidade ou custos de ativação',
+    ],
+  },
+  'ged-pro': {
+    id: 'ged-pro',
+    name: 'GED Pro',
+    module: 'ged',
+    badge: 'Mais Escolhido',
+    tagline: 'Para clínicas, escritórios e empresas com fluxo ativo de contratos e documentos.',
+    priceMonthly: 89.00,
+    priceYearlyMonthly: 69.00,
+    annualTotal: 828.00,
+    storage: '100 GB',
+    features: [
+      'Até 100 GB de Armazenamento Seguro em Nuvem',
+      'OCR e IA ilimitados para extração automática de dados',
+      'Recebimento e arquivamento de arquivos direto pelo WhatsApp',
+      'Régua ativa de vencimentos com avisos automáticos',
+      'Portal do Cliente e assinatura eletrônica em 1 clique',
+    ],
+  },
+  'ged-escala': {
+    id: 'ged-escala',
+    name: 'GED Escala',
+    module: 'ged',
+    badge: 'Alta Performance',
+    tagline: 'Para contabilidades, departamentos jurídicos e empresas de alto volume de arquivos.',
+    priceMonthly: 149.00,
+    priceYearlyMonthly: 119.00,
+    annualTotal: 1428.00,
+    storage: '500 GB',
+    features: [
+      'Até 500 GB de Armazenamento de Alta Velocidade',
+      'Multi-departamentos com permissões avançadas de acesso',
+      'OCR avançado com pesquisa semântica por termos e cláusulas',
+      'Assinatura eletrônica avançada com validade jurídica',
+      'Suporte técnico e onboarding assistido pela engenharia',
     ],
   },
 };

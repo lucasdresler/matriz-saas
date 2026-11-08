@@ -23,6 +23,7 @@ import {
   ChevronDown,
   Check,
   TrendingUp,
+  FolderOpen,
   FileText,
   UploadCloud,
   RefreshCw,
@@ -68,8 +69,9 @@ import {
   initialCobrancaLogs,
   initialReputacaoConfig,
   initialReputacaoFeedbacks,
+  initialGedDocuments,
 } from '@/lib/mockData';
-import { Organization, Lead, LeadStatus, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, CobrancaRule, CobrancaNotificationLog, CobrancaStage, ReputacaoFeedback, ReputacaoConfig } from '@/types';
+import { Organization, Lead, LeadStatus, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, CobrancaRule, CobrancaNotificationLog, CobrancaStage, ReputacaoFeedback, ReputacaoConfig, GedDocument } from '@/types';
 
 export default function MatrizDashboard() {
   // Estado Multi-Tenant (Organização Ativa)
@@ -78,7 +80,12 @@ export default function MatrizDashboard() {
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
 
   // Navegação Principal (Inicia direto no Funil CRM para o trabalho diário)
-  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao'>('kanban');
+  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao' | 'ged'>('kanban');
+
+  // Estados do Agillex GED (Documentos com OCR e IA)
+  const [gedDocuments, setGedDocuments] = useState<GedDocument[]>(initialGedDocuments);
+  const [gedSearch, setGedSearch] = useState('');
+  const [gedCategoryFilter, setGedCategoryFilter] = useState<'todos' | 'contrato' | 'certidao' | 'nota_fiscal' | 'laudo'>('todos');
 
   // Estados do Agillex Cobrança (Régua Inteligente Asaas Pix)
   const [cobrancaRules, setCobrancaRules] = useState<CobrancaRule[]>(initialCobrancaRules);
@@ -588,7 +595,7 @@ export default function MatrizDashboard() {
   };
 
   // Organização Atual
-  const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao') => {
+  const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao' | 'ged') => {
     setActiveTab(tab);
     setMobileSidebarOpen(false);
     if (tab === 'livechat') {
@@ -1548,6 +1555,41 @@ export default function MatrizDashboard() {
             </div>
           )}
 
+          {/* MÓDULO 6: AGILLEX GED (DOCUMENTOS COM IA) */}
+          {currentOrg.modules?.ged && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '2px' }}>
+                <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#38BDF8', fontWeight: 700, letterSpacing: '0.05em' }}>
+                  Agillex GED
+                </span>
+                <span style={{ fontSize: '0.6rem', color: '#38BDF8', fontWeight: 600, background: 'rgba(56, 189, 248, 0.1)', padding: '1px 5px', borderRadius: '4px' }}>OCR + IA</span>
+              </div>
+
+              <button
+                onClick={() => handleTabChange('ged')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: activeTab === 'ged' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+                  color: activeTab === 'ged' ? '#38BDF8' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'ged' ? 600 : 400,
+                  border: activeTab === 'ged' ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid transparent',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FolderOpen size={18} />
+                  <span style={{ fontSize: '0.86rem' }}>Gestão de Documentos</span>
+                </div>
+                <span style={{ fontSize: '0.65rem', background: '#0284C7', color: '#fff', padding: '1px 6px', borderRadius: '99px', fontWeight: 700 }}>
+                  NUVEM
+                </span>
+              </button>
+            </div>
+          )}
+
           {/* ADMIN MASTER */}
           <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
             <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, padding: '0 8px', marginBottom: '4px', letterSpacing: '0.05em' }}>
@@ -1647,6 +1689,7 @@ export default function MatrizDashboard() {
                 {activeTab === 'saas' && 'Painel SaaS & MRR'}
                 {activeTab === 'cobranca' && 'Agillex Cobrança Inteligente'}
                 {activeTab === 'reputacao' && 'Agillex Reputação — Acelerador Google 5★'}
+                {activeTab === 'ged' && 'Agillex GED — Gestão Eletrônica de Documentos'}
               </h1>
               <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '10px' }}>
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -4768,6 +4811,261 @@ export default function MatrizDashboard() {
                           </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MÓDULO 6: AGILLEX GED (GESTÃO ELETRÔNICA DE DOCUMENTOS COM IA) */}
+          {activeTab === 'ged' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* Header do Módulo */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '16px',
+                  backgroundColor: 'var(--bg-surface)',
+                  padding: '20px 24px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-subtle)',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38BDF8' }}>
+                      <FolderOpen size={18} />
+                    </div>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                      Agillex GED — Gestão Eletrônica de Documentos & OCR
+                    </h2>
+                    <span style={{ fontSize: '0.72rem', backgroundColor: '#0284C7', color: '#fff', padding: '2px 8px', borderRadius: '99px', fontWeight: 700 }}>
+                      IA ATIVA
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Centralize contratos, certidões e laudos em nuvem segura com leitura automática de textos por IA e alertas ativos de vencimento no WhatsApp.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => alert('Simulação: Upload de documento acionado! A IA processará o OCR e extrairá datas e cláusulas automaticamente.')}
+                    style={{
+                      padding: '9px 16px',
+                      borderRadius: '8px',
+                      backgroundColor: '#0284C7',
+                      color: '#fff',
+                      fontSize: '0.84rem',
+                      fontWeight: 600,
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
+                    }}
+                  >
+                    <UploadCloud size={16} />
+                    Fazer Upload & Ler com OCR
+                  </button>
+                </div>
+              </div>
+
+              {/* Cards de Métricas do GED */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                <div style={{ backgroundColor: 'var(--bg-surface)', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Armazenamento em Nuvem</span>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', marginTop: '4px' }}>
+                    2.7 GB <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 400 }}>/ 100 GB</span>
+                  </div>
+                  <div style={{ width: '100%', height: '6px', backgroundColor: 'rgba(255, 255, 255, 0.08)', borderRadius: '99px', marginTop: '10px', overflow: 'hidden' }}>
+                    <div style={{ width: '3%', height: '100%', backgroundColor: '#38BDF8' }} />
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: 'var(--bg-surface)', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Documentos Catalogados</span>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#38BDF8', marginTop: '4px' }}>
+                    {gedDocuments.length}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: '#34D399', fontWeight: 500 }}>100% indexados com OCR</span>
+                </div>
+
+                <div style={{ backgroundColor: 'var(--bg-surface)', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Certidões & Contratos Válidos</span>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#34D399', marginTop: '4px' }}>
+                    {gedDocuments.filter((d) => d.status === 'valido').length}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Conformidade jurídica ativa</span>
+                </div>
+
+                <div style={{ backgroundColor: 'var(--bg-surface)', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Alertas de Vencimento Próximo</span>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#FBBF24', marginTop: '4px' }}>
+                    {gedDocuments.filter((d) => d.status === 'alerta_vencimento').length}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: '#FBBF24', fontWeight: 500 }}>Notificação ativa WhatsApp</span>
+                </div>
+              </div>
+
+              {/* Tabela de Documentos do GED */}
+              <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '240px' }}>
+                    <Search size={16} style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      placeholder="Pesquisar por nome, palavra-chave no texto ou CPF/CNPJ via OCR..."
+                      value={gedSearch}
+                      onChange={(e) => setGedSearch(e.target.value)}
+                      style={{
+                        width: '100%',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        color: '#fff',
+                        fontSize: '0.84rem',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {(['todos', 'contrato', 'certidao', 'laudo'] as const).map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setGedCategoryFilter(cat)}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          border: 'none',
+                          cursor: 'pointer',
+                          backgroundColor: gedCategoryFilter === cat ? '#0284C7' : 'rgba(255, 255, 255, 0.05)',
+                          color: gedCategoryFilter === cat ? '#fff' : 'var(--text-secondary)',
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {cat === 'todos' ? 'Todos os Arquivos' : cat === 'certidao' ? 'Certidões CND' : cat + 's'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+                        <th style={{ padding: '12px 16px', fontWeight: 600 }}>Documento & Arquivo</th>
+                        <th style={{ padding: '12px 16px', fontWeight: 600 }}>Categoria</th>
+                        <th style={{ padding: '12px 16px', fontWeight: 600 }}>Extração OCR com IA</th>
+                        <th style={{ padding: '12px 16px', fontWeight: 600 }}>Validade / Vencimento</th>
+                        <th style={{ padding: '12px 16px', fontWeight: 600 }}>Status</th>
+                        <th style={{ padding: '12px 16px', fontWeight: 600 }}>WhatsApp</th>
+                        <th style={{ padding: '12px 16px', fontWeight: 600, textAlign: 'right' }}>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {gedDocuments
+                        .filter((d) => {
+                          if (gedCategoryFilter !== 'todos' && d.category !== gedCategoryFilter) return false;
+                          if (!gedSearch.trim()) return true;
+                          const q = gedSearch.toLowerCase();
+                          return d.title.toLowerCase().includes(q) || (d.ocrExtractedText && d.ocrExtractedText.toLowerCase().includes(q));
+                        })
+                        .map((doc) => (
+                          <tr key={doc.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                            <td style={{ padding: '14px 16px' }}>
+                              <div style={{ fontWeight: 600, color: '#fff' }}>{doc.title}</div>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                {doc.fileName} • {doc.fileSize} • Enviado {doc.uploadedAt}
+                              </div>
+                            </td>
+                            <td style={{ padding: '14px 16px' }}>
+                              <span
+                                style={{
+                                  fontSize: '0.72rem',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                                  color: 'var(--text-secondary)',
+                                  textTransform: 'uppercase',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {doc.category}
+                              </span>
+                            </td>
+                            <td style={{ padding: '14px 16px', maxWidth: '300px' }}>
+                              <div
+                                style={{
+                                  fontSize: '0.75rem',
+                                  color: 'var(--text-secondary)',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                                title={doc.ocrExtractedText}
+                              >
+                                <Sparkles size={12} style={{ display: 'inline', marginRight: '4px', color: '#38BDF8' }} />
+                                {doc.ocrExtractedText || 'Processando OCR...'}
+                              </div>
+                            </td>
+                            <td style={{ padding: '14px 16px', color: doc.expiresAt ? '#fff' : 'var(--text-muted)' }}>
+                              {doc.expiresAt ? new Date(doc.expiresAt + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem expiração'}
+                            </td>
+                            <td style={{ padding: '14px 16px' }}>
+                              <span
+                                style={{
+                                  fontSize: '0.72rem',
+                                  padding: '3px 10px',
+                                  borderRadius: '99px',
+                                  fontWeight: 600,
+                                  backgroundColor:
+                                    doc.status === 'valido' ? 'rgba(16, 185, 129, 0.15)' :
+                                    doc.status === 'alerta_vencimento' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                  color:
+                                    doc.status === 'valido' ? '#34D399' :
+                                    doc.status === 'alerta_vencimento' ? '#FBBF24' : '#F87171',
+                                }}
+                              >
+                                {doc.status === 'valido' ? 'Válido' :
+                                 doc.status === 'alerta_vencimento' ? 'Vence em Breve' : 'Expirado'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '14px 16px' }}>
+                              <span style={{ fontSize: '0.75rem', color: doc.whatsappSynced ? '#34D399' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <CheckCircle2 size={13} style={{ color: doc.whatsappSynced ? '#34D399' : 'var(--text-muted)' }} />
+                                {doc.whatsappSynced ? 'Sincronizado' : 'Manual'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                              <button
+                                type="button"
+                                onClick={() => alert(`Visualizando dados OCR do documento: ${doc.title}\n\nTexto Extraído pela IA:\n${doc.ocrExtractedText}`)}
+                                style={{
+                                  padding: '5px 10px',
+                                  borderRadius: '6px',
+                                  backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                                  color: '#38BDF8',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Ver Detalhes OCR
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>

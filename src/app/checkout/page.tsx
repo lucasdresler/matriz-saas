@@ -68,6 +68,12 @@ const MODULE_HEADER_CONTENT: Record<
     subtitle:
       'Acelerador de avaliações 5 estrelas no Google Maps pós-atendimento com filtro protetor de satisfação e IA.',
   },
+  ged: {
+    title: 'Contratação Segura do Agillex GED',
+    trialTitle: 'Ativação Segura do Agillex GED',
+    subtitle:
+      'Gestão eletrônica de documentos em nuvem com OCR inteligente, leitura por IA e alertas ativos no WhatsApp.',
+  },
 };
 
 function CheckoutContent() {

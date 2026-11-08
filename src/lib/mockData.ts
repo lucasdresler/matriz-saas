@@ -1,4 +1,4 @@
-import { Organization, Lead, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, WhatsappInstance, CobrancaRule, CobrancaNotificationLog, ReputacaoFeedback, ReputacaoConfig } from '@/types';
+import { Organization, Lead, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, WhatsappInstance, CobrancaRule, CobrancaNotificationLog, ReputacaoFeedback, ReputacaoConfig, GedDocument } from '@/types';
 
 // Organização Oficial de Trabalho da AllLogic Online
 export const initialOrganizations: Organization[] = [
@@ -19,6 +19,7 @@ export const initialOrganizations: Organization[] = [
       crm: true,
       cobranca: true,
       reputacao: true,
+      ged: true,
     },
   },
 ];
@@ -339,5 +340,48 @@ export const initialReputacaoFeedbacks: ReputacaoFeedback[] = [
     status: 'resolvido',
     serviceName: 'Hospedagem cPanel',
     aiResponseDraft: 'Cliente acolhida pela equipe técnica no WhatsApp com suporte assistido direto.',
+  },
+];
+
+// Documentos e Arquivos do Agillex GED (Exemplos reais corporativos)
+export const initialGedDocuments: GedDocument[] = [
+  {
+    id: 'ged-doc-1',
+    orgId: 'org-alllogic',
+    title: 'Contrato de Prestação de Serviços Digitais - Agillex Hub Pro',
+    fileName: 'Contrato_Agillex_Hub_2026.pdf',
+    category: 'contrato',
+    fileSize: '1.4 MB',
+    uploadedAt: 'Hoje às 10:30',
+    expiresAt: '2027-11-08',
+    status: 'valido',
+    ocrExtractedText: 'Partes: AllLogic Online e Contratante. Objeto: Licenciamento de Software Agillex Hub Pro e Atendimento IA WhatsApp.',
+    whatsappSynced: true,
+  },
+  {
+    id: 'ged-doc-2',
+    orgId: 'org-alllogic',
+    title: 'Certidão Negativa de Débitos Federais (CND)',
+    fileName: 'CND_Receita_Federal_2026.pdf',
+    category: 'certidao',
+    fileSize: '420 KB',
+    uploadedAt: '01/11/2026',
+    expiresAt: '2026-11-20',
+    status: 'alerta_vencimento',
+    ocrExtractedText: 'Certidão Conjunta Negativa de Débitos Relativos aos Tributos Federais e à Dívida Ativa da União. Válida até 20/11/2026.',
+    whatsappSynced: true,
+  },
+  {
+    id: 'ged-doc-3',
+    orgId: 'org-alllogic',
+    title: 'Alvará de Licença e Funcionamento Comercial',
+    fileName: 'Alvara_Funcionamento_Prefeitura.pdf',
+    category: 'laudo',
+    fileSize: '890 KB',
+    uploadedAt: '15/10/2026',
+    expiresAt: '2027-04-15',
+    status: 'valido',
+    ocrExtractedText: 'Alvará de localização e funcionamento emitido pela Prefeitura Municipal. Regime tributário: Simples Nacional.',
+    whatsappSynced: false,
   },
 ];
