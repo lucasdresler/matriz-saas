@@ -54,7 +54,8 @@ import {
   BadgePercent,
   Star,
   Award,
-  Shield
+  Shield,
+  LogOut,
 } from 'lucide-react';
 import {
   initialOrganizations,
@@ -251,6 +252,29 @@ export default function MatrizDashboard() {
   const [rescheduleTime, setRescheduleTime] = useState<string>('');
   const [rescheduleSuccess, setRescheduleSuccess] = useState<boolean>(false);
   const [copiedMessage, setCopiedMessage] = useState<boolean>(false);
+
+  // Estado e Logout do Usuário Autenticado
+  const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string; role: string } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.authenticated && data?.user) {
+          setCurrentUser(data.user);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (e) {
+      console.error(e);
+    }
+    window.location.href = '/login';
+  };
 
   // Estados para Gestão de Serviços Oferecidos
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
@@ -1623,32 +1647,59 @@ export default function MatrizDashboard() {
 
         {/* Rodapé da Sidebar com Status do Usuário */}
         <div style={{ padding: '14px 16px', borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem', color: '#fff' }}>
-              D
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem', color: '#fff', flexShrink: 0 }}>
+              {(currentUser?.name || 'Lucas Dresler').charAt(0).toUpperCase()}
             </div>
-            <div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff' }}>Dresler</div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Super Admin</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {currentUser?.name || 'Lucas Dresler'}
+              </div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                {currentUser?.role === 'admin' ? 'Administrador' : 'Super Admin'}
+              </div>
             </div>
           </div>
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            style={{
-              color: 'var(--text-muted)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '6px',
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="Configurações da Empresa e Workspace"
-          >
-            <Settings size={16} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              style={{
+                color: 'var(--text-muted)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'color 0.2s',
+              }}
+              title="Configurações da Empresa e Workspace"
+            >
+              <Settings size={16} />
+            </button>
+            <button
+              onClick={handleLogout}
+              style={{
+                color: 'var(--text-muted)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'color 0.2s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#EF4444')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+              title="Sair da Plataforma"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
       </aside>
 
