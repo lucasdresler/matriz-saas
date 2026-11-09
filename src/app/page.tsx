@@ -56,6 +56,9 @@ import {
   Award,
   Shield,
   LogOut,
+  Lock,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   initialOrganizations,
@@ -274,6 +277,63 @@ export default function MatrizDashboard() {
       console.error(e);
     }
     window.location.href = '/login';
+  };
+
+  // Estados e Ação para Alteração de Senha
+  const [changePassCurrent, setChangePassCurrent] = useState('');
+  const [changePassNew, setChangePassNew] = useState('');
+  const [changePassConfirm, setChangePassConfirm] = useState('');
+  const [changePassShow, setChangePassShow] = useState(false);
+  const [changePassLoading, setChangePassLoading] = useState(false);
+  const [changePassError, setChangePassError] = useState<string | null>(null);
+  const [changePassSuccess, setChangePassSuccess] = useState<string | null>(null);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangePassError(null);
+    setChangePassSuccess(null);
+
+    if (!changePassCurrent || !changePassNew) {
+      setChangePassError('Preencha a senha atual e a nova senha.');
+      return;
+    }
+
+    if (changePassNew.length < 8) {
+      setChangePassError('A nova senha deve ter no mínimo 8 caracteres.');
+      return;
+    }
+
+    if (changePassNew !== changePassConfirm) {
+      setChangePassError('A confirmação não confere com a nova senha.');
+      return;
+    }
+
+    setChangePassLoading(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: changePassCurrent,
+          newPassword: changePassNew,
+          confirmPassword: changePassConfirm,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao alterar senha.');
+      }
+
+      setChangePassSuccess('Senha alterada com sucesso!');
+      setChangePassCurrent('');
+      setChangePassNew('');
+      setChangePassConfirm('');
+    } catch (err: any) {
+      setChangePassError(err.message || 'Erro ao comunicar com o servidor.');
+    } finally {
+      setChangePassLoading(false);
+    }
   };
 
   // Estados para Gestão de Serviços Oferecidos
@@ -6517,6 +6577,160 @@ export default function MatrizDashboard() {
                 </div>
                 <ExternalLink size={14} style={{ color: '#10B981' }} />
               </a>
+            </div>
+
+            {/* Segurança & Alteração de Senha */}
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface-elevated)',
+                borderRadius: '12px',
+                padding: '16px',
+                border: '1px solid var(--border-subtle)',
+                marginBottom: '20px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldCheck size={18} style={{ color: '#00F5D4' }} />
+                  <div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#fff' }}>
+                      Segurança da Conta & Alteração de Senha
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      Logado como: <strong style={{ color: '#38BDF8' }}>{currentUser?.email || 'admin@alllogiconline.com.br'}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                    Senha Atual
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={changePassShow ? 'text' : 'password'}
+                      value={changePassCurrent}
+                      onChange={(e) => setChangePassCurrent(e.target.value)}
+                      placeholder="Sua senha atual"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '8px 36px 8px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        border: '1px solid var(--border-subtle)',
+                        color: '#fff',
+                        fontSize: '0.82rem',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setChangePassShow(!changePassShow)}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      {changePassShow ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      Nova Senha (mín. 8 dígitos)
+                    </label>
+                    <input
+                      type={changePassShow ? 'text' : 'password'}
+                      value={changePassNew}
+                      onChange={(e) => setChangePassNew(e.target.value)}
+                      placeholder="Nova senha"
+                      required
+                      minLength={8}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        border: '1px solid var(--border-subtle)',
+                        color: '#fff',
+                        fontSize: '0.82rem',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      Confirmar Nova Senha
+                    </label>
+                    <input
+                      type={changePassShow ? 'text' : 'password'}
+                      value={changePassConfirm}
+                      onChange={(e) => setChangePassConfirm(e.target.value)}
+                      placeholder="Repita a nova senha"
+                      required
+                      minLength={8}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                        border: '1px solid var(--border-subtle)',
+                        color: '#fff',
+                        fontSize: '0.82rem',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {changePassError && (
+                  <div style={{ fontSize: '0.75rem', color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                    {changePassError}
+                  </div>
+                )}
+
+                {changePassSuccess && (
+                  <div style={{ fontSize: '0.75rem', color: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.25)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Check size={14} />
+                    {changePassSuccess}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                  <button
+                    type="submit"
+                    disabled={changePassLoading}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                      border: 'none',
+                      color: '#fff',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      opacity: changePassLoading ? 0.7 : 1,
+                    }}
+                  >
+                    {changePassLoading ? <Loader2 size={14} className="spin-slow" /> : <Lock size={14} />}
+                    {changePassLoading ? 'Atualizando...' : 'Atualizar Senha'}
+                  </button>
+                </div>
+              </form>
             </div>
 
             {/* Footer */}
