@@ -100,6 +100,14 @@ export const initialServices: ServiceItem[] = [
     description: 'Acelerador de avaliações 5 estrelas no Google Meu Negócio pós-atendimento. Filtro inteligente de satisfação (NPS 4-5 vai pro Google Maps, 1-3 é protegido e tratado internamente) e respostas com IA para SEO local.',
   },
   {
+    id: 'srv-ged',
+    orgId: 'org-alllogic',
+    name: 'Agillex GED (Gestão de Documentos com OCR & IA)',
+    price: 89.9,
+    durationMinutes: 30,
+    description: 'Cofre digital seguro com leitura de fotos e PDFs por OCR e IA, alertas preventivos de vencimento diretamente no WhatsApp e assinatura digital em 1 clique.',
+  },
+  {
     id: 'srv-7',
     orgId: 'org-alllogic',
     name: 'Hospedagem cPanel Essencial',
