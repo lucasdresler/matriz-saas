@@ -61,6 +61,17 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // 3. Autenticação por x-api-key para integrações internas (n8n, Evolution, Agentes)
+  const apiKey = req.headers.get('x-api-key');
+  if (apiKey && apiKey === (process.env.API_SECRET_KEY || 'MatrizSuperSecretApiKey2026')) {
+    return NextResponse.next();
+  }
+
+  // 4. Permitir GET /api/agent-config para sincronização do n8n / Agentes
+  if (pathname === '/api/agent-config' && req.method === 'GET') {
+    return NextResponse.next();
+  }
+
   // 3. Verificar cookie de sessão para rotas protegidas
   const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   const isAuthenticated = sessionCookie ? await verifyEdgeToken(sessionCookie) : false;
