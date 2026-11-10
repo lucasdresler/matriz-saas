@@ -68,13 +68,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Fallback adicional para login com "admin@alllogiconline.com.br"
-    if (!isValid && cleanEmail === 'admin@alllogiconline.com.br' && password === masterPass) {
+    // 3. Fallback adicional para login com "admin@alllogiconline.com.br" e "admin@agillex.com.br"
+    if (!isValid && (cleanEmail === 'admin@alllogiconline.com.br' || cleanEmail === 'admin@agillex.com.br') && password === masterPass) {
       isValid = true;
       userData = {
         id: 'a0000000-0000-0000-0000-000000000001',
-        email: 'admin@alllogiconline.com.br',
-        name: 'Administrador AllLogic',
+        email: cleanEmail,
+        name: 'Administrador Agillex',
         role: 'super_admin',
       };
     }

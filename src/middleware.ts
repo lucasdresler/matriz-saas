@@ -38,20 +38,30 @@ async function verifyEdgeToken(token: string): Promise<boolean> {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 1. Rotas estáticas e internas do Next.js
+  // 1. Se o usuário já está autenticado e tenta acessar /login, redireciona para a home ou página solicitada
+  if (pathname === '/login') {
+    const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+    const isAuthenticated = sessionCookie ? await verifyEdgeToken(sessionCookie) : false;
+    if (isAuthenticated) {
+      const redirectPath = req.nextUrl.searchParams.get('redirect') || '/';
+      return NextResponse.redirect(new URL(redirectPath, req.url));
+    }
+    return NextResponse.next();
+  }
+
+  // 2. Rotas estáticas e públicas
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon.ico') ||
     pathname.startsWith('/api/webhooks') || // Webhooks WhatsApp e Asaas usam suas próprias chaves
     pathname.startsWith('/checkout') || // Checkout público de clientes
     pathname.startsWith('/api/checkout') ||
-    pathname.startsWith('/api/auth') || // Rotas de login/logout
-    pathname === '/login'
+    pathname.startsWith('/api/auth') // Rotas de login/logout
   ) {
     return NextResponse.next();
   }
 
-  // 2. Verificar cookie de sessão
+  // 3. Verificar cookie de sessão para rotas protegidas
   const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   const isAuthenticated = sessionCookie ? await verifyEdgeToken(sessionCookie) : false;
 
