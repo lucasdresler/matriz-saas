@@ -7,7 +7,21 @@ export async function GET(req: NextRequest) {
     const orgRes = await query('SELECT id FROM organizations LIMIT 1;');
     const orgId = orgRes.rows[0]?.id || 'a0000000-0000-0000-0000-000000000001';
 
-    let servicesRes = await query(
+    // Garantir que todos os serviços do catálogo oficial (incluindo Agillex Cobrança, Reputação e GED) estejam cadastrados e ativos
+    for (const srv of initialServices) {
+      await query(
+        `INSERT INTO services (
+           organization_id, name, price, duration_minutes, description, is_active, created_at
+         )
+         SELECT $1, $2, $3, $4, $5, true, NOW()
+         WHERE NOT EXISTS (
+           SELECT 1 FROM services WHERE organization_id = $1 AND name = $2 AND is_active = true
+         );`,
+        [orgId, srv.name, srv.price, srv.durationMinutes, srv.description]
+      );
+    }
+
+    const servicesRes = await query(
       `SELECT 
          id,
          organization_id as "orgId",
@@ -21,33 +35,6 @@ export async function GET(req: NextRequest) {
        ORDER BY created_at ASC;`,
       [orgId]
     );
-
-    // Se o banco ainda não tiver serviços cadastrados, popular com os serviços padrão da AllLogic
-    if (servicesRes.rows.length === 0) {
-      for (const srv of initialServices) {
-        await query(
-          `INSERT INTO services (
-             organization_id, name, price, duration_minutes, description, is_active, created_at
-           ) VALUES ($1, $2, $3, $4, $5, true, NOW());`,
-          [orgId, srv.name, srv.price, srv.durationMinutes, srv.description]
-        );
-      }
-
-      servicesRes = await query(
-        `SELECT 
-           id,
-           organization_id as "orgId",
-           name,
-           price::float as price,
-           COALESCE(duration_minutes, 30) as "durationMinutes",
-           COALESCE(description, '') as description,
-           is_active as "isActive"
-         FROM services
-         WHERE organization_id = $1 AND is_active = true
-         ORDER BY created_at ASC;`,
-        [orgId]
-      );
-    }
 
     return NextResponse.json({
       success: true,

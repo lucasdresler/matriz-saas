@@ -588,6 +588,7 @@ export default function MatrizDashboard() {
 
   // Importador de Planilhas (CSV / JSON gerados pelo Prospector)
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const chatMessagesEndRef = React.useRef<HTMLDivElement | null>(null);
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1033,6 +1034,13 @@ export default function MatrizDashboard() {
       }
     }
   }, [activeTab, selectedLeadId, messages, orgLeads]);
+
+  // Auto-scroll para a mensagem mais recente ao carregar conversa ou receber nova mensagem
+  useEffect(() => {
+    if (activeTab === 'livechat' && selectedLeadId) {
+      chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [activeTab, selectedLeadId, currentLeadMessages.length]);
 
   // Alternar pausa da IA para um lead (Human Handoff)
   const toggleAiForLead = (leadId: string) => {
@@ -2581,7 +2589,17 @@ export default function MatrizDashboard() {
 
               {/* Coluna Direita: Janela do Chat Ao Vivo */}
               {selectedLead ? (
-                <div className="livechat-main" style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#0B141A' }}>
+                <div
+                  className="livechat-main"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    minHeight: 0,
+                    overflow: 'hidden',
+                    backgroundColor: '#0B141A',
+                  }}
+                >
                   {/* Header do Chat com o Lead & BOTÃO HUMAN HANDOFF */}
                   <div
                     style={{
@@ -2591,6 +2609,7 @@ export default function MatrizDashboard() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      flexShrink: 0,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -2686,10 +2705,13 @@ export default function MatrizDashboard() {
 
                   {/* Área das Mensagens (Estilo WhatsApp) */}
                   <div
+                    className="livechat-messages-container"
                     style={{
                       flex: 1,
+                      minHeight: 0,
                       padding: '20px 24px',
                       overflowY: 'auto',
+                      overflowX: 'hidden',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '10px',
@@ -2697,7 +2719,7 @@ export default function MatrizDashboard() {
                       backgroundSize: '24px 24px',
                     }}
                   >
-                    <div style={{ alignSelf: 'center', padding: '4px 12px', borderRadius: '6px', backgroundColor: '#182229', color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.68rem', marginBottom: '8px' }}>
+                    <div style={{ alignSelf: 'center', padding: '4px 12px', borderRadius: '6px', backgroundColor: '#182229', color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.68rem', marginBottom: '8px', flexShrink: 0 }}>
                       Criptografia de ponta a ponta · Conectado via Evolution API
                     </div>
 
@@ -2738,10 +2760,13 @@ export default function MatrizDashboard() {
 
                     {/* Indicador de IA Digitando */}
                     {isAiThinking && (
-                      <div style={{ alignSelf: 'flex-end', backgroundColor: '#005C4B', padding: '8px 14px', borderRadius: '8px', color: '#6EE7B7', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ alignSelf: 'flex-end', backgroundColor: '#005C4B', padding: '8px 14px', borderRadius: '8px', color: '#6EE7B7', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                         <Sparkles size={14} className="live-indicator" /> IA processando resposta contextual...
                       </div>
                     )}
+
+                    {/* Âncora invisível para auto-scroll suave até o final */}
+                    <div ref={chatMessagesEndRef} style={{ height: '1px', flexShrink: 0 }} />
                   </div>
 
                   {/* Input de Envio de Mensagem */}
@@ -2753,6 +2778,7 @@ export default function MatrizDashboard() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
+                      flexShrink: 0,
                     }}
                   >
                     <input

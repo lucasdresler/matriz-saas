@@ -263,6 +263,23 @@ input, textarea, select {
   overflow: hidden;
 }
 
+.livechat-main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background-color: #0B141A;
+}
+
+.livechat-messages-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
