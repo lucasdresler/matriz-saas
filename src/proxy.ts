@@ -35,7 +35,7 @@ async function verifyEdgeToken(token: string): Promise<boolean> {
   }
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // 1. Se o usuário já está autenticado e tenta acessar /login, redireciona para a home ou página solicitada

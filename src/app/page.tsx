@@ -4954,6 +4954,13 @@ export default function MatrizDashboard() {
                       </tr>
                     </thead>
                     <tbody>
+                      {reputacaoFeedbacks.length === 0 && (
+                        <tr>
+                          <td colSpan={7} style={{ padding: '24px 14px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                            Nenhum feedback recebido ainda.
+                          </td>
+                        </tr>
+                      )}
                       {reputacaoFeedbacks.map((item) => (
                         <tr key={item.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
                           <td style={{ padding: '12px 14px', color: '#fff', fontWeight: 600 }}>

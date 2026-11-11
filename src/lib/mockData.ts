@@ -306,50 +306,7 @@ export const initialReputacaoConfig: ReputacaoConfig = {
 };
 
 // Feedbacks e avaliações recebidas via pesquisa NPS
-export const initialReputacaoFeedbacks: ReputacaoFeedback[] = [
-  {
-    id: 'rep-1',
-    orgId: 'org-alllogic',
-    customerName: 'Dra. Mariana Vasconcelos',
-    customerPhone: '5511991223344',
-    rating: 5,
-    category: 'promotor',
-    googleReviewClicked: true,
-    comment: 'Atendimento impecável! O assistente de IA respondeu meus clientes em segundos.',
-    createdAt: 'Hoje às 11:40',
-    status: 'publicado',
-    serviceName: 'Agillex Atende Pro',
-    aiResponseDraft: 'Olá, Dra. Mariana! Muito obrigado pela avaliação de 5 estrelas e pelo carinho. É uma honra apoiar sua clínica com tecnologia humanizada!',
-  },
-  {
-    id: 'rep-2',
-    orgId: 'org-alllogic',
-    customerName: 'Carlos Eduardo Mendes',
-    customerPhone: '5511982334455',
-    rating: 5,
-    category: 'promotor',
-    googleReviewClicked: true,
-    comment: 'O agendamento integrado com o Google Calendar eliminou todos os conflitos de horário na barbearia.',
-    createdAt: 'Ontem às 17:15',
-    status: 'publicado',
-    serviceName: 'Agillex Agenda',
-    aiResponseDraft: 'Grande Carlos, agradecemos demais pelas 5 estrelas! Sucesso total na barbearia.',
-  },
-  {
-    id: 'rep-3',
-    orgId: 'org-alllogic',
-    customerName: 'Fernanda Rocha',
-    customerPhone: '5511973445566',
-    rating: 3,
-    category: 'neutro',
-    googleReviewClicked: false,
-    comment: 'Tive uma dúvida na configuração do DNS e demorou um pouco para eu entender.',
-    createdAt: 'Ontem às 14:05',
-    status: 'resolvido',
-    serviceName: 'Hospedagem cPanel',
-    aiResponseDraft: 'Cliente acolhida pela equipe técnica no WhatsApp com suporte assistido direto.',
-  },
-];
+export const initialReputacaoFeedbacks: ReputacaoFeedback[] = [];
 
 // Documentos e Arquivos do Agillex GED (Exemplos reais corporativos)
 export const initialGedDocuments: GedDocument[] = [

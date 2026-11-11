@@ -48,38 +48,8 @@ export interface AsaasPaymentInput {
   description: string;
 }
 
-import fs from 'fs';
-import path from 'path';
-
 function getEnvVariable(name: string): string {
-  try {
-    const candidatePaths = [
-      '/app/.env.production',
-      path.resolve(process.cwd(), '.env.production'),
-      path.resolve(process.cwd(), '.env'),
-    ];
-    for (const p of candidatePaths) {
-      if (fs.existsSync(p)) {
-        const content = fs.readFileSync(p, 'utf8');
-        for (const line of content.split('\n')) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith(`${name}=`)) {
-            const val = trimmed.substring(`${name}=`.length).trim();
-            const clean = val.replace(/^['"]|['"]$/g, '');
-            if (clean) return clean;
-          }
-        }
-      }
-    }
-  } catch {
-    // Silencioso em caso de permissao
-  }
-
-  if (process.env[name] && process.env[name] !== '') {
-    return process.env[name] as string;
-  }
-
-  return '';
+  return process.env[name] || '';
 }
 
 export class AsaasService {
