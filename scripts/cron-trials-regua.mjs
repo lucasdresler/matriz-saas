@@ -183,7 +183,7 @@ async function runTrialRegua() {
     // D-1: Falta 1 dia
     else if (daysRemaining === 1) {
       log(`📢 [D-1] Enviando alerta de encerramento amanhã para ${trial.name}`);
-      const text = `Olá, *${trial.name}*! Seu período de teste de 14 dias do *${trial.plan}* encerra amanhã! ⏰\n\nPara continuar aproveitando todos os recursos sem nenhuma pausa e manter todos os seus dados e atendimentos preservados, continue seu plano com desconto em:\n👉 https://hub.alllogiconline.com.br/checkout?modulo=combo&plano=combo`;
+      const text = `Olá, *${trial.name}*! Seu período de teste de 14 dias do *${trial.plan}* encerra amanhã! ⏰\n\nPara continuar aproveitando todos os recursos sem nenhuma pausa e manter todos os seus dados e atendimentos preservados, continue seu plano com desconto em:\n👉 https://hub.agillex.com.br/checkout?modulo=combo&plano=combo`;
       await sendWhatsApp(trial.phone, text);
     }
 
@@ -195,7 +195,7 @@ async function runTrialRegua() {
       if (pix?.pixCopiaECola) {
         text += `\n\n🔑 *Código Pix Copia e Cola:*\n\`${pix.pixCopiaECola}\`\n\nApós o pagamento, sua plataforma é liberada automaticamente em segundos.`;
       } else {
-        text += `\n👉 Acesse o link seguro de pagamento: https://hub.alllogiconline.com.br/checkout?modulo=combo&plano=combo`;
+        text += `\n👉 Acesse o link seguro de pagamento: https://hub.agillex.com.br/checkout?modulo=combo&plano=combo`;
       }
       await sendWhatsApp(trial.phone, text);
     }

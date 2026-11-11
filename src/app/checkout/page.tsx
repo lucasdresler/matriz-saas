@@ -317,7 +317,7 @@ function CheckoutContent() {
         <div className="checkout-container">
           <div className="site-header__inner">
             <div className="site-header__brand">
-              <a href="https://alllogiconline.com.br" className="site-header__logo" aria-label="AllLogic Online">
+              <a href="https://agillex.com.br/" className="site-header__logo" aria-label="AllLogic Online">
                 <img src="/images/logo-alllogic.png" alt="AllLogic Online" />
               </a>
 
@@ -341,12 +341,12 @@ function CheckoutContent() {
             <nav className={`site-navigation ${mobileMenuOpen ? 'is-open' : ''}`} aria-label="Navegação primária">
               <ul className="site-navigation__list">
                 <li>
-                  <a href="https://alllogiconline.com.br/" className="site-navigation__link">
+                  <a href="https://agillex.com.br/" className="site-navigation__link">
                     Início
                   </a>
                 </li>
                 <li>
-                  <a href="https://alllogiconline.com.br/#solucoes" className="site-navigation__link">
+                  <a href="https://agillex.com.br/#produtos" className="site-navigation__link">
                     Soluções
                   </a>
                 </li>
@@ -380,7 +380,7 @@ function CheckoutContent() {
                     <ul className="site-navigation__dropdown-menu" role="menu">
                       <li role="none">
                         <a
-                          href="https://alllogiconline.com.br/agillex-hub"
+                          href="https://agillex.com.br/#produtos"
                           className="site-navigation__dropdown-link"
                           role="menuitem"
                         >
@@ -389,7 +389,7 @@ function CheckoutContent() {
                       </li>
                       <li role="none">
                         <a
-                          href="https://alllogiconline.com.br/agillex-agenda"
+                          href="https://agillex.com.br/#produtos"
                           className="site-navigation__dropdown-link"
                           role="menuitem"
                         >
@@ -398,7 +398,7 @@ function CheckoutContent() {
                       </li>
                       <li role="none">
                         <a
-                          href="https://alllogiconline.com.br/agillex-atendimento"
+                          href="https://agillex.com.br/#produtos"
                           className="site-navigation__dropdown-link"
                           role="menuitem"
                         >
@@ -1195,7 +1195,7 @@ function CheckoutContent() {
           <div className="footer__inner">
             {/* Marca */}
             <div className="footer__brand">
-              <a href="https://alllogiconline.com.br" className="footer__logo" aria-label="AllLogic Online">
+              <a href="https://agillex.com.br/" className="footer__logo" aria-label="AllLogic Online">
                 <img
                   src="/images/logo-alllogic.png"
                   alt="AllLogic Online — Engenharia de Soluções Digitais"
@@ -1246,7 +1246,7 @@ function CheckoutContent() {
                         <li className="footer__dropdown-item" role="none">
                           <a
                             className="footer__dropdown-link"
-                            href="https://alllogiconline.com.br/agillex-hub"
+                            href="https://agillex.com.br/#produtos"
                             role="menuitem"
                           >
                             Agillex Hub
@@ -1255,7 +1255,7 @@ function CheckoutContent() {
                         <li className="footer__dropdown-item" role="none">
                           <a
                             className="footer__dropdown-link"
-                            href="https://alllogiconline.com.br/agillex-agenda"
+                            href="https://agillex.com.br/#produtos"
                             role="menuitem"
                           >
                             Agillex Agenda
@@ -1264,7 +1264,7 @@ function CheckoutContent() {
                         <li className="footer__dropdown-item" role="none">
                           <a
                             className="footer__dropdown-link"
-                            href="https://alllogiconline.com.br/agillex-atendimento"
+                            href="https://agillex.com.br/#produtos"
                             role="menuitem"
                           >
                             Agillex Atende
@@ -1274,10 +1274,10 @@ function CheckoutContent() {
                     </div>
                   </li>
                   <li>
-                    <a href="https://alllogiconline.com.br/politica-de-privacidade">Política de Privacidade</a>
+                    <a href="https://agillex.com.br/privacidade/">Política de Privacidade</a>
                   </li>
                   <li>
-                    <a href="https://alllogiconline.com.br/termos-de-uso">Termos de Uso</a>
+                    <a href="https://agillex.com.br/termos/">Termos de Uso</a>
                   </li>
                 </ul>
               </nav>

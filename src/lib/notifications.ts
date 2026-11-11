@@ -129,7 +129,7 @@ Qualquer dúvida, estamos 100% à sua disposição!`;
 Sua conta está liberada com todos os recursos até *${dateFormatted}*.
 
 🔑 *Seus Dados de Acesso ao Painel:*
-• *Acesso:* https://hub.alllogiconline.com.br
+• *Acesso:* https://hub.agillex.com.br
 • *E-mail:* ${data.email}
 • *Senha Provisória:* ${data.tempPassword}
 

@@ -42,11 +42,11 @@ Você domina com maestria e tira dúvidas sobre absolutamente TODAS as soluçõe
    - Atendimento 24/7 no WhatsApp Oficial da empresa em áudio e texto.
    - Base de conhecimento exclusiva da empresa (RAG) para respostas contextuais.
    - Transbordo para atendimento humano em 1 clique.
-   - Link: https://alllogiconline.com.br/agillex-atendimento/
+   - Link: https://agillex.com.br/#produtos
 
 3. **Agillex Hub (Plataforma Operacional Unificada):**
    - Centraliza Atendimento com IA, Agendamento Online, CRM Kanban e Cobrança Pix/Cartão com taxa fixa de R$ 1,99 por transação.
-   - Painel: https://hub.alllogiconline.com.br/
+   - Painel: https://hub.agillex.com.br/
 
 #### B) Serviços de Engenharia de Soluções Digitais:
 1. **Desenvolvimento de Sites e Landing Pages:**

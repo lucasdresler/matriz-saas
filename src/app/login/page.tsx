@@ -192,7 +192,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu.email@alllogiconline.com.br"
+                placeholder="seu.email@empresa.com.br"
                 autoComplete="email"
                 style={{
                   width: '100%',

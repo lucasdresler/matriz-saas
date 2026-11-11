@@ -6579,7 +6579,7 @@ export default function MatrizDashboard() {
               </a>
 
               <a
-                href="https://hub.alllogiconline.com.br/checkout?modulo=combo"
+                href="https://hub.agillex.com.br/checkout?modulo=combo"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
