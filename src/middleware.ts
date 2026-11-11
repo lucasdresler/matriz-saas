@@ -42,6 +42,9 @@ export async function middleware(req: NextRequest) {
   if (pathname === '/login') {
     const sessionCookie = req.cookies.get(SESSION_COOKIE_NAME)?.value;
     const isAuthenticated = sessionCookie ? await verifyEdgeToken(sessionCookie) : false;
+    if (req.nextUrl.searchParams.get('switch') === 'true') {
+      return NextResponse.next();
+    }
     if (isAuthenticated) {
       const redirectPath = req.nextUrl.searchParams.get('redirect') || '/';
       return NextResponse.redirect(new URL(redirectPath, req.url));

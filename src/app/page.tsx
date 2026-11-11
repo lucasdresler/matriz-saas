@@ -82,6 +82,8 @@ export default function MatrizDashboard() {
   const [organizations, setOrganizations] = useState<Organization[]>(initialOrganizations);
   const [activeOrgId, setActiveOrgId] = useState<string>('org-alllogic');
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
+  const [workspaceError, setWorkspaceError] = useState('');
+  const [workspaceReady, setWorkspaceReady] = useState(false);
 
   // Navegação Principal (Inicia direto no Funil CRM para o trabalho diário)
   const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao' | 'ged'>('kanban');
@@ -147,30 +149,47 @@ export default function MatrizDashboard() {
 
   // Sincronização em tempo real com o backend do Hub (/api/leads)
   useEffect(() => {
+    if (!workspaceReady) return;
     let isMounted = true;
     let initialSyncDone = false;
 
     const syncLeads = async () => {
       try {
-        const res = await fetch('/api/leads');
+        const res = await fetch(`/api/leads?orgId=${encodeURIComponent(activeOrgId)}`);
         if (!res.ok) return;
         const data = await res.json();
         if (data?.success && isMounted) {
           if (Array.isArray(data.leads)) {
-            // Se o backend ainda estiver vazio e o usuário tiver leads minerados no navegador, sincronizar para o banco
             if (data.leads.length === 0 && !initialSyncDone) {
-              const localSaved = typeof window !== 'undefined' ? localStorage.getItem('agillex_hub_leads_prod') : null;
+              const localSaved = localStorage.getItem('agillex_hub_leads_prod');
+              const allLogicWorkspace = organizations.find((org) => org.id === activeOrgId)?.slug === 'alllogic';
               if (localSaved) {
                 try {
                   const parsed = JSON.parse(localSaved);
-                  if (Array.isArray(parsed) && parsed.length > 0) {
-                    fetch('/api/leads', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ syncAll: parsed }),
-                    }).catch(() => {});
+                  if (Array.isArray(parsed)) {
+                    const scopedLeads = parsed
+                      .filter((localLead: Lead) => (
+                        localLead.orgId === activeOrgId
+                        || (
+                          allLogicWorkspace
+                          && (!localLead.orgId || localLead.orgId === 'org-alllogic' || localLead.orgId === 'a0000000-0000-0000-0000-000000000001')
+                        )
+                      ))
+                      .map((localLead: Lead) => ({ ...localLead, orgId: activeOrgId }));
+                    if (scopedLeads.length > 0) {
+                      const syncResponse = await fetch('/api/leads', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orgId: activeOrgId, syncAll: scopedLeads }),
+                      });
+                      if (!syncResponse.ok) {
+                        throw new Error('Não foi possível sincronizar os leads locais deste workspace.');
+                      }
+                    }
                   }
-                } catch (e) {}
+                } catch (error) {
+                  console.error('[Leads] Falha ao sincronizar leads locais:', error);
+                }
               }
               initialSyncDone = true;
             } else if (data.leads.length > 0) {
@@ -185,15 +204,20 @@ export default function MatrizDashboard() {
                 // Preserva leads locais não sincronizados ainda
                 const merged: Lead[] = data.leads.map((l: Lead) => ({
                   ...l,
-                  orgId: (!l.orgId || l.orgId === 'a0000000-0000-0000-0000-000000000001') ? 'org-alllogic' : l.orgId,
+                  orgId: l.orgId,
                 }));
                 prevLeads.forEach((localLead) => {
                   const phoneDigits = localLead.phone.replace(/\D/g, '').slice(-8);
-                  if (!backendMap.has(localLead.id) && (!phoneDigits || !backendMap.has(phoneDigits))) {
-                    merged.push({
-                      ...localLead,
-                      orgId: (!localLead.orgId || localLead.orgId === 'a0000000-0000-0000-0000-000000000001') ? 'org-alllogic' : localLead.orgId,
-                    });
+                  const localOrgId =
+                    localLead.orgId === 'org-alllogic' && organizations.find((org) => org.id === activeOrgId)?.slug === 'alllogic'
+                      ? activeOrgId
+                      : localLead.orgId;
+                  if (
+                    localOrgId === activeOrgId
+                    && !backendMap.has(localLead.id)
+                    && (!phoneDigits || !backendMap.has(phoneDigits))
+                  ) {
+                    merged.push({ ...localLead, orgId: activeOrgId });
                   }
                 });
                 return merged;
@@ -219,7 +243,7 @@ export default function MatrizDashboard() {
       isMounted = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [activeOrgId, organizations, workspaceReady]);
 
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(initialMessages);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
@@ -260,14 +284,49 @@ export default function MatrizDashboard() {
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string; role: string } | null>(null);
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.authenticated && data?.user) {
-          setCurrentUser(data.user);
+    let isMounted = true;
+    const loadWorkspaces = async () => {
+      try {
+        const userResponse = await fetch('/api/auth/me');
+        const userData = await userResponse.json();
+        if (!userResponse.ok || !userData?.authenticated || !userData?.user) {
+          throw new Error('Não foi possível identificar a sessão atual.');
         }
-      })
-      .catch(() => {});
+        if (isMounted) setCurrentUser(userData.user);
+
+        const organizationsResponse = await fetch('/api/organizations');
+        const organizationsData = await organizationsResponse.json();
+        if (!organizationsResponse.ok || !organizationsData?.success || !Array.isArray(organizationsData.organizations)) {
+          throw new Error(organizationsData?.error || 'Não foi possível carregar as empresas.');
+        }
+        if (!isMounted) return;
+
+        const availableOrganizations = organizationsData.organizations as Organization[];
+        if (availableOrganizations.length === 0) {
+          throw new Error('Sua conta ainda não está vinculada a um workspace. Fale com o suporte.');
+        }
+
+        setOrganizations(availableOrganizations);
+        const defaultOrganization =
+          userData.user.role === 'super_admin'
+            ? availableOrganizations.find((org) => org.slug === 'alllogic') || availableOrganizations[0]
+            : availableOrganizations[0];
+        setActiveOrgId(defaultOrganization.id);
+        setWorkspaceError('');
+        setWorkspaceReady(true);
+      } catch (error) {
+        console.error('[Workspace] Falha ao carregar os workspaces:', error);
+        if (isMounted) {
+          setWorkspaceError(error instanceof Error ? error.message : 'Falha ao carregar as empresas.');
+          setWorkspaceReady(true);
+        }
+      }
+    };
+
+    loadWorkspaces();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -562,7 +621,7 @@ export default function MatrizDashboard() {
         fetch('/api/leads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ syncAll: data.leads }),
+          body: JSON.stringify({ orgId: activeOrgId, syncAll: data.leads }),
         }).catch(() => {});
 
         const msg = data.ignoredCount && data.ignoredCount > 0
@@ -809,10 +868,10 @@ export default function MatrizDashboard() {
 
   const currentOrg = organizations.find((o) => o.id === activeOrgId) || organizations[0];
   const isOrgMatch = (itemOrgId?: string) => {
-    if (!itemOrgId) return true;
+    if (!itemOrgId) return currentOrg.slug === 'alllogic';
     if (itemOrgId === activeOrgId) return true;
     if (
-      activeOrgId === 'org-alllogic' &&
+      currentOrg.slug === 'alllogic' &&
       (itemOrgId === 'a0000000-0000-0000-0000-000000000001' || itemOrgId === 'org-alllogic')
     ) {
       return true;
@@ -829,6 +888,21 @@ export default function MatrizDashboard() {
   const filteredLeads = orgLeads.filter((l) => {
     if (!kanbanSearch.trim()) return true;
     const q = kanbanSearch.toLowerCase();
+    if (!workspaceReady || workspaceError) {
+      return (
+        <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#070B14', color: '#E2E8F0', padding: '24px' }}>
+          <div role={workspaceError ? 'alert' : 'status'} style={{ maxWidth: '420px', textAlign: 'center' }}>
+            <p>{workspaceError || 'Carregando seu workspace...'}</p>
+            {workspaceError && (
+              <button onClick={handleLogout} style={{ color: '#67E8F9', textDecoration: 'underline' }}>
+                Sair e entrar novamente
+              </button>
+            )}
+          </div>
+        </main>
+      );
+    }
+
     return (
       (l.name && l.name.toLowerCase().includes(q)) ||
       (l.phone && l.phone.toLowerCase().includes(q)) ||
@@ -849,7 +923,7 @@ export default function MatrizDashboard() {
       if (selectedLeadId === leadId) {
         setSelectedLeadId('');
       }
-      fetch(`/api/leads?id=${leadId}`, { method: 'DELETE' }).catch(() => {});
+      fetch(`/api/leads?id=${leadId}&orgId=${encodeURIComponent(activeOrgId)}`, { method: 'DELETE' }).catch(() => {});
     }
   };
 
@@ -927,7 +1001,7 @@ export default function MatrizDashboard() {
     fetch('/api/leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lead: updated }),
+      body: JSON.stringify({ orgId: activeOrgId, lead: updated }),
     }).catch(() => {});
   };
 
@@ -1059,7 +1133,7 @@ export default function MatrizDashboard() {
         fetch('/api/leads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lead: target }),
+          body: JSON.stringify({ orgId: activeOrgId, lead: target }),
         }).catch(() => {});
       }
       return nextLeads;
@@ -1111,7 +1185,7 @@ export default function MatrizDashboard() {
       fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: newMsg }),
+        body: JSON.stringify({ orgId: activeOrgId, message: newMsg }),
       }).catch(() => {});
     }
   };
@@ -1160,7 +1234,7 @@ export default function MatrizDashboard() {
     fetch('/api/leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: newMsg }),
+      body: JSON.stringify({ orgId: activeOrgId, message: newMsg }),
     }).catch(() => {});
 
     // Se a mensagem foi do lead e a IA estiver ativa, simular resposta inteligente da IA
@@ -1325,6 +1399,11 @@ export default function MatrizDashboard() {
               </div>
               <ChevronDown size={15} color="var(--text-muted)" />
             </button>
+            {workspaceError && (
+              <div role="alert" style={{ color: '#FCA5A5', fontSize: '0.72rem', marginTop: '6px' }}>
+                {workspaceError}
+              </div>
+            )}
 
             {/* Menu Dropdown de Workspaces */}
             {orgDropdownOpen && (
@@ -1369,47 +1448,6 @@ export default function MatrizDashboard() {
                     {org.id === activeOrgId && <Check size={14} color="#10B981" />}
                   </button>
                 ))}
-                <div style={{ borderTop: '1px solid var(--border-subtle)', margin: '4px 0' }} />
-                <button
-                  onClick={() => {
-                    const newName = prompt('Nome da nova empresa/cliente:');
-                    if (newName) {
-                      const newOrg: Organization = {
-                        id: 'org-' + Date.now(),
-                        name: newName,
-                        slug: newName.toLowerCase().replace(/\s+/g, '-'),
-                        category: 'Empresa Cliente',
-                        plan: 'Starter',
-                        logoColor: '#F59E0B',
-                        whatsappPhone: '+55 11 90000-0000',
-                        whatsappStatus: 'qr_ready',
-                        aiActive: true,
-                        totalLeads: 0,
-                        modules: {
-                          agenda: true,
-                          atendimento: false,
-                          crm: false,
-                        },
-                      };
-                      setOrganizations((prev) => [...prev, newOrg]);
-                      setActiveOrgId(newOrg.id);
-                      setOrgDropdownOpen(false);
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    color: '#34D399',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  <Plus size={14} /> Novo Workspace (Cliente)
-                </button>
               </div>
             )}
           </div>
