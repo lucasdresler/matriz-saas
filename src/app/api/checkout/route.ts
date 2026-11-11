@@ -3,7 +3,10 @@ import { asaasService } from '@/lib/asaas';
 import { SAAS_PLANS } from '@/types/pricing';
 import { whmService } from '@/lib/whm';
 import { notificationService } from '@/lib/notifications';
-import { query } from '@/lib/db';
+import { generateTemporaryPassword, hashPassword } from '@/lib/auth';
+import { withTransaction } from '@/lib/db';
+
+class TrialAccountAlreadyExistsError extends Error {}
 
 export async function POST(request: Request) {
   try {
@@ -23,7 +26,11 @@ export async function POST(request: Request) {
     } = body;
 
     // Validações básicas
-    if (!name || !email || !phone) {
+    if (
+      typeof name !== 'string' || !name.trim()
+      || typeof email !== 'string' || !email.trim()
+      || typeof phone !== 'string' || !phone.trim()
+    ) {
       return NextResponse.json(
         { error: 'Nome, e-mail e telefone são obrigatórios.' },
         { status: 400 }
@@ -34,8 +41,13 @@ export async function POST(request: Request) {
 
     // Fluxo de ativação de teste gratuito (14 dias)
     if (isTrial) {
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 14);
+      const cleanEmail = email.trim().toLowerCase();
+      if (cleanEmail.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+        return NextResponse.json(
+          { error: 'Informe um endereço de e-mail válido.' },
+          { status: 400 }
+        );
+      }
 
       const targetCompanyName = companyName || name;
       const cleanPhone = phone.replace(/\D/g, '');
@@ -45,44 +57,184 @@ export async function POST(request: Request) {
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)+/g, '') || `empresa-${Date.now()}`;
+      const tempPassword = generateTemporaryPassword();
+      const passwordHash = hashPassword(tempPassword);
+      let userId: string;
 
-      // 1. Tentar persistir organização e lead no PostgreSQL
+      let organizationCreatedAt: Date;
       try {
-        const orgRes = await query(
-          `INSERT INTO public.organizations (name, slug, category, plan, whatsapp_phone)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (slug) DO UPDATE SET updated_at = NOW()
-           RETURNING id;`,
-          [targetCompanyName, `${tenantSlug}-${Date.now().toString().slice(-4)}`, plan.module, plan.name, cleanPhone]
-        );
+        const account = await withTransaction(async (client) => {
+          let userResult = await client.query(
+            `SELECT id, password_hash
+             FROM auth.users
+             WHERE LOWER(email) = $1
+             LIMIT 1
+             FOR UPDATE;`,
+            [cleanEmail]
+          );
+          let user = userResult.rows[0];
 
-        if (orgRes && orgRes.rows && orgRes.rows[0]) {
-          const orgId = orgRes.rows[0].id;
-          await query(
-            `INSERT INTO public.leads (organization_id, name, phone, whatsapp, email, status, service_interest)
-             VALUES ($1, $2, $3, $4, $5, 'novo', $6);`,
-            [orgId, name, cleanPhone, cleanPhone, email, `Trial 14 dias - ${plan.name}`]
+          if (user?.password_hash) {
+            throw new TrialAccountAlreadyExistsError();
+          }
+
+          if (!user) {
+            userResult = await client.query(
+              `INSERT INTO auth.users (email, password_hash, name, role)
+               VALUES ($1, $2, $3, 'owner')
+               ON CONFLICT DO NOTHING
+               RETURNING id, password_hash;`,
+              [cleanEmail, passwordHash, name]
+            );
+            user = userResult.rows[0];
+
+            if (!user) {
+              userResult = await client.query(
+                `SELECT id, password_hash
+                 FROM auth.users
+                 WHERE LOWER(email) = $1
+                 LIMIT 1
+                 FOR UPDATE;`,
+                [cleanEmail]
+              );
+              user = userResult.rows[0];
+            }
+          }
+
+          if (!user) {
+            throw new Error('Não foi possível criar o usuário do teste.');
+          }
+
+          if (user.password_hash) {
+            throw new TrialAccountAlreadyExistsError();
+          }
+
+          await client.query(
+            `UPDATE auth.users
+             SET name = $1, role = 'owner', password_hash = $2, updated_at = NOW()
+             WHERE id = $3;`,
+            [name, passwordHash, user.id]
+          );
+
+          const membership = await client.query(
+            `SELECT o.id, o.created_at
+             FROM public.organization_members AS om
+             JOIN public.organizations AS o ON o.id = om.organization_id
+             WHERE om.user_id = $1
+             ORDER BY om.created_at DESC
+             LIMIT 1
+             FOR UPDATE OF o;`,
+            [user.id]
+          );
+
+          let orgId = membership.rows[0]?.id;
+          let orgCreatedAt: Date | undefined = membership.rows[0]?.created_at;
+          if (!orgId) {
+            const previousTrial = await client.query(
+              `SELECT o.id, o.created_at
+               FROM public.leads AS l
+               JOIN public.organizations AS o ON o.id = l.organization_id
+               WHERE LOWER(l.email) = $1 AND l.service_interest LIKE 'Trial 14 dias - %'
+               ORDER BY l.created_at DESC
+               LIMIT 1
+               FOR UPDATE OF o;`,
+              [cleanEmail]
+            );
+
+            orgId = previousTrial.rows[0]?.id;
+            orgCreatedAt = previousTrial.rows[0]?.created_at;
+            if (orgId) {
+              await client.query(
+                `INSERT INTO public.organization_members (organization_id, user_id, role)
+                 VALUES ($1, $2, 'owner')
+                 ON CONFLICT (organization_id, user_id) DO NOTHING;`,
+                [orgId, user.id]
+              );
+            } else {
+              const orgRes = await client.query(
+                `INSERT INTO public.organizations (name, slug, category, plan, whatsapp_phone)
+                 VALUES ($1, $2, $3, $4, $5)
+                 RETURNING id, created_at;`,
+                [targetCompanyName, `${tenantSlug}-${Date.now().toString().slice(-4)}`, plan.module, plan.name, cleanPhone]
+              );
+              orgId = orgRes.rows[0]?.id;
+              orgCreatedAt = orgRes.rows[0]?.created_at;
+
+              if (!orgId || !orgCreatedAt) {
+                throw new Error('Não foi possível criar a organização do teste.');
+              }
+
+              await client.query(
+                `INSERT INTO public.organization_members (organization_id, user_id, role)
+                 VALUES ($1, $2, 'owner')
+                 ON CONFLICT (organization_id, user_id) DO NOTHING;`,
+                [orgId, user.id]
+              );
+
+              await client.query(
+                `INSERT INTO public.leads (organization_id, name, phone, whatsapp, email, status, service_interest)
+                 VALUES ($1, $2, $3, $3, $4, 'novo', $5);`,
+                [orgId, name, cleanPhone, cleanEmail, `Trial 14 dias - ${plan.name}`]
+              );
+            }
+          }
+
+          if (!orgCreatedAt) {
+            throw new Error('Não foi possível determinar a data de início do teste.');
+          }
+
+          return { userId: user.id, organizationCreatedAt: orgCreatedAt };
+        });
+        userId = account.userId;
+        organizationCreatedAt = account.organizationCreatedAt;
+      } catch (dbErr) {
+        if (dbErr instanceof TrialAccountAlreadyExistsError) {
+          return NextResponse.json(
+            { error: 'Não foi possível iniciar um novo cadastro com esses dados. Confira as informações ou procure o suporte.' },
+            { status: 409 }
           );
         }
-      } catch (dbErr: any) {
-        console.warn('[API Checkout Trial] Aviso: persistência em banco isolado:', dbErr.message);
+        throw dbErr;
       }
 
-      // 2. Disparar WhatsApp de boas-vindas com credenciais para o cliente
-      await notificationService.notifyTrialWelcome({
+      const trialEndDate = new Date(organizationCreatedAt);
+      trialEndDate.setDate(trialEndDate.getDate() + 14);
+
+      const whatsappDelivered = await notificationService.notifyTrialWelcome({
         customerName: name,
         phone,
-        email,
+        email: cleanEmail,
         planName: plan.name,
         trialEndDate: trialEndDate.toISOString(),
+        tempPassword,
       });
 
-      // 3. Disparar notificação operacional interna para o WhatsApp da equipe AllLogic
+      if (!whatsappDelivered) {
+        try {
+          await withTransaction(async (client) => {
+            await client.query(
+              `UPDATE auth.users
+               SET password_hash = NULL, updated_at = NOW()
+               WHERE id = $1 AND password_hash = $2;`,
+              [userId, passwordHash]
+            );
+          });
+        } catch (resetError) {
+          console.error('[API Checkout Trial] Não foi possível invalidar a senha não entregue:', resetError);
+          throw new Error('Falha ao entregar o acesso e invalidar a senha provisória.');
+        }
+
+        return NextResponse.json(
+          { error: 'Seu cadastro foi salvo, mas não conseguimos enviar a senha provisória pelo WhatsApp. Verifique o número e tente novamente.' },
+          { status: 502 }
+        );
+      }
+
       await notificationService.notifyNewTrialLead({
         customerName: name,
         companyName: targetCompanyName,
         phone,
-        email,
+        email: cleanEmail,
         planName: plan.name,
         trialEndDate: trialEndDate.toISOString(),
       });
@@ -93,7 +245,7 @@ export async function POST(request: Request) {
         plan: plan.name,
         companyName: targetCompanyName,
         trialEndDate: trialEndDate.toISOString(),
-        message: 'Teste gratuito de 14 dias ativado com sucesso! Seja bem-vindo ao Agillex.',
+        message: 'Teste gratuito ativado! Enviamos a senha provisória pelo WhatsApp informado.',
       });
     }
 

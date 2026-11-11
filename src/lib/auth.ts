@@ -3,6 +3,10 @@ import crypto from 'crypto';
 export const SESSION_COOKIE_NAME = 'agillex_session';
 const AUTH_SECRET = process.env.AUTH_SECRET || 'AllLogicAgillexHubSecretKey2026MasterKey!';
 
+export function generateTemporaryPassword(): string {
+  return crypto.randomBytes(24).toString('base64url');
+}
+
 /**
  * Cria hash seguro da senha com scrypt e salt criptográfico
  */

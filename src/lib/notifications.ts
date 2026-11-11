@@ -119,8 +119,8 @@ Qualquer dúvida, estamos 100% à sua disposição!`;
     email: string;
     planName: string;
     trialEndDate: string;
-    tempPassword?: string;
-  }): Promise<void> {
+    tempPassword: string;
+  }): Promise<boolean> {
     const cleanPhone = data.phone.replace(/\D/g, '');
     const dateFormatted = new Date(data.trialEndDate).toLocaleDateString('pt-BR');
 
@@ -131,18 +131,23 @@ Sua conta está liberada com todos os recursos até *${dateFormatted}*.
 🔑 *Seus Dados de Acesso ao Painel:*
 • *Acesso:* https://hub.alllogiconline.com.br
 • *E-mail:* ${data.email}
-${data.tempPassword ? `• *Senha Inicial:* ${data.tempPassword}\n` : ''}
+• *Senha Provisória:* ${data.tempPassword}
+
+Por segurança, altere sua senha após o primeiro acesso.
+
 💡 Durante esses 14 dias, você pode explorar e utilizar o sistema livremente sem nenhum compromisso e sem precisar cadastrar cartão de crédito.
 
 Caso precise de qualquer orientação ou queira tirar dúvidas com nossa equipe técnica, basta responder a esta mensagem. Tenha uma excelente experiência!`;
 
     try {
       if (cleanPhone.length >= 10) {
-        await this.sendWhatsAppText(cleanPhone, message);
+        return await this.sendWhatsAppText(cleanPhone, message);
       }
     } catch (err: any) {
       console.warn('[NotificationService] Falha ao enviar WhatsApp de trial para o cliente:', err.message);
     }
+
+    return false;
   }
 
   /**
@@ -167,7 +172,7 @@ Caso precise de qualquer orientação ou queira tirar dúvidas com nossa equipe 
 ✉️ *E-mail:* ${data.email}
 ⏰ *Válido até:* ${dateFormatted}
 
-👉 Lead cadastrado no CRM e WhatsApp de boas-vindas disparado automaticamente.`;
+👉 Dados registrados no CRM. A senha provisória foi enviada ao cliente pelo WhatsApp.`;
 
     try {
       await this.sendWhatsAppText(this.adminPhone, adminMessage);

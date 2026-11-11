@@ -15,14 +15,15 @@ Definir a arquitetura completa de automação para os fluxos de entrada (Trial d
 - **Ausência de cobrança:** Campos de cartão de crédito e cobrança são ocultados.
 
 ### 2.2. Ações Automáticas do Backend (`/api/checkout`):
-1. **Persistência de Dados (PostgreSQL Multi-tenant):**
-   - Criação do registro na tabela `organizations` / `tenants` com `status = 'trial'`.
-   - Registro de `trial_starts_at = NOW()` e `trial_ends_at = NOW() + INTERVAL '14 days'`.
-   - Geração de usuário administrador (`users`) com hash seguro de senha inicial temporária.
-2. **Disparo Imediato no WhatsApp do Cliente (Evolution API):**
-   - Template amigável de boas-vindas com dados de acesso:
-     > *"Olá, [Nome]! Seja muito bem-vindo ao período de 14 dias de teste do **[Produto]** pela AllLogic Online! 🚀"*  
-     > *"Sua conta está liberada até [Data de Término]. Para começar agora mesmo, acesse seu painel: [Link do Painel] com seu e-mail: [Email] e senha temporária: [Senha]"*
+1. **Persistência transacional no PostgreSQL Multi-tenant:**
+   - Criação ou recuperação de uma conta pendente em `auth.users`.
+   - Criação da organização, vínculo do titular como `owner` em `organization_members` e inclusão do lead.
+   - Geração de uma senha provisória aleatória com entropia criptográfica. Somente o hash seguro da senha é persistido em `auth.users.password_hash`.
+   - Se a tentativa de envio pelo WhatsApp falhar, a senha provisória é invalidada para que uma nova tentativa possa gerar e enviar outra senha.
+   - Se o cadastro anterior criou a organização e o lead, mas não concluiu o acesso, a nova tentativa reaproveita esses registros e mantém o prazo original do trial.
+2. **Boas-vindas e credenciais pelo WhatsApp (Evolution API):**
+   - Envio ao número informado no cadastro do período do teste, endereço de acesso, e-mail e senha provisória.
+   - Recomendar que a pessoa altere a senha após o primeiro acesso. E-mail/SMTP não é necessário para esse fluxo.
 3. **Notificação Operacional Interna:**
    - Envio automático para o WhatsApp da equipe AllLogic (`OPERATIONAL_WHATSAPP`):
      > *"🔔 Novo Lead de Teste Gratuito Iniciado!"*  
@@ -64,5 +65,5 @@ Como o cliente não insere cartão no início do teste, a conversão ocorre por 
 
 ## 5. Próximos Passos de Implementação
 
-1. Inserir a persistência de banco e o disparo do WhatsApp de boas-vindas na branch `isTrial` de `src/app/api/checkout/route.ts`.
+1. Aplicar `supabase/migrations/20261111_trial_auth_fields.sql` no PostgreSQL de produção antes de publicar o novo fluxo.
 2. Implementar a rotina agendada (Cron job / n8n workflow diário) para monitoramento de `trial_ends_at` e disparo dos avisos de D-3, D-1, D0 e D+1.

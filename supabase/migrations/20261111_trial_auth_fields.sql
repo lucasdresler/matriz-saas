@@ -1,0 +1,5 @@
+ALTER TABLE auth.users
+    ADD COLUMN IF NOT EXISTS password_hash TEXT,
+    ADD COLUMN IF NOT EXISTS name VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'member',
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
