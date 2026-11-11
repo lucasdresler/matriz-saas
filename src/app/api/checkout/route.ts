@@ -159,10 +159,18 @@ export async function POST(request: Request) {
              FROM public.organization_members AS om
              JOIN public.organizations AS o ON o.id = om.organization_id
              WHERE om.user_id = $1
+               AND o.slug <> 'alllogic'
+               AND EXISTS (
+                 SELECT 1
+                 FROM public.leads AS l
+                 WHERE l.organization_id = o.id
+                   AND LOWER(l.email) = $2
+                   AND l.service_interest LIKE 'Trial 14 dias - %'
+               )
              ORDER BY om.created_at DESC
              LIMIT 1
              FOR UPDATE OF o;`,
-            [user.id]
+            [user.id, cleanEmail]
           );
 
           let orgId = membership.rows[0]?.id;
@@ -362,7 +370,7 @@ export async function POST(request: Request) {
             billingMethod: 'Cartão de Crédito',
             provisioning,
           });
-        } catch (provisionErr: any) {
+        } catch (provisionErr: unknown) {
           console.error('[API Checkout] Erro no provisionamento WHM pós-cartão:', provisionErr);
         }
       }
@@ -441,10 +449,10 @@ export async function POST(request: Request) {
       { error: 'Forma de pagamento não suportada.' },
       { status: 400 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API Checkout] Erro no processamento:', error);
     return checkoutJson(request,
-      { error: error.message || 'Erro interno ao processar pagamento.' },
+      { error: error instanceof Error ? error.message : 'Erro interno ao processar pagamento.' },
       { status: 500 }
     );
   }

@@ -2,9 +2,8 @@
 
 ## 1. Objetivo
 
-Definir a arquitetura completa de automação para os fluxos de entrada (Trial de 14 dias sem cartão), provisionamento multi-produto e régua ativa de conversão financeira para todos os produtos da AllLogic Online:
+Definir o fluxo de entrada e encerramento do Trial de 14 dias sem cartão para os produtos da Família Agillex:
 - **Família Agillex:** Agillex Hub, Agillex Agenda, Agillex Atende, Agillex Cobrança e Agillex Reputação.
-- **Serviços de Infraestrutura:** Hospedagem Web (cPanel) e Domínios (.com.br / internacionais).
 
 ---
 
@@ -35,22 +34,12 @@ Definir a arquitetura completa de automação para os fluxos de entrada (Trial d
 
 ---
 
-## 3. Fluxo 2: Régua Ativa de Cobrança e Conversão Pós-Teste
+## 3. Fluxo 2: Encerramento do período de teste
 
-Como o cliente não insere cartão no início do teste, a conversão ocorre por **Régua Ativa no WhatsApp** (utilizando o motor do Agillex Cobrança integrado ao gateway Asaas):
-
-### 3.1. Cronograma da Régua de Degustação:
-1. **D-3 (11º dia do teste) — Engajamento & Suporte:**
-   - Mensagem: *"Olá, [Nome]! Faltam apenas 3 dias para encerrar seu período gratuito do [Produto]. Como está sendo sua experiência? Tem alguma dúvida em que nosso time possa ajudar?"*
-2. **D-1 (13º dia do teste) — Prévia de Continuidade:**
-   - Mensagem: *"Seu teste encerra amanhã! Para continuar aproveitando todos os recursos sem nenhuma pausa e com seus dados preservados, escolha seu formato de pagamento preferido: [Link Seguro de Checkout]"*
-3. **D0 (14º dia — Encerramento do Teste & Cobrança Pix):**
-   - Criação automática da cobrança no gateway Asaas para a primeira mensalidade.
-   - Disparo do lembrete com código **Pix Copia e Cola**:
-     > *"Hoje encerra seu período de avaliação do [Produto]. Mantenha sua operação rodando sem interrupções! Pague sua mensalidade em 1 clique via Pix Copia e Cola:"*  
-     > `[Código Pix Copia e Cola Asaas]`
-4. **D+1 (15º dia) — Bloqueio Cortês com Preservação de Dados:**
-   - Se o pagamento não for liquidado, o acesso ao painel é pausado e exibe a tela informativa de encerramento (`admin_trial_expirado`), informando que todos os cadastros e dados históricos continuam preservados e disponibilizando o botão de pagamento imediato para desbloqueio em tempo real.
+- O prazo é calculado a partir da criação da organização do cliente e dura 14 dias corridos.
+- O Hub verifica a validade ao acessar rotas protegidas. Após os 14 dias, o acesso operacional é pausado e o cliente recebe uma tela com orientação para falar com a equipe Agillex.
+- Nenhum dado da organização é apagado e nenhuma cobrança ou fatura é criada automaticamente.
+- A reativação deve ser feita após a contratação, com o fluxo de assinatura e confirmação de pagamento correspondente.
 
 ---
 
@@ -65,7 +54,8 @@ Como o cliente não insere cartão no início do teste, a conversão ocorre por 
 
 ---
 
-## 5. Próximos Passos de Implementação
+## 5. Estado da implementação
 
-1. Aplicar `supabase/migrations/20261111_trial_auth_fields.sql` no PostgreSQL de produção antes de publicar o novo fluxo.
-2. Implementar a rotina agendada (Cron job / n8n workflow diário) para monitoramento de `trial_ends_at` e disparo dos avisos de D-3, D-1, D0 e D+1.
+- O encerramento do acesso é verificado pelo Hub sem depender de cron ou workflow externo.
+- Não existe rotina agendada ativa de trials na VPS do Hub nem na hospedagem cPanel da AllLogic.
+- A régua de notificações D-3/D-1 e a reativação automática após pagamento não estão implementadas.
