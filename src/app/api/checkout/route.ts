@@ -119,10 +119,10 @@ export async function POST(request: Request) {
           if (!user) {
             userResult = await client.query(
               `INSERT INTO auth.users (email, password_hash, name, role)
-               VALUES ($1, $2, $3, 'owner')
+               VALUES ($1, NULL, $2, 'owner')
                ON CONFLICT DO NOTHING
                RETURNING id, password_hash;`,
-              [cleanEmail, passwordHash, name]
+              [cleanEmail, name]
             );
             user = userResult.rows[0];
 
