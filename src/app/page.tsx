@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Kanban,
@@ -29,20 +30,16 @@ import {
   RefreshCw,
   ExternalLink,
   ShieldCheck,
-  Bell,
   Sliders,
   DollarSign,
   UserCheck,
   Zap,
-  ChevronRight,
-  MoreVertical,
   CalendarCheck2,
   Menu,
   X,
   ArrowLeft,
   Copy,
   CheckCheck,
-  Layers,
   MapPin,
   Loader2,
   Trash2,
@@ -68,7 +65,6 @@ import {
   initialServices,
   initialKnowledgeDocs,
   initialSaaSClients,
-  initialWhatsappInstance,
   initialCobrancaRules,
   initialCobrancaLogs,
   initialReputacaoConfig,
@@ -77,19 +73,68 @@ import {
 } from '@/lib/mockData';
 import { Organization, Lead, LeadStatus, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, CobrancaRule, CobrancaNotificationLog, CobrancaStage, ReputacaoFeedback, ReputacaoConfig, GedDocument } from '@/types';
 
+type DashboardTab = 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao' | 'ged';
+type ImportedLeadRow = Record<string, unknown>;
+
+function isRecord(value: unknown): value is ImportedLeadRow {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function importedText(row: ImportedLeadRow, keys: string[], fallback: string): string {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === 'string' && value.trim()) return value;
+    if (typeof value === 'number') return String(value);
+  }
+  return fallback;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+function isTabSupported(tab: DashboardTab, org: Organization): boolean {
+  if (tab === 'saas') return true;
+  if (tab === 'agenda') return Boolean(org.modules?.agenda);
+  if (tab === 'livechat' || tab === 'ai_brain' || tab === 'whatsapp') return Boolean(org.modules?.atendimento);
+  if (tab === 'overview' || tab === 'kanban') return Boolean(org.modules?.crm);
+  if (tab === 'cobranca') return Boolean(org.modules?.cobranca);
+  if (tab === 'reputacao') return Boolean(org.modules?.reputacao);
+  if (tab === 'ged') return Boolean(org.modules?.ged);
+  return true;
+}
+
+function getWorkspaceTab(tab: DashboardTab, org: Organization): DashboardTab {
+  if (isTabSupported(tab, org)) return tab;
+  if (org.modules?.agenda && !org.modules?.crm && !org.modules?.atendimento) return 'agenda';
+  if (org.modules?.atendimento && !org.modules?.crm) return 'livechat';
+  if (org.modules?.crm) return 'overview';
+  if (org.modules?.agenda) return 'agenda';
+  if (org.modules?.reputacao) return 'reputacao';
+  if (org.modules?.cobranca) return 'cobranca';
+  if (org.modules?.ged) return 'ged';
+  return 'saas';
+}
+
 export default function MatrizDashboard() {
+  const router = useRouter();
+  const messageIdPrefix = React.useId();
+  const messageSequence = React.useRef(0);
+  const createMessageId = () => `${messageIdPrefix}-${++messageSequence.current}`;
+
   // Estado Multi-Tenant (Organização Ativa)
   const [organizations, setOrganizations] = useState<Organization[]>(initialOrganizations);
   const [activeOrgId, setActiveOrgId] = useState<string>('org-alllogic');
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
   const [workspaceError, setWorkspaceError] = useState('');
   const [workspaceReady, setWorkspaceReady] = useState(false);
+  const [selectedLeadId, setSelectedLeadId] = useState<string>('');
 
   // Navegação Principal (Inicia direto no Funil CRM para o trabalho diário)
-  const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao' | 'ged'>('kanban');
+  const [activeTab, setActiveTab] = useState<DashboardTab>('kanban');
 
   // Estados do Agillex GED (Documentos com OCR e IA)
-  const [gedDocuments, setGedDocuments] = useState<GedDocument[]>(initialGedDocuments);
+  const [gedDocuments] = useState<GedDocument[]>(initialGedDocuments);
   const [gedSearch, setGedSearch] = useState('');
   const [gedCategoryFilter, setGedCategoryFilter] = useState<'todos' | 'contrato' | 'certidao' | 'nota_fiscal' | 'laudo'>('todos');
 
@@ -105,7 +150,7 @@ export default function MatrizDashboard() {
   const [simResult, setSimResult] = useState<{ success: boolean; text?: string } | null>(null);
 
   // Estados do Agillex Reputação (Acelerador Google 5★)
-  const [reputacaoConfig, setReputacaoConfig] = useState<ReputacaoConfig>(initialReputacaoConfig);
+  const [reputacaoConfig] = useState<ReputacaoConfig>(initialReputacaoConfig);
   const [reputacaoFeedbacks, setReputacaoFeedbacks] = useState<ReputacaoFeedback[]>(initialReputacaoFeedbacks);
   const [repSimRating, setRepSimRating] = useState<number>(5);
   const [repSimName, setRepSimName] = useState('Lucas Dresler');
@@ -134,11 +179,12 @@ export default function MatrizDashboard() {
               orgId: (!l.orgId || l.orgId === 'a0000000-0000-0000-0000-000000000001') ? 'org-alllogic' : l.orgId,
             }));
           }
-        } catch (e) {}
+        } catch {}
       }
     }
     return initialLeads;
   });
+  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(initialMessages);
 
   // Salva automaticamente qualquer alteração nos leads no navegador
   useEffect(() => {
@@ -193,6 +239,10 @@ export default function MatrizDashboard() {
               }
               initialSyncDone = true;
             } else if (data.leads.length > 0) {
+              if (!selectedLeadId) {
+                const firstActiveLead = data.leads.find((lead: Lead) => data.messages?.[lead.id]?.length > 0);
+                setSelectedLeadId(firstActiveLead?.id || data.leads[0].id);
+              }
               setLeads((prevLeads) => {
                 const backendMap = new Map<string, Lead>();
                 data.leads.forEach((l: Lead) => {
@@ -243,16 +293,14 @@ export default function MatrizDashboard() {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [activeOrgId, organizations, workspaceReady]);
+  }, [activeOrgId, organizations, selectedLeadId, workspaceReady]);
 
-  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(initialMessages);
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [services, setServices] = useState<ServiceItem[]>(initialServices);
   const [knowledgeDocs, setKnowledgeDocs] = useState<KnowledgeDoc[]>(initialKnowledgeDocs);
   const [saasClients] = useState<SaaSClient[]>(initialSaaSClients);
 
   // Estados de Interatividade
-  const [selectedLeadId, setSelectedLeadId] = useState<string>('');
   const [chatInput, setChatInput] = useState('');
   const [chatSearch, setChatSearch] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -312,6 +360,7 @@ export default function MatrizDashboard() {
             ? availableOrganizations.find((org) => org.slug === 'alllogic') || availableOrganizations[0]
             : availableOrganizations[0];
         setActiveOrgId(defaultOrganization.id);
+        setActiveTab((tab) => getWorkspaceTab(tab, defaultOrganization));
         setWorkspaceError('');
         setWorkspaceReady(true);
       } catch (error) {
@@ -335,7 +384,7 @@ export default function MatrizDashboard() {
     } catch (e) {
       console.error(e);
     }
-    window.location.href = '/login';
+    router.push('/login');
   };
 
   // Estados e Ação para Alteração de Senha
@@ -388,8 +437,8 @@ export default function MatrizDashboard() {
       setChangePassCurrent('');
       setChangePassNew('');
       setChangePassConfirm('');
-    } catch (err: any) {
-      setChangePassError(err.message || 'Erro ao comunicar com o servidor.');
+    } catch (err: unknown) {
+      setChangePassError(getErrorMessage(err, 'Erro ao comunicar com o servidor.'));
     } finally {
       setChangePassLoading(false);
     }
@@ -425,13 +474,13 @@ export default function MatrizDashboard() {
   const [toneOfVoice, setToneOfVoice] = useState<string>('amigavel');
   const [followupDelay, setFollowupDelay] = useState<string>('120');
   const [agentSaving, setAgentSaving] = useState(false);
-  const [agentLoading, setAgentLoading] = useState(false);
+  const [agentLoadedOrgId, setAgentLoadedOrgId] = useState('');
+  const agentLoading = agentLoadedOrgId !== activeOrgId;
   const [agentFeedback, setAgentFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Carregar Configurações do Agente do Backend (/api/agent-config)
   useEffect(() => {
     let isMounted = true;
-    setAgentLoading(true);
     fetch(`/api/agent-config?orgId=${activeOrgId}`)
       .then((r) => r.json())
       .then((data) => {
@@ -444,7 +493,7 @@ export default function MatrizDashboard() {
       })
       .catch((err) => console.warn('Erro ao carregar configurações do agente:', err))
       .finally(() => {
-        if (isMounted) setAgentLoading(false);
+        if (isMounted) setAgentLoadedOrgId(activeOrgId);
       });
     return () => {
       isMounted = false;
@@ -482,10 +531,10 @@ export default function MatrizDashboard() {
           message: data?.error || 'Erro ao salvar configurações no servidor.',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setAgentFeedback({
         type: 'error',
-        message: err.message || 'Falha de conexão ao salvar configurações.',
+        message: getErrorMessage(err, 'Falha de conexão ao salvar configurações.'),
       });
     } finally {
       setAgentSaving(false);
@@ -638,8 +687,8 @@ export default function MatrizDashboard() {
       } else {
         setProspectorError('Nenhum resultado foi encontrado para os critérios informados.');
       }
-    } catch (err: any) {
-      setProspectorError(err.message || 'Falha na comunicação com o robô de prospecção.');
+    } catch (err: unknown) {
+      setProspectorError(getErrorMessage(err, 'Falha na comunicação com o robô de prospecção.'));
     } finally {
       setIsProspecting(false);
     }
@@ -660,18 +709,22 @@ export default function MatrizDashboard() {
 
         // Se for JSON
         if (file.name.endsWith('.json')) {
-          const parsed = JSON.parse(text);
-          const rawList = Array.isArray(parsed) ? parsed : (parsed.leads || []);
-          const importedLeads: Lead[] = rawList.map((item: any, idx: number) => ({
+          const parsed: unknown = JSON.parse(text);
+          const rawList = Array.isArray(parsed)
+            ? parsed.filter(isRecord)
+            : isRecord(parsed) && Array.isArray(parsed.leads)
+              ? parsed.leads.filter(isRecord)
+              : [];
+          const importedLeads: Lead[] = rawList.map((item: ImportedLeadRow, idx: number) => ({
             id: `lead-import-${Date.now()}-${idx}`,
             orgId: activeOrgId,
-            name: item.Nome || item.name || 'Empresa Importada',
-            phone: item.Telefone || item.phone || 'N/A',
-            email: item.Email || item.email || '',
+            name: importedText(item, ['Nome', 'name'], 'Empresa Importada'),
+            phone: importedText(item, ['Telefone', 'phone'], 'N/A'),
+            email: importedText(item, ['Email', 'email'], ''),
             status: 'novo',
-            tags: ['Planilha', item.Categoria_Google || item.Nicho_Buscado || 'Google Maps'],
-            serviceInterest: item.Oferta_Recomendada || item.serviceInterest || 'Hospedagem cPanel + Domínio',
-            lastMessage: item.Mensagem_Abordagem_WhatsApp || item.lastMessage || 'Lead importado via planilha.',
+            tags: ['Planilha', importedText(item, ['Categoria_Google', 'Nicho_Buscado'], 'Google Maps')],
+            serviceInterest: importedText(item, ['Oferta_Recomendada', 'serviceInterest'], 'Hospedagem cPanel + Domínio'),
+            lastMessage: importedText(item, ['Mensagem_Abordagem_WhatsApp', 'lastMessage'], 'Lead importado via planilha.'),
             lastMessageTime: 'Agora',
             aiPaused: false,
             unreadCount: 0,
@@ -730,8 +783,8 @@ export default function MatrizDashboard() {
           setLeads((prev) => [...prev, ...importedLeads]);
           alert(`✓ ${importedLeads.length} leads importados com sucesso para o seu CRM!`);
         }
-      } catch (err: any) {
-        alert('Erro ao importar planilha: ' + err.message);
+      } catch (err: unknown) {
+        alert('Erro ao importar planilha: ' + getErrorMessage(err, 'formato inválido'));
       }
     };
     reader.readAsText(file);
@@ -739,7 +792,7 @@ export default function MatrizDashboard() {
   };
 
   // Organização Atual
-  const handleTabChange = (tab: 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao' | 'ged') => {
+  const handleTabChange = (tab: DashboardTab) => {
     setActiveTab(tab);
     setMobileSidebarOpen(false);
     if (tab === 'livechat') {
@@ -794,8 +847,8 @@ export default function MatrizDashboard() {
       } else {
         setSimResult({ success: false, text: data.error || 'Falha ao processar notificação' });
       }
-    } catch (err: any) {
-      setSimResult({ success: false, text: err.message || 'Erro de comunicação' });
+    } catch (err: unknown) {
+      setSimResult({ success: false, text: getErrorMessage(err, 'Erro de comunicação') });
     } finally {
       setSimLoading(false);
     }
@@ -835,8 +888,8 @@ export default function MatrizDashboard() {
       } else {
         setRepSimResult({ success: false, text: data.error || 'Falha ao enviar pesquisa' });
       }
-    } catch (err: any) {
-      setRepSimResult({ success: false, text: err.message || 'Erro de conexão' });
+    } catch (err: unknown) {
+      setRepSimResult({ success: false, text: getErrorMessage(err, 'Erro de conexão') });
     } finally {
       setRepSimLoading(false);
     }
@@ -859,8 +912,8 @@ export default function MatrizDashboard() {
       if (res.ok && data.reply) {
         setAiGeneratedReply(data.reply);
       }
-    } catch (e: any) {
-      console.error(e);
+    } catch (error: unknown) {
+      console.error(error);
     } finally {
       setAiReplyLoading(false);
     }
@@ -1021,39 +1074,6 @@ export default function MatrizDashboard() {
     );
   };
 
-  // Ajustar aba ativa automaticamente caso a organização atual não possua o módulo contratado
-  useEffect(() => {
-    const isTabSupported = (tab: string, org: Organization) => {
-      if (tab === 'saas') return true;
-      if (tab === 'agenda') return org.modules?.agenda;
-      if (tab === 'livechat' || tab === 'ai_brain' || tab === 'whatsapp') return org.modules?.atendimento;
-      if (tab === 'overview' || tab === 'kanban') return org.modules?.crm;
-      return true;
-    };
-
-    if (!isTabSupported(activeTab, currentOrg)) {
-      if (currentOrg.modules?.agenda && !currentOrg.modules?.crm && !currentOrg.modules?.atendimento) {
-        setActiveTab('agenda');
-      } else if (currentOrg.modules?.atendimento && !currentOrg.modules?.crm) {
-        setActiveTab('livechat');
-      } else if (currentOrg.modules?.crm) {
-        setActiveTab('overview');
-      } else if (currentOrg.modules?.agenda) {
-        setActiveTab('agenda');
-      }
-    }
-  }, [activeOrgId, currentOrg, activeTab]);
-
-  // Atualizar lead selecionado ao mudar de workspace
-  useEffect(() => {
-    const firstActive = orgLeads.find((l) => Boolean(messages[l.id] && messages[l.id].length > 0));
-    if (firstActive) {
-      setSelectedLeadId(firstActive.id);
-    } else if (orgLeads[0]) {
-      setSelectedLeadId(orgLeads[0].id);
-    }
-  }, [activeOrgId]);
-
   // Função para calcular o momento de atividade mais recente de um lead
   const getLeadRecencyTime = (l: Lead) => {
     if (l.lastMessageAt) {
@@ -1099,16 +1119,6 @@ export default function MatrizDashboard() {
 
   const currentLeadMessages = selectedLead ? (messages[selectedLead.id] || []) : [];
 
-  // Selecionar primeira conversa ativa se nenhuma estiver selecionada ao entrar no Live Chat
-  useEffect(() => {
-    if (activeTab === 'livechat' && !selectedLeadId) {
-      const firstActive = orgLeads.find((l) => Boolean(messages[l.id] && messages[l.id].length > 0));
-      if (firstActive) {
-        setSelectedLeadId(firstActive.id);
-      }
-    }
-  }, [activeTab, selectedLeadId, messages, orgLeads]);
-
   // Auto-scroll para a mensagem mais recente ao carregar conversa ou receber nova mensagem
   useEffect(() => {
     if (activeTab === 'livechat' && selectedLeadId) {
@@ -1152,7 +1162,7 @@ export default function MatrizDashboard() {
     if (!targetLead) return;
     const leadMsgs = messages[targetLead.id] || [];
     if (targetLead.lastMessage && leadMsgs.length === 0) {
-      const newMsgId = 'msg-' + Date.now();
+      const newMsgId = createMessageId();
       const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       const newMsg: ChatMessage = {
         id: newMsgId,
@@ -1196,7 +1206,7 @@ export default function MatrizDashboard() {
     if (!chatInput.trim() || !selectedLead) return;
 
     const userText = chatInput.trim();
-    const newMsgId = 'msg-' + Date.now();
+    const newMsgId = createMessageId();
     const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
     const newMsg: ChatMessage = {
@@ -1427,6 +1437,16 @@ export default function MatrizDashboard() {
                     key={org.id}
                     onClick={() => {
                       setActiveOrgId(org.id);
+                      setActiveTab((tab) => getWorkspaceTab(tab, org));
+                      const workspaceLeads = leads.filter((lead) => (
+                        lead.orgId === org.id
+                        || (
+                          org.slug === 'alllogic'
+                          && (lead.orgId === 'org-alllogic' || lead.orgId === 'a0000000-0000-0000-0000-000000000001')
+                        )
+                      ));
+                      const firstActiveLead = workspaceLeads.find((lead) => messages[lead.id]?.length > 0);
+                      setSelectedLeadId(firstActiveLead?.id || workspaceLeads[0]?.id || '');
                       setOrgDropdownOpen(false);
                     }}
                     style={{
