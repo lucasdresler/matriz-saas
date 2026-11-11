@@ -8,6 +8,35 @@ import { withTransaction } from '@/lib/db';
 
 class TrialAccountAlreadyExistsError extends Error {}
 
+const CHECKOUT_CORS_ORIGINS = new Set([
+  'https://agillex.com.br',
+  'https://www.agillex.com.br',
+]);
+
+function withCheckoutCors(response: NextResponse, request: Request): NextResponse {
+  const origin = request.headers.get('origin');
+  if (origin && CHECKOUT_CORS_ORIGINS.has(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    response.headers.set('Access-Control-Max-Age', '600');
+    response.headers.append('Vary', 'Origin');
+  }
+  return response;
+}
+
+function checkoutJson(request: Request, body: unknown, init?: ResponseInit): NextResponse {
+  return withCheckoutCors(NextResponse.json(body, init), request);
+}
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin');
+  if (origin && !CHECKOUT_CORS_ORIGINS.has(origin)) {
+    return new NextResponse(null, { status: 403 });
+  }
+  return withCheckoutCors(new NextResponse(null, { status: 204 }), request);
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -31,19 +60,28 @@ export async function POST(request: Request) {
       || typeof email !== 'string' || !email.trim()
       || typeof phone !== 'string' || !phone.trim()
     ) {
-      return NextResponse.json(
+      return checkoutJson(request,
         { error: 'Nome, e-mail e telefone são obrigatórios.' },
         { status: 400 }
       );
     }
 
-    const plan = SAAS_PLANS[planId] || SAAS_PLANS['pro'];
+    const plan =
+      typeof planId === 'string' && Object.prototype.hasOwnProperty.call(SAAS_PLANS, planId)
+        ? SAAS_PLANS[planId]
+        : undefined;
+    if (!plan) {
+      return checkoutJson(request,
+        { error: 'Plano inválido ou indisponível.' },
+        { status: 400 }
+      );
+    }
 
     // Fluxo de ativação de teste gratuito (14 dias)
     if (isTrial) {
       const cleanEmail = email.trim().toLowerCase();
       if (cleanEmail.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-        return NextResponse.json(
+        return checkoutJson(request,
           { error: 'Informe um endereço de e-mail válido.' },
           { status: 400 }
         );
@@ -189,7 +227,7 @@ export async function POST(request: Request) {
         organizationCreatedAt = account.organizationCreatedAt;
       } catch (dbErr) {
         if (dbErr instanceof TrialAccountAlreadyExistsError) {
-          return NextResponse.json(
+          return checkoutJson(request,
             { error: 'Não foi possível iniciar um novo cadastro com esses dados. Confira as informações ou procure o suporte.' },
             { status: 409 }
           );
@@ -224,7 +262,7 @@ export async function POST(request: Request) {
           throw new Error('Falha ao entregar o acesso e invalidar a senha provisória.');
         }
 
-        return NextResponse.json(
+        return checkoutJson(request,
           { error: 'Seu cadastro foi salvo, mas não conseguimos enviar a senha provisória pelo WhatsApp. Verifique o número e tente novamente.' },
           { status: 502 }
         );
@@ -239,7 +277,7 @@ export async function POST(request: Request) {
         trialEndDate: trialEndDate.toISOString(),
       });
 
-      return NextResponse.json({
+      return checkoutJson(request, {
         success: true,
         status: 'trial',
         plan: plan.name,
@@ -250,7 +288,7 @@ export async function POST(request: Request) {
     }
 
     if (!cpfCnpj) {
-      return NextResponse.json(
+      return checkoutJson(request,
         { error: 'CPF ou CNPJ é obrigatório para emissão da cobrança/assinatura.' },
         { status: 400 }
       );
@@ -275,7 +313,7 @@ export async function POST(request: Request) {
     // 2. Processar de acordo com a forma de pagamento
     if (billingMethod === 'CREDIT_CARD') {
       if (!creditCard || !creditCard.number || !creditCard.holderName) {
-        return NextResponse.json(
+        return checkoutJson(request,
           { error: 'Dados do cartão de crédito incompletos.' },
           { status: 400 }
         );
@@ -329,7 +367,7 @@ export async function POST(request: Request) {
         }
       }
 
-      return NextResponse.json({
+      return checkoutJson(request, {
         success: true,
         status: 'active',
         billingMethod: 'CREDIT_CARD',
@@ -357,7 +395,7 @@ export async function POST(request: Request) {
 
       const qr = await asaasService.getPixQrCode(payment.id);
 
-      return NextResponse.json({
+      return checkoutJson(request, {
         success: true,
         status: 'pending',
         billingMethod: 'PIX',
@@ -386,7 +424,7 @@ export async function POST(request: Request) {
         description,
       });
 
-      return NextResponse.json({
+      return checkoutJson(request, {
         success: true,
         status: 'pending',
         billingMethod: 'BOLETO',
@@ -399,13 +437,13 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json(
+    return checkoutJson(request,
       { error: 'Forma de pagamento não suportada.' },
       { status: 400 }
     );
   } catch (error: any) {
     console.error('[API Checkout] Erro no processamento:', error);
-    return NextResponse.json(
+    return checkoutJson(request,
       { error: error.message || 'Erro interno ao processar pagamento.' },
       { status: 500 }
     );

@@ -10,9 +10,11 @@ Definir a arquitetura completa de automação para os fluxos de entrada (Trial d
 
 ## 2. Fluxo 1: Entrada e Ativação do Teste Gratuito (14 Dias)
 
-### 2.1. Coleta Unificada no Checkout (`/checkout?trial=true`)
+### 2.1. Cadastro Unificado de Teste Grátis
+- Todos os CTAs de teste grátis do site oficial abrem o mesmo formulário de cadastro; o produto e a variante associados ao CTA ficam pré-selecionados, mas podem ser alterados no próprio formulário.
 - **Campos obrigatórios:** Nome, WhatsApp com DDD, E-mail, Razão Social / Nome Fantasia, Produto / Plano Selecionado.
-- **Ausência de cobrança:** Campos de cartão de crédito e cobrança são ocultados.
+- **Ausência de cobrança:** O formulário envia o cadastro diretamente para `/api/checkout` no Hub, sem abrir o checkout comercial nem solicitar cartão, dados de cobrança ou pagamento.
+- Após a ativação, a confirmação oferece acesso à tela de login do Hub; não encaminha para aquisição ou contratação de outro produto.
 
 ### 2.2. Ações Automáticas do Backend (`/api/checkout`):
 1. **Persistência transacional no PostgreSQL Multi-tenant:**
