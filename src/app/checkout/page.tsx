@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import {
   ShieldCheck,
@@ -17,10 +18,23 @@ import {
   MessageSquare,
   Zap,
   Server,
-  Globe,
 } from 'lucide-react';
 import { SAAS_PLANS, PlanConfig, ModuleType, BillingCycle, BillingMethod } from '@/types/pricing';
 import './checkout.css';
+
+interface CheckoutSuccessData {
+  status: 'active' | 'trial' | 'pending';
+  message: string;
+  plan: string;
+  trialEndDate?: string;
+  domain?: string;
+  provisioning?: {
+    domain: string;
+    cpanelUrl: string;
+    username: string;
+    password: string;
+  } | null;
+}
 
 const MODULE_HEADER_CONTENT: Record<
   ModuleType,
@@ -146,7 +160,7 @@ function CheckoutContent() {
   // Estados de processamento
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [successData, setSuccessData] = useState<any>(null);
+  const [successData, setSuccessData] = useState<CheckoutSuccessData | null>(null);
   const [pixData, setPixData] = useState<{ qrCode: string; copyPaste: string; paymentId: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -159,31 +173,16 @@ function CheckoutContent() {
     ).values()
   );
 
-  // Garantir plano selecionado válido ao trocar módulo
-  useEffect(() => {
-    const plans = Array.from(
-      new Map(
-        Object.values(SAAS_PLANS)
-          .filter((p) => p.module === selectedModule)
-          .map((p) => [p.name, p])
-      ).values()
-    );
-    if (!plans.some((p) => p.id === selectedPlanId)) {
-      if (plans.length > 0) {
-        setSelectedPlanId(plans[0].id);
-      }
-    }
-  }, [selectedModule, selectedPlanId]);
-
   const currentPlan: PlanConfig =
-    SAAS_PLANS[selectedPlanId] || availablePlans[0] || SAAS_PLANS['combo'] || SAAS_PLANS['pro'];
+    availablePlans.find((plan) => plan.id === selectedPlanId) ||
+    availablePlans[0] ||
+    SAAS_PLANS['combo'];
   const isYearly = cycle === 'yearly';
-  const displayPrice = isYearly ? currentPlan.priceYearlyMonthly : currentPlan.priceMonthly;
   const totalPrice = isYearly ? currentPlan.annualTotal : currentPlan.priceMonthly;
 
   // Polling para checagem do PIX com suporte a provisionamento de hospedagem
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | null = null;
     if (pixData?.paymentId) {
       interval = setInterval(async () => {
         try {
@@ -201,14 +200,16 @@ function CheckoutContent() {
                 : 'Pagamento PIX confirmado com sucesso! Sua conta foi ativada.',
             });
             setPixData(null);
-            clearInterval(interval);
+            if (interval) clearInterval(interval);
           }
         } catch (e) {
           console.error('Erro ao verificar status PIX:', e);
         }
       }, 3000);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [pixData, currentPlan.name, currentPlan.id, domain, formData.email, formData.name]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -274,8 +275,8 @@ function CheckoutContent() {
       } else {
         setSuccessData(data);
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Falha na conexão com o servidor.');
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Falha na conexão com o servidor.');
     } finally {
       setLoading(false);
     }
@@ -297,7 +298,7 @@ function CheckoutContent() {
           <div className="site-header__inner">
             <div className="site-header__brand">
               <a href="https://agillex.com.br/" className="site-header__logo" aria-label="AllLogic Online">
-                <img src="/images/logo-alllogic.png" alt="AllLogic Online" />
+                <Image src="/images/logo-alllogic.png" alt="AllLogic Online" width={1672} height={941} />
               </a>
 
               {/* Botão hambúrguer no mobile */}
@@ -525,7 +526,7 @@ function CheckoutContent() {
                 </a>
               ) : (
                 <a
-                  href={isTrial ? `/login?email=${encodeURIComponent(formData.email)}` : '/'}
+                  href={isTrial ? `/login?switch=true&email=${encodeURIComponent(formData.email)}` : '/'}
                   className="checkout-submit-btn btn-interactive"
                   style={{ maxWidth: '300px', margin: '0 auto', textDecoration: 'none' }}
                 >
@@ -559,9 +560,12 @@ function CheckoutContent() {
                     boxShadow: 'var(--shadow-sm)',
                   }}
                 >
-                  <img
+                  <Image
                     src={`data:image/png;base64,${pixData.qrCode}`}
                     alt="QR Code PIX"
+                    width={200}
+                    height={200}
+                    unoptimized
                     style={{ width: '200px', height: '200px', display: 'block' }}
                   />
                 </div>
@@ -1057,7 +1061,7 @@ function CheckoutContent() {
                     {/* Lista de Planos do Módulo */}
                     <div style={{ marginBottom: '20px' }}>
                       {availablePlans.map((plan) => {
-                        const isSelected = plan.id === selectedPlanId;
+                        const isSelected = plan.id === currentPlan.id;
                         const planMonthly = isYearly ? plan.priceYearlyMonthly : plan.priceMonthly;
 
                         return (
@@ -1155,9 +1159,11 @@ function CheckoutContent() {
             {/* Marca */}
             <div className="footer__brand">
               <a href="https://agillex.com.br/" className="footer__logo" aria-label="AllLogic Online">
-                <img
+                <Image
                   src="/images/logo-alllogic.png"
                   alt="AllLogic Online — Engenharia de Soluções Digitais"
+                  width={1672}
+                  height={941}
                 />
               </a>
               <p>Tecnologia que trabalha para as pessoas.</p>
