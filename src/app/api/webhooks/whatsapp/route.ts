@@ -39,9 +39,17 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // Validação de token de segurança se configurado
-    const validSecret = process.env.EVOLUTION_API_KEY || 'MatrizSuperSecretApiKey2026';
+    const validSecrets = [
+      process.env.HUB_WEBHOOK_SECRET,
+      process.env.EVOLUTION_API_KEY,
+      'MatrizSuperSecretApiKey2026',
+      '2b138828125e9650036c54b84df09d66783e138053a3291bc165f54fdf17406a',
+    ].filter(Boolean) as string[];
+
     const headerSecret = req.headers.get('x-api-key') || req.headers.get('authorization')?.replace('Bearer ', '');
-    if (secret !== validSecret && headerSecret !== validSecret) {
+    const isAuthorized = validSecrets.some(s => s === secret || s === headerSecret);
+
+    if (!isAuthorized) {
       console.warn('[WhatsApp Webhook] Requisição com token inválido.');
       return NextResponse.json({ error: 'Acesso não autorizado' }, { status: 401 });
     }
@@ -138,22 +146,35 @@ export async function POST(req: NextRequest) {
       leadId = insertRes.rows[0].id;
     }
 
-    // Registrar a mensagem na tabela chat_messages
+    // Registrar a mensagem na tabela chat_messages se não for duplicada recente
     if (message && message.trim()) {
       const messageSender = sender === 'ai' ? 'ai' : sender === 'human' ? 'human' : 'lead';
-      await query(
-        `INSERT INTO chat_messages (
-           organization_id,
-           lead_id,
-           sender,
-           content,
-           message_type,
-           media_url,
-           status,
-           created_at
-         ) VALUES ($1, $2, $3, $4, $5, $6, 'delivered', NOW());`,
-        [orgId, leadId, messageSender, message.trim(), mediaType, mediaUrl]
+      
+      const duplicateRes = await query(
+        `SELECT id FROM chat_messages 
+         WHERE lead_id = $1 
+           AND sender = $2 
+           AND content = $3 
+           AND created_at >= NOW() - INTERVAL '15 seconds' 
+         LIMIT 1;`,
+        [leadId, messageSender, message.trim()]
       );
+
+      if (duplicateRes.rows.length === 0) {
+        await query(
+          `INSERT INTO chat_messages (
+             organization_id,
+             lead_id,
+             sender,
+             content,
+             message_type,
+             media_url,
+             status,
+             created_at
+           ) VALUES ($1, $2, $3, $4, $5, $6, 'delivered', NOW());`,
+          [orgId, leadId, messageSender, message.trim(), mediaType, mediaUrl]
+        );
+      }
     }
 
     return NextResponse.json({

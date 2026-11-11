@@ -20,11 +20,21 @@ export interface HostingOrderNotificationInput {
 export class NotificationService {
   private evolutionUrl: string;
   private evolutionApiKey: string;
+  private evolutionInstance: string;
   private adminPhone: string;
 
   constructor() {
-    this.evolutionUrl = process.env.NEXT_PUBLIC_EVOLUTION_API_URL || 'https://wa.alllogiconline.com.br';
-    this.evolutionApiKey = process.env.EVOLUTION_API_KEY || 'MatrizSuperSecretApiKey2026';
+    const rawUrl = process.env.EVOLUTION_API_URL || process.env.NEXT_PUBLIC_EVOLUTION_API_URL;
+    this.evolutionUrl = (rawUrl && !rawUrl.includes('wa.alllogiconline.com.br') && !rawUrl.includes('wa.agillex.com.br'))
+      ? rawUrl
+      : 'https://evolution.alllogiconline.com.br';
+
+    const rawKey = process.env.EVOLUTION_API_KEY;
+    this.evolutionApiKey = (rawKey && rawKey !== 'MatrizSuperSecretApiKey2026')
+      ? rawKey
+      : '2b138828125e9650036c54b84df09d66783e138053a3291bc165f54fdf17406a';
+
+    this.evolutionInstance = process.env.EVOLUTION_INSTANCE_NAME || 'agillex-homologacao';
     this.adminPhone = process.env.OPERATIONAL_WHATSAPP || '5511966381915';
   }
 
@@ -167,27 +177,44 @@ Caso precise de qualquer orientação ou queira tirar dúvidas com nossa equipe 
   }
 
   /**
-   * Envia mensagem de texto via Evolution API se houver instância ativa
+   * Envia mensagem de texto via Evolution API
    */
   public async sendWhatsAppText(phone: string, text: string): Promise<boolean> {
     try {
-      const cleanPhone = phone.replace(/\D/g, '');
-      const number = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+      let cleanPhone = phone.replace(/\D/g, '');
+      if (cleanPhone.startsWith('0')) {
+        cleanPhone = cleanPhone.replace(/^0+/, '');
+      }
+      const number = (cleanPhone.length === 10 || cleanPhone.length === 11)
+        ? `55${cleanPhone}`
+        : cleanPhone.startsWith('55')
+        ? cleanPhone
+        : `55${cleanPhone}`;
 
-      // 1. Localizar primeira instância conectada
-      const instancesRes = await fetch(`${this.evolutionUrl}/instance/fetchInstances`, {
-        headers: { apikey: this.evolutionApiKey },
-      });
+      let instanceName = this.evolutionInstance;
 
-      if (!instancesRes.ok) return false;
+      // 1. Se a instância padrão não estiver definida, localiza a primeira instância conectada
+      if (!instanceName) {
+        try {
+          const instancesRes = await fetch(`${this.evolutionUrl}/instance/fetchInstances`, {
+            headers: { apikey: this.evolutionApiKey },
+          });
 
-      const instances = await instancesRes.json();
-      if (!Array.isArray(instances) || instances.length === 0) {
-        return false;
+          if (instancesRes.ok) {
+            const instances = await instancesRes.json();
+            if (Array.isArray(instances) && instances.length > 0) {
+              instanceName = instances[0].name || instances[0].instanceName;
+            }
+          }
+        } catch (e: any) {
+          console.warn('[NotificationService] Falha ao consultar instâncias Evolution:', e?.message);
+        }
       }
 
-      const instanceName = instances[0].name || instances[0].instanceName;
-      if (!instanceName) return false;
+      if (!instanceName) {
+        console.error('[NotificationService] Nenhuma instância da Evolution API disponível.');
+        return false;
+      }
 
       // 2. Disparar mensagem
       const sendRes = await fetch(`${this.evolutionUrl}/message/sendText/${instanceName}`, {
@@ -207,8 +234,16 @@ Caso precise de qualquer orientação ou queira tirar dúvidas com nossa equipe 
         }),
       });
 
-      return sendRes.ok;
-    } catch {
+      if (!sendRes.ok) {
+        const errText = await sendRes.text().catch(() => '');
+        console.error(`[NotificationService] Falha ao enviar WhatsApp para ${number} (${sendRes.status}):`, errText);
+        return false;
+      }
+
+      console.log(`[NotificationService] WhatsApp entregue com sucesso para ${number} via instância ${instanceName}`);
+      return true;
+    } catch (err: any) {
+      console.error('[NotificationService] Exceção ao enviar WhatsApp:', err?.message || err);
       return false;
     }
   }

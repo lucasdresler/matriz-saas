@@ -15,10 +15,11 @@ echo "🚀 Iniciando build e sincronização do Agillex Hub (hub.agillex.com.br)
 npm run build
 
 # 2. Sincronizar com GitHub
+COMMIT_MSG="${1:-fix(livechat): conectar envio de mensagens do hub com a evolution api oficial}"
 if git status --porcelain | grep -q .; then
   echo "📦 Criando commit das alterações..."
   git add .
-  git commit -m "fix(livechat): corrigir overflow e auto-scroll no chat do whatsapp"
+  git commit -m "$COMMIT_MSG"
 fi
 
 echo "📤 Enviando código para o GitHub..."

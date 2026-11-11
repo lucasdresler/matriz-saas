@@ -10,8 +10,10 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_URL=postgresql://matriz_admin:MatrizSecurePass2026!@postgres:5432/matriz_db?schema=public
-      - NEXT_PUBLIC_EVOLUTION_API_URL=https://wa.alllogiconline.com.br
-      - EVOLUTION_API_KEY=MatrizSuperSecretApiKey2026
+      - NEXT_PUBLIC_EVOLUTION_API_URL=https://evolution.alllogiconline.com.br
+      - EVOLUTION_API_URL=https://evolution.alllogiconline.com.br
+      - EVOLUTION_API_KEY=2b138828125e9650036c54b84df09d66783e138053a3291bc165f54fdf17406a
+      - EVOLUTION_INSTANCE_NAME=agillex-homologacao
     volumes:
       - .env.production:/app/.env.production:ro
     depends_on:
@@ -24,7 +26,7 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.matriz-saas.rule=Host(`hub.alllogiconline.com.br`)"
+      - "traefik.http.routers.matriz-saas.rule=Host(`hub.alllogiconline.com.br`) || Host(`hub.agillex.com.br`)"
       - "traefik.http.routers.matriz-saas.entrypoints=websecure"
       - "traefik.http.routers.matriz-saas.tls.certresolver=letsencrypt"
       - "traefik.http.services.matriz-saas.loadbalancer.server.port=3000" 

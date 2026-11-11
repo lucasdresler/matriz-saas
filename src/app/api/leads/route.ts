@@ -124,10 +124,10 @@ export async function POST(req: NextRequest) {
           const leadPhoneRes = await query('SELECT phone, whatsapp FROM leads WHERE id = $1::uuid LIMIT 1;', [message.leadId]);
           const phone = leadPhoneRes.rows[0]?.whatsapp || leadPhoneRes.rows[0]?.phone;
           if (phone) {
-            notificationService.sendWhatsAppText(phone, message.content).catch(() => {});
+            await notificationService.sendWhatsAppText(phone, message.content);
           }
-        } catch {
-          // Continua normalmente se a Evolution API não estiver pareada
+        } catch (err: any) {
+          console.error('[API Leads] Erro ao disparar mensagem WhatsApp do atendente humano:', err?.message || err);
         }
       }
 
