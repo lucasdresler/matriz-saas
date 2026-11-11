@@ -95,6 +95,9 @@ function CheckoutContent() {
   const initialCycle = (searchParams.get('ciclo') as BillingCycle) || 'monthly';
   const initialTrial = searchParams.get('trial') === 'true' && initialModule !== 'hospedagem';
   const initialEmail = searchParams.get('email') || '';
+  const initialName = searchParams.get('nome') || searchParams.get('name') || '';
+  const initialCompanyName = searchParams.get('empresa') || searchParams.get('companyName') || '';
+  const initialPhone = searchParams.get('tel') || searchParams.get('phone') || '';
 
   const [selectedModule, setSelectedModule] = useState<ModuleType>(initialModule);
   const [selectedPlanId, setSelectedPlanId] = useState<string>(initialPlanId);
@@ -125,11 +128,11 @@ function CheckoutContent() {
 
   // Formulário
   const [formData, setFormData] = useState({
-    name: '',
+    name: initialName,
     email: initialEmail,
-    phone: '',
+    phone: initialPhone,
     cpfCnpj: '',
-    companyName: '',
+    companyName: initialCompanyName,
   });
 
   // Cartão de crédito
@@ -563,11 +566,11 @@ function CheckoutContent() {
                 </a>
               ) : (
                 <a
-                  href="/"
+                  href={isTrial ? `/login?email=${encodeURIComponent(formData.email)}` : '/'}
                   className="checkout-submit-btn btn-interactive"
                   style={{ maxWidth: '300px', margin: '0 auto', textDecoration: 'none' }}
                 >
-                  <span>Acessar Painel do Agillex Hub</span>
+                  <span>{isTrial ? 'Fazer login no Agillex Hub' : 'Acessar Painel do Agillex Hub'}</span>
                   <ArrowRight size={18} />
                 </a>
               )}
