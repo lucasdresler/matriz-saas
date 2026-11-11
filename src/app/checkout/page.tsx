@@ -293,27 +293,6 @@ function CheckoutContent() {
     <div className="checkout-page">
       {/* 2. HEADER E MENU INSTITUCIONAL (Idêntico ao site) */}
       <header className="site-header">
-        {/* 1. TOPBAR DE SERVIÇOS (Idêntica ao site) */}
-        <div className="header__services">
-          <a
-            className="header__services-link"
-            href="https://alllogiconline.com.br/dominios-e-hospedagem"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span>Encontre seu domínio</span>
-          </a>
-          <span className="header__services-sep" aria-hidden="true">|</span>
-          <a
-            className="header__services-link"
-            href="https://alllogiconline.com.br/dominios-e-hospedagem#hospedagem-sites"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span>Hospede seu site</span>
-          </a>
-        </div>
-
         <div className="checkout-container">
           <div className="site-header__inner">
             <div className="site-header__brand">
@@ -337,7 +316,7 @@ function CheckoutContent() {
               </button>
             </div>
 
-            {/* Menu com os 9 itens oficiais do site */}
+            {/* Menu de navegação para agillex.com.br */}
             <nav className={`site-navigation ${mobileMenuOpen ? 'is-open' : ''}`} aria-label="Navegação primária">
               <ul className="site-navigation__list">
                 <li>
@@ -407,26 +386,6 @@ function CheckoutContent() {
                       </li>
                     </ul>
                   </div>
-                </li>
-                <li>
-                  <a href="https://alllogiconline.com.br/#portfolio" className="site-navigation__link">
-                    Portfólio
-                  </a>
-                </li>
-                <li>
-                  <a href="https://alllogiconline.com.br/#diagnostico" className="site-navigation__link">
-                    Diagnóstico
-                  </a>
-                </li>
-                <li>
-                  <a href="https://alllogiconline.com.br/sobre" className="site-navigation__link">
-                    Sobre
-                  </a>
-                </li>
-                <li>
-                  <a href="https://alllogiconline.com.br/contato" className="site-navigation__link">
-                    Contato
-                  </a>
                 </li>
               </ul>
             </nav>
