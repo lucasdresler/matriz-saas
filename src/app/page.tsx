@@ -6530,112 +6530,117 @@ export default function MatrizDashboard() {
               </div>
             </div>
 
-            {/* Acesso à Agenda Pública */}
-            <div
-              style={{
-                backgroundColor: 'var(--bg-surface-elevated)',
-                borderRadius: '12px',
-                padding: '16px',
-                border: '1px solid var(--border-subtle)',
-                marginBottom: '16px',
-              }}
-            >
-              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>
-                Link da Agenda Pública dos Clientes:
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-subtle)',
-                }}
-              >
-                <span
+            {currentOrg.modules?.agenda && (
+              <>
+                {/* Acesso à Agenda Pública */}
+                <div
                   style={{
-                    fontSize: '0.78rem',
-                    color: '#38BDF8',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    flex: 1,
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    border: '1px solid var(--border-subtle)',
+                    marginBottom: '16px',
                   }}
                 >
-                  {`https://agenda.alllogiconline.com.br/${currentOrg.slug}`}
-                </span>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`https://agenda.alllogiconline.com.br/${currentOrg.slug}`);
-                    setCopiedLink(true);
-                    setTimeout(() => setCopiedLink(false), 2000);
-                  }}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    fontSize: '0.72rem',
-                    fontWeight: 600,
-                    backgroundColor: copiedLink ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
-                    color: '#fff',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  {copiedLink ? <Check size={12} /> : <Copy size={12} />}
-                  {copiedLink ? 'Copiado!' : 'Copiar'}
-                </button>
-                <a
-                  href={`https://agenda.alllogiconline.com.br/${currentOrg.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    fontSize: '0.72rem',
-                    color: 'var(--text-muted)',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                  title="Abrir em nova aba"
-                >
-                  <ExternalLink size={14} />
-                </a>
-              </div>
-            </div>
-
-            {/* Atalhos Rápidos para Módulos e Painel da Agenda */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-              <a
-                href="https://agenda.alllogiconline.com.br/admin"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  borderRadius: '10px',
-                  backgroundColor: 'rgba(56, 189, 248, 0.08)',
-                  border: '1px solid rgba(56, 189, 248, 0.25)',
-                  color: '#fff',
-                  textDecoration: 'none',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Calendar size={18} style={{ color: '#38BDF8' }} />
-                  <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Acessar Painel da Agenda (Admin)</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Gerenciar profissionais, serviços e horários</div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>
+                    Link da Agenda Pública dos Clientes:
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-subtle)',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '0.78rem',
+                        color: '#38BDF8',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        flex: 1,
+                      }}
+                    >
+                      {`https://agenda.alllogiconline.com.br/${currentOrg.slug}`}
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://agenda.alllogiconline.com.br/${currentOrg.slug}`);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        backgroundColor: copiedLink ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
+                        color: '#fff',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      {copiedLink ? <Check size={12} /> : <Copy size={12} />}
+                      {copiedLink ? 'Copiado!' : 'Copiar'}
+                    </button>
+                    <a
+                      href={`https://agenda.alllogiconline.com.br/${currentOrg.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        fontSize: '0.72rem',
+                        color: 'var(--text-muted)',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title="Abrir em nova aba"
+                    >
+                      <ExternalLink size={14} />
+                    </a>
                   </div>
                 </div>
-                <ExternalLink size={14} style={{ color: '#38BDF8' }} />
-              </a>
 
+                {/* Atalho para o painel administrativo da Agenda */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                  <a
+                    href="https://agenda.alllogiconline.com.br/admin"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      backgroundColor: 'rgba(56, 189, 248, 0.08)',
+                      border: '1px solid rgba(56, 189, 248, 0.25)',
+                      color: '#fff',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Calendar size={18} style={{ color: '#38BDF8' }} />
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Acessar Painel da Agenda (Admin)</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Gerenciar profissionais, serviços e horários</div>
+                      </div>
+                    </div>
+                    <ExternalLink size={14} style={{ color: '#38BDF8' }} />
+                  </a>
+                </div>
+              </>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
               <a
                 href="https://hub.agillex.com.br/checkout?modulo=combo"
                 target="_blank"
