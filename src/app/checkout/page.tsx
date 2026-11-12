@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { SAAS_PLANS, PlanConfig, ModuleType, BillingCycle, BillingMethod } from '@/types/pricing';
 import './checkout.css';
+import AgillexNavbar from './components/AgillexNavbar';
+import AgillexFooter from './components/AgillexFooter';
 
 interface CheckoutSuccessData {
   status: 'active' | 'trial' | 'pending' | 'failed';
@@ -375,115 +377,13 @@ function CheckoutContent() {
 
   return (
     <div className="checkout-page">
-      {/* 2. HEADER E MENU INSTITUCIONAL (Idêntico ao site) */}
-      <header className="site-header">
-        <div className="checkout-container">
-          <div className="site-header__inner">
-            <div className="site-header__brand">
-              <a href="https://agillex.com.br/" className="site-header__logo" aria-label="AllLogic Online">
-                <Image src="/images/logo-alllogic.png" alt="AllLogic Online" width={1672} height={941} />
-              </a>
+      {/* 2. HEADER AGILLEX (mesma identidade do site agillex.com.br) */}
+      <AgillexNavbar />
 
-              {/* Botão hambúrguer no mobile (removido - sem menu institucional) */}
-              {/*
-              <button
-                type="button"
-                className="site-navigation__toggle"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                aria-expanded={mobileMenuOpen}
-                aria-label="Abrir menu de navegação"
-              >
-                <span className="site-navigation__toggle-icon" aria-hidden="true">
-                  <span className="site-navigation__toggle-bar"></span>
-                  <span className="site-navigation__toggle-bar"></span>
-                  <span className="site-navigation__toggle-bar"></span>
-                </span>
-              </button>
-              */}
-
-              {/* Menu de navegação para agillex.com.br (removido) */}
-              {/*
-              <nav className={`site-navigation ${mobileMenuOpen ? 'is-open' : ''}`} aria-label="Navegação primária">
-                <ul className="site-navigation__list">
-                  <li>
-                    <a href="https://agillex.com.br/" className="site-navigation__link">
-                      Início
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://agillex.com.br/#produtos" className="site-navigation__link">
-                      Soluções
-                    </a>
-                  </li>
-                  <li className={`site-navigation__item--has-dropdown ${dropdownOpen ? 'is-open' : ''}`}>
-                    <div className="site-navigation__dropdown">
-                      <button
-                        type="button"
-                        className="site-navigation__link site-navigation__dropdown-toggle"
-                        onClick={() => setDropdownOpen(!dropdownOpen)}
-                        aria-expanded={dropdownOpen}
-                        aria-haspopup="true"
-                      >
-                        <span>Família Agillex</span>
-                        <svg
-                          className="site-navigation__dropdown-icon"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M4 6L8 10L12 6"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
-                      <ul className="site-navigation__dropdown-menu" role="menu">
-                        <li role="none">
-                          <a
-                            href="https://agillex.com.br/#produtos"
-                            className="site-navigation__dropdown-link"
-                            role="menuitem"
-                          >
-                            Agillex Hub
-                          </a>
-                        </li>
-                        <li role="none">
-                          <a
-                            href="https://agillex.com.br/#produtos"
-                            className="site-navigation__dropdown-link"
-                            role="menuitem"
-                          >
-                            Agillex Agenda
-                          </a>
-                        </li>
-                        <li role="none">
-                          <a
-                            href="https://agillex.com.br/#produtos"
-                            className="site-navigation__dropdown-link"
-                            role="menuitem"
-                          >
-                            Agillex Atende
-                          </a>
-                        </li>
-                      </ul>
-                    </div>
-                  </li>
-                </ul>
-              </nav>
-              */}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* 3. CONTEÚDO PRINCIPAL (Fundo claro e design homologado) */}
+      {/* 3. CONTEÚDO PRINCIPAL (Dark Cyberpunk Agillex) */}
       <main className="checkout-body">
         <div className="checkout-container">
+
           {/* Caso de Sucesso */}
           {successData && (
             <div className="checkout-card card-interactive" style={{ maxWidth: '640px', margin: '40px auto', textAlign: 'center' }}>
@@ -1346,143 +1246,10 @@ function CheckoutContent() {
         </div>
       </main>
 
-      {/* 4. RODAPÉ INSTITUCIONAL (Idêntico ao site alllogiconline.com.br) */}
-      <footer className="footer">
-        <div className="checkout-container">
-          <div className="footer__inner">
-            {/* Marca */}
-            <div className="footer__brand">
-              <a href="https://agillex.com.br/" className="footer__logo" aria-label="AllLogic Online">
-                <Image
-                  src="/images/logo-alllogic.png"
-                  alt="AllLogic Online — Engenharia de Soluções Digitais"
-                  width={1672}
-                  height={941}
-                />
-              </a>
-              <p>Tecnologia que trabalha para as pessoas.</p>
-            </div>
+      {/* 4. RODAPÉ AGILLEX (mesma identidade do site agillex.com.br) */}
+      <AgillexFooter />
 
-            {/* Navegação institucional (removida) */}
-            {/*
-            <div className="footer__nav">
-              <h2>Navegação</h2>
-              <nav aria-label="Navegação institucional">
-                <ul>
-                  <li className="footer__nav-item--has-dropdown">
-                    <div className={`footer__dropdown ${footerDropdownOpen ? 'is-open' : ''}`}>
-                      <button
-                        type="button"
-                        className="footer__dropdown-toggle"
-                        aria-expanded={footerDropdownOpen}
-                        aria-haspopup="true"
-                        id="footer-dropdown-familia-agillex"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setFooterDropdownOpen(!footerDropdownOpen);
-                        }}
-                      >
-                        <span>Família Agillex</span>
-                        <svg
-                          className="footer__dropdown-icon"
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </button>
-                      <ul
-                        className="footer__dropdown-menu"
-                        role="menu"
-                        aria-labelledby="footer-dropdown-familia-agillex"
-                      >
-                        <li className="footer__dropdown-item" role="none">
-                          <a
-                            className="footer__dropdown-link"
-                            href="https://agillex.com.br/#produtos"
-                            role="menuitem"
-                          >
-                            Agillex Hub
-                          </a>
-                        </li>
-                        <li className="footer__dropdown-item" role="none">
-                          <a
-                            className="footer__dropdown-link"
-                            href="https://agillex.com.br/#produtos"
-                            role="menuitem"
-                          >
-                            Agillex Agenda
-                          </a>
-                        </li>
-                        <li className="footer__dropdown-item" role="none">
-                          <a
-                            className="footer__dropdown-link"
-                            href="https://agillex.com.br/#produtos"
-                            role="menuitem"
-                          >
-                            Agillex Atende
-                          </a>
-                        </li>
-                      </ul>
-                    </div>
-                  </li>
-                  <li>
-                    <a href="https://agillex.com.br/privacidade/">Política de Privacidade</a>
-                  </li>
-                  <li>
-                    <a href="https://agillex.com.br/termos/">Termos de Uso</a>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-            */}
-
-            {/* Informações de contato (removido) */}
-            {/*
-            <div className="footer__contact">
-              <h2>Contato</h2>
-
-              <address>
-                <p>
-                  <span>E-mail</span>
-                  <a href="mailto:contato@alllogiconline.com.br">contato@alllogiconline.com.br</a>
-                </p>
-
-                <p>
-                  <span>Telefone</span>
-                  <a href="tel:+5511966381915">(11) 96638-1915</a>
-                </p>
-
-                <p>
-                  <span>WhatsApp</span>
-                  <a
-                    href="https://wa.me/5511966381915"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    (11) 96638-1915
-                  </a>
-                </p>
-              </address>
-            </div>
-            */}
-          </div>
-
-          {/* Copyright */}
-          <div className="footer__copyright">
-            <p>© {new Date().getFullYear()} AllLogic Online. Todos os direitos reservados.</p>
-          </div>
-        </div>
-      </footer>
-
-      {/* Botão Voltar ao Topo (Dourado Oficial da Paleta AllLogic com seta branca encorpada) */}
+      {/* Botão Voltar ao Topo (Neon Agillex) */}
       <button
         type="button"
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -1496,7 +1263,7 @@ function CheckoutContent() {
           height="20"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#ffffff"
+          stroke="#060B18"
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
