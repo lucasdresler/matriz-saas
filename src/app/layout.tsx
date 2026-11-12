@@ -4,6 +4,8 @@ import Footer from "@/components/Footer";
 import { usePathname } from "next/navigation";
 import "./globals.css";
 
+"use client";
+
 export const metadata: Metadata = {
   title: "Agillex Hub | Engenharia de Soluções Digitais & Atendimento IA",
   description: "Tecnologia que trabalha para as pessoas. Plataforma multi-tenant com Agentes de Atendimento IA, CRM Kanban e Integração WhatsApp.",
