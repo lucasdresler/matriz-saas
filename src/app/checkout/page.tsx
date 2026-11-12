@@ -23,6 +23,7 @@ import { SAAS_PLANS, PlanConfig, ModuleType, BillingCycle, BillingMethod } from 
 import './checkout.css';
 import AgillexNavbar from './components/AgillexNavbar';
 import AgillexFooter from './components/AgillexFooter';
+import BackToTop from './components/BackToTop';
 
 interface CheckoutSuccessData {
   status: 'active' | 'trial' | 'pending' | 'failed';
@@ -129,6 +130,7 @@ function CheckoutContent() {
   const [isTrial, setIsTrial] = useState<boolean>(initialTrial);
   const [billingMethod, setBillingMethod] = useState<BillingMethod>('CREDIT_CARD');
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [trialModalOpen, setTrialModalOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -378,7 +380,7 @@ function CheckoutContent() {
   return (
     <div className="checkout-page">
       {/* 2. HEADER AGILLEX (mesma identidade do site agillex.com.br) */}
-      <AgillexNavbar />
+      <AgillexNavbar onOpenTrial={() => setTrialModalOpen(true)} />
 
       {/* 3. CONTEÚDO PRINCIPAL (Dark Cyberpunk Agillex) */}
       <main className="checkout-body">
@@ -1249,29 +1251,8 @@ function CheckoutContent() {
       {/* 4. RODAPÉ AGILLEX (mesma identidade do site agillex.com.br) */}
       <AgillexFooter />
 
-      {/* Botão Voltar ao Topo (Neon Agillex) */}
-      <button
-        type="button"
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className={`scroll-to-top ${showScrollTop ? 'scroll-to-top--visible' : ''}`}
-        aria-label="Voltar ao topo"
-        title="Voltar ao topo"
-      >
-        <svg
-          className="scroll-to-top__icon"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#060B18"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M12 19V5M5 12l7-7 7 7" />
-        </svg>
-      </button>
+      {/* Botão Voltar ao Topo (BackToTop Agillex, idêntico ao site) */}
+      <BackToTop />
     </div>
   );
 }

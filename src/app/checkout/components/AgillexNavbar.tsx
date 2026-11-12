@@ -1,12 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bot, ChevronDown, Sparkles, ArrowRight, Menu, X } from 'lucide-react';
+import { Bot, ChevronDown, Sparkles, ArrowRight, Menu, X, ShieldCheck } from 'lucide-react';
 
-export default function AgillexNavbar() {
-  const [productsOpen, setProductsOpen] = useState(false);
+interface NavbarProps {
+  onOpenTrial: () => void;
+}
+
+export default function AgillexNavbar({ onOpenTrial }: NavbarProps) {
+  const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const products = [
     { name: 'Agillex Hub', desc: 'Plataforma Unificada Multi-Tenant & CRM', id: 'hub', color: '#1F6FFF' },
@@ -17,6 +30,17 @@ export default function AgillexNavbar() {
     { name: 'Agillex GED', desc: 'Gestão de Documentos com OCR & IA', id: 'ged', color: '#8B5CF6' },
   ];
 
+  const scrollToSection = (id: string) => {
+    setProductsOpen(false);
+    setMobileMenuOpen(false);
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.location.href = `/#${id}`;
+    }
+  };
+
   return (
     <nav
       style={{
@@ -25,9 +49,9 @@ export default function AgillexNavbar() {
         left: 0,
         right: 0,
         zIndex: 100,
-        backgroundColor: 'rgba(6, 11, 24, 0.88)',
-        backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(56, 189, 248, 0.15)',
+        backgroundColor: scrolled ? 'rgba(6, 11, 24, 0.88)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(16px)' : 'none',
+        borderBottom: scrolled ? '1px solid rgba(56, 189, 248, 0.15)' : '1px solid transparent',
         transition: 'all 0.3s ease',
       }}
     >
@@ -44,6 +68,12 @@ export default function AgillexNavbar() {
         {/* LOGO AGILLEX */}
         <Link
           href="https://agillex.com.br/"
+          onClick={(e) => {
+            if (typeof window !== 'undefined' && window.location.pathname === '/') {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -116,6 +146,7 @@ export default function AgillexNavbar() {
           }}
           className="desktop-nav"
         >
+          {/* Dropdown Produtos */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setProductsOpen(!productsOpen)}
@@ -245,25 +276,14 @@ export default function AgillexNavbar() {
             Acessar Hub
           </a>
 
-          <a
-            href="https://hub.agillex.com.br/checkout?modulo=agenda&plano=agenda_inicial&trial=true"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: '9px 20px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #1F6FFF 0%, #00F5D4 100%)',
-              color: '#060B18',
-              fontWeight: 700,
-              fontSize: '0.84rem',
-              textDecoration: 'none',
-              boxShadow: '0 0 20px rgba(0, 245, 212, 0.35)',
-              transition: 'all 0.25s ease',
-            }}
+          <button
+            onClick={onOpenTrial}
+            className="btn-primary-neon"
+            style={{ padding: '9px 20px', fontSize: '0.84rem' }}
           >
             <Sparkles size={16} />
             Testar 14 Dias Grátis
-          </a>
+          </button>
         </div>
 
         {/* BOTÃO MOBILE */}
@@ -345,25 +365,14 @@ export default function AgillexNavbar() {
             >
               Acessar Hub (Login)
             </a>
-            <a
-              href="https://hub.agillex.com.br/checkout?modulo=agenda&plano=agenda_inicial&trial=true"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #1F6FFF 0%, #00F5D4 100%)',
-                color: '#060B18',
-                fontWeight: 700,
-                textAlign: 'center',
-                textDecoration: 'none',
-                boxShadow: '0 0 20px rgba(0, 245, 212, 0.35)',
-              }}
+            <button
+              onClick={onOpenTrial}
+              className="btn-primary-neon"
+              style={{ width: '100%', justifyContent: 'center' }}
             >
               <Sparkles size={16} />
               Iniciar Teste Grátis de 14 Dias
-            </a>
+            </button>
           </div>
         </div>
       )}
