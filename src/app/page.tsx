@@ -1354,18 +1354,18 @@ export default function MatrizDashboard() {
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                background: 'linear-gradient(135deg, #1F6FFF 0%, #00F5D4 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 16px rgba(37, 99, 235, 0.4)',
+                boxShadow: '0 0 20px rgba(31, 111, 255, 0.4)',
               }}
             >
               <Bot size={20} color="#fff" />
             </div>
             <div>
               <div style={{ fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.02em', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                Agillex Hub <span style={{ fontSize: '0.62rem', background: 'rgba(37, 99, 235, 0.15)', color: '#60A5FA', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(37, 99, 235, 0.3)' }}>PRO</span>
+                Agillex Hub <span style={{ fontSize: '0.62rem', background: 'rgba(0, 245, 212, 0.15)', color: '#00F5D4', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(0, 245, 212, 0.3)' }}>PRO</span>
               </div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Engenharia de Soluções Digitais</div>
             </div>
@@ -1479,10 +1479,10 @@ export default function MatrizDashboard() {
           {currentOrg.modules?.agenda && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 8px', marginBottom: '2px' }}>
-                <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#60A5FA', fontWeight: 700, letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#38BDF8', fontWeight: 700, letterSpacing: '0.05em' }}>
                   Agillex Agenda
                 </span>
-                <span style={{ fontSize: '0.6rem', color: '#60A5FA', fontWeight: 600 }}>ATIVO</span>
+                <span style={{ fontSize: '0.6rem', color: '#38BDF8', fontWeight: 600 }}>ATIVO</span>
               </div>
 
               <button

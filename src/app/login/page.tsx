@@ -35,7 +35,6 @@ function LoginForm() {
         throw new Error(data.error || 'Falha ao autenticar');
       }
 
-      // Sucesso: redireciona para o painel
       router.push(redirectPath);
       router.refresh();
     } catch (err: any) {
@@ -48,24 +47,24 @@ function LoginForm() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#0B132B',
+        backgroundColor: '#060B18',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px 16px',
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        backgroundImage: 'radial-gradient(circle at 50% 20%, rgba(37, 99, 235, 0.12) 0%, transparent 60%)',
+        fontFamily: 'var(--font-sans)',
+        backgroundImage: 'radial-gradient(circle at 50% 20%, rgba(31, 111, 255, 0.12) 0%, transparent 60%)',
       }}
     >
       <div
         style={{
           width: '100%',
           maxWidth: '440px',
-          backgroundColor: '#172038',
-          borderRadius: '16px',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(37, 99, 235, 0.15)',
+          backgroundColor: '#0F172A',
+          borderRadius: '14px',
+          border: '1px solid rgba(31, 111, 255, 0.25)',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(31, 111, 255, 0.15)',
           padding: '36px 32px',
           position: 'relative',
           overflow: 'hidden',
@@ -79,7 +78,7 @@ function LoginForm() {
             left: 0,
             right: 0,
             height: '4px',
-            background: 'linear-gradient(90deg, #00F5D4, #3A86FF, #2563EB)',
+            background: 'linear-gradient(90deg, #1F6FFF 0%, #00F5D4 100%)',
           }}
         />
 
@@ -90,15 +89,15 @@ function LoginForm() {
               width: '54px',
               height: '54px',
               borderRadius: '14px',
-              background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+              background: 'linear-gradient(135deg, #1F6FFF 0%, #00F5D4 100%)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 24px rgba(37, 99, 235, 0.5)',
+              boxShadow: '0 0 24px rgba(31, 111, 255, 0.5)',
               marginBottom: '16px',
             }}
           >
-            <Bot size={30} color="#fff" />
+            <Bot size={30} color="#060B18" />
           </div>
 
           <div
@@ -166,7 +165,7 @@ function LoginForm() {
                 display: 'block',
                 fontSize: '0.82rem',
                 fontWeight: 600,
-                color: '#CBD5E1',
+                color: '#94A3B8',
                 marginBottom: '7px',
               }}
             >
@@ -198,16 +197,16 @@ function LoginForm() {
                   width: '100%',
                   boxSizing: 'border-box',
                   padding: '11px 14px 11px 40px',
-                  backgroundColor: '#0F172A',
-                  border: '1px solid rgba(71, 85, 105, 0.5)',
+                  backgroundColor: '#060B18',
+                  border: '1px solid rgba(31, 111, 255, 0.25)',
                   borderRadius: '8px',
                   color: '#FFFFFF',
                   fontSize: '0.92rem',
                   outline: 'none',
                   transition: 'border-color 0.15s ease',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#3B82F6')}
-                onBlur={(e) => (e.target.style.borderColor = 'rgba(71, 85, 105, 0.5)')}
+                onFocus={(e) => (e.target.style.borderColor = '#1F6FFF')}
+                onBlur={(e) => (e.target.style.borderColor = 'rgba(31, 111, 255, 0.25)')}
               />
             </div>
           </div>
@@ -220,7 +219,7 @@ function LoginForm() {
                 display: 'block',
                 fontSize: '0.82rem',
                 fontWeight: 600,
-                color: '#CBD5E1',
+                color: '#94A3B8',
                 marginBottom: '7px',
               }}
             >
@@ -252,16 +251,16 @@ function LoginForm() {
                   width: '100%',
                   boxSizing: 'border-box',
                   padding: '11px 42px 11px 40px',
-                  backgroundColor: '#0F172A',
-                  border: '1px solid rgba(71, 85, 105, 0.5)',
+                  backgroundColor: '#060B18',
+                  border: '1px solid rgba(31, 111, 255, 0.25)',
                   borderRadius: '8px',
                   color: '#FFFFFF',
                   fontSize: '0.92rem',
                   outline: 'none',
                   transition: 'border-color 0.15s ease',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#3B82F6')}
-                onBlur={(e) => (e.target.style.borderColor = 'rgba(71, 85, 105, 0.5)')}
+                onFocus={(e) => (e.target.style.borderColor = '#1F6FFF')}
+                onBlur={(e) => (e.target.style.borderColor = 'rgba(31, 111, 255, 0.25)')}
               />
               <button
                 type="button"
@@ -294,7 +293,7 @@ function LoginForm() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                style={{ accentColor: '#2563EB', cursor: 'pointer', width: '15px', height: '15px' }}
+                style={{ accentColor: '#1F6FFF', cursor: 'pointer', width: '15px', height: '15px' }}
               />
               Manter conectado
             </label>
@@ -304,24 +303,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              fontWeight: 700,
-              fontSize: '0.95rem',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              boxShadow: '0 4px 16px rgba(37, 99, 235, 0.4)',
-              transition: 'all 0.15s ease',
-              opacity: loading ? 0.75 : 1,
-            }}
+            className="btn-primary"
           >
             {loading ? (
               <>
@@ -342,7 +324,7 @@ function LoginForm() {
           style={{
             marginTop: '28px',
             paddingTop: '18px',
-            borderTop: '1px solid rgba(71, 85, 105, 0.25)',
+            borderTop: '1px solid rgba(31, 111, 255, 0.25)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -357,7 +339,7 @@ function LoginForm() {
       </div>
 
       {/* Assinatura AllLogic */}
-      <div style={{ marginTop: '24px', fontSize: '0.78rem', color: '#475569', textAlign: 'center' }}>
+      <div style={{ marginTop: '24px', fontSize: '0.78rem', color: '#64748B', textAlign: 'center' }}>
         AllLogic Online • Tecnologia que trabalha para as pessoas.
       </div>
     </div>
@@ -368,8 +350,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div style={{ minHeight: '100vh', backgroundColor: '#0B132B', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>
-          <Loader2 size={32} className="spin-slow" />
+        <div style={{ minHeight: '100vh', backgroundColor: '#060B18', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>
+          <Loader2 size={32} className="animate-spin" />
         </div>
       }
     >
