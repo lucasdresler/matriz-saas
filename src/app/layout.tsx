@@ -1,10 +1,10 @@
+"use client";
+
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { usePathname } from "next/navigation";
 import "./globals.css";
-
-"use client";
 
 export const metadata: Metadata = {
   title: "Agillex Hub | Engenharia de Soluções Digitais & Atendimento IA",
