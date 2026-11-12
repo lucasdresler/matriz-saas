@@ -126,9 +126,6 @@ function CheckoutContent() {
   const [cycle, setCycle] = useState<BillingCycle>(initialCycle);
   const [isTrial, setIsTrial] = useState<boolean>(initialTrial);
   const [billingMethod, setBillingMethod] = useState<BillingMethod>('CREDIT_CARD');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [footerDropdownOpen, setFooterDropdownOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
@@ -136,8 +133,6 @@ function CheckoutContent() {
       setShowScrollTop(window.scrollY > 400);
     };
     const handleDocumentClick = () => {
-      setDropdownOpen(false);
-      setFooterDropdownOpen(false);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     document.addEventListener('click', handleDocumentClick);
@@ -389,7 +384,8 @@ function CheckoutContent() {
                 <Image src="/images/logo-alllogic.png" alt="AllLogic Online" width={1672} height={941} />
               </a>
 
-              {/* Botão hambúrguer no mobile */}
+              {/* Botão hambúrguer no mobile (removido - sem menu institucional) */}
+              {/*
               <button
                 type="button"
                 className="site-navigation__toggle"
@@ -403,81 +399,84 @@ function CheckoutContent() {
                   <span className="site-navigation__toggle-bar"></span>
                 </span>
               </button>
-            </div>
+              */}
 
-            {/* Menu de navegação para agillex.com.br */}
-            <nav className={`site-navigation ${mobileMenuOpen ? 'is-open' : ''}`} aria-label="Navegação primária">
-              <ul className="site-navigation__list">
-                <li>
-                  <a href="https://agillex.com.br/" className="site-navigation__link">
-                    Início
-                  </a>
-                </li>
-                <li>
-                  <a href="https://agillex.com.br/#produtos" className="site-navigation__link">
-                    Soluções
-                  </a>
-                </li>
-                <li className={`site-navigation__item--has-dropdown ${dropdownOpen ? 'is-open' : ''}`}>
-                  <div className="site-navigation__dropdown">
-                    <button
-                      type="button"
-                      className="site-navigation__link site-navigation__dropdown-toggle"
-                      onClick={() => setDropdownOpen(!dropdownOpen)}
-                      aria-expanded={dropdownOpen}
-                      aria-haspopup="true"
-                    >
-                      <span>Família Agillex</span>
-                      <svg
-                        className="site-navigation__dropdown-icon"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        aria-hidden="true"
+              {/* Menu de navegação para agillex.com.br (removido) */}
+              {/*
+              <nav className={`site-navigation ${mobileMenuOpen ? 'is-open' : ''}`} aria-label="Navegação primária">
+                <ul className="site-navigation__list">
+                  <li>
+                    <a href="https://agillex.com.br/" className="site-navigation__link">
+                      Início
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://agillex.com.br/#produtos" className="site-navigation__link">
+                      Soluções
+                    </a>
+                  </li>
+                  <li className={`site-navigation__item--has-dropdown ${dropdownOpen ? 'is-open' : ''}`}>
+                    <div className="site-navigation__dropdown">
+                      <button
+                        type="button"
+                        className="site-navigation__link site-navigation__dropdown-toggle"
+                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                        aria-expanded={dropdownOpen}
+                        aria-haspopup="true"
                       >
-                        <path
-                          d="M4 6L8 10L12 6"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                    <ul className="site-navigation__dropdown-menu" role="menu">
-                      <li role="none">
-                        <a
-                          href="https://agillex.com.br/#produtos"
-                          className="site-navigation__dropdown-link"
-                          role="menuitem"
+                        <span>Família Agillex</span>
+                        <svg
+                          className="site-navigation__dropdown-icon"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          aria-hidden="true"
                         >
-                          Agillex Hub
-                        </a>
-                      </li>
-                      <li role="none">
-                        <a
-                          href="https://agillex.com.br/#produtos"
-                          className="site-navigation__dropdown-link"
-                          role="menuitem"
-                        >
-                          Agillex Agenda
-                        </a>
-                      </li>
-                      <li role="none">
-                        <a
-                          href="https://agillex.com.br/#produtos"
-                          className="site-navigation__dropdown-link"
-                          role="menuitem"
-                        >
-                          Agillex Atende
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
-                </li>
-              </ul>
-            </nav>
+                          <path
+                            d="M4 6L8 10L12 6"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      <ul className="site-navigation__dropdown-menu" role="menu">
+                        <li role="none">
+                          <a
+                            href="https://agillex.com.br/#produtos"
+                            className="site-navigation__dropdown-link"
+                            role="menuitem"
+                          >
+                            Agillex Hub
+                          </a>
+                        </li>
+                        <li role="none">
+                          <a
+                            href="https://agillex.com.br/#produtos"
+                            className="site-navigation__dropdown-link"
+                            role="menuitem"
+                          >
+                            Agillex Agenda
+                          </a>
+                        </li>
+                        <li role="none">
+                          <a
+                            href="https://agillex.com.br/#produtos"
+                            className="site-navigation__dropdown-link"
+                            role="menuitem"
+                          >
+                            Agillex Atende
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  </li>
+                </ul>
+              </nav>
+              */}
+            </div>
           </div>
         </div>
       </header>
@@ -1364,7 +1363,8 @@ function CheckoutContent() {
               <p>Tecnologia que trabalha para as pessoas.</p>
             </div>
 
-            {/* Navegação institucional */}
+            {/* Navegação institucional (removida) */}
+            {/*
             <div className="footer__nav">
               <h2>Navegação</h2>
               <nav aria-label="Navegação institucional">
@@ -1442,8 +1442,10 @@ function CheckoutContent() {
                 </ul>
               </nav>
             </div>
+            */}
 
-            {/* Informações de contato */}
+            {/* Informações de contato (removido) */}
+            {/*
             <div className="footer__contact">
               <h2>Contato</h2>
 
@@ -1470,6 +1472,7 @@ function CheckoutContent() {
                 </p>
               </address>
             </div>
+            */}
           </div>
 
           {/* Copyright */}

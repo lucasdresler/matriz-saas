@@ -1,23 +1,5 @@
 import Link from 'next/link';
 
-const FOOTER_LINKS = [
-  { name: 'Início', href: 'https://agillex.com.br/' },
-  { name: 'Soluções', href: 'https://agillex.com.br/#solucoes' },
-  { name: 'Portfólio', href: 'https://agillex.com.br/#portfolio' },
-  { name: 'Diagnóstico', href: 'https://agillex.com.br/#diagnostico' },
-  { name: 'Sobre', href: 'https://agillex.com.br/#sobre' },
-  { name: 'Contato', href: 'https://agillex.com.br/contato' },
-];
-
-const PRODUCT_LINKS = [
-  { name: 'Agillex Hub', href: 'https://agillex.com.br/#produtos' },
-  { name: 'Agillex Agenda', href: 'https://agillex.com.br/#produtos' },
-  { name: 'Agillex Atende', href: 'https://agillex.com.br/#produtos' },
-  { name: 'Agillex Cobrança', href: 'https://agillex.com.br/#produtos' },
-  { name: 'Agillex Reputação', href: 'https://agillex.com.br/#produtos' },
-  { name: 'Agillex GED', href: 'https://agillex.com.br/#produtos' },
-];
-
 const ACCESS_LINKS = [
   { name: 'Acessar Hub', href: 'https://hub.agillex.com.br/login' },
   { name: 'Planos e Preços', href: 'https://hub.agillex.com.br/plans' },
@@ -102,30 +84,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Produtos */}
-        <div>
-          <h4 style={{ color: '#00F5D4', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Família Agillex</h4>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {PRODUCT_LINKS.map((link) => (
-              <li key={link.name}>
-                <Link
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    color: '#CBD5E1',
-                    textDecoration: 'none',
-                    fontSize: '0.9rem',
-                    transition: 'color 0.2s ease',
-                  }}
-                >
-                  {link.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
         {/* Acesso rápido */}
         <div>
           <h4 style={{ color: '#00F5D4', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Acesso Rápido</h4>
@@ -150,27 +108,7 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Institucional */}
-        <div>
-          <h4 style={{ color: '#00F5D4', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Institucional</h4>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {FOOTER_LINKS.map((link) => (
-              <li key={link.name}>
-                <Link
-                  href={link.href}
-                  style={{
-                    color: '#CBD5E1',
-                    textDecoration: 'none',
-                    fontSize: '0.9rem',
-                    transition: 'color 0.2s ease',
-                  }}
-                >
-                  {link.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Navegação institucional removida */}
       </div>
 
       <div
