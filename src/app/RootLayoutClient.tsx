@@ -15,7 +15,7 @@ export default function RootLayoutClient({
   return (
     <>
       {!isCheckout && <Header />}
-      <main style={{ minHeight: "100vh", paddingTop: isCheckout ? 0 : "64px" }}>{children}</main>
+      <main style={{ minHeight: "100vh", paddingTop: "64px" }}>{children}</main>
       {!isCheckout && <Footer />}
     </>
   );
