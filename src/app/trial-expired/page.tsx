@@ -29,7 +29,7 @@ export default function TrialExpiredPage() {
           adequado para continuar.
         </p>
         <a
-          href="https://agillex.com.br/#planos"
+          href="/plans"
           style={{
             display: 'inline-flex',
             justifyContent: 'center',

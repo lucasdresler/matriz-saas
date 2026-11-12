@@ -37,9 +37,13 @@ Definir o fluxo de entrada e encerramento do Trial de 14 dias sem cartão para o
 ## 3. Fluxo 2: Encerramento do período de teste
 
 - O prazo é calculado a partir da criação da organização do cliente e dura 14 dias corridos.
-- O Hub verifica a validade ao acessar rotas protegidas. Após os 14 dias, o acesso operacional é pausado e o cliente recebe uma tela com orientação para falar com a equipe Agillex.
+- O Hub verifica a validade ao acessar rotas protegidas. Após os 14 dias, o acesso operacional é pausado e o cliente é direcionado para `/trial-expired`.
 - Nenhum dado da organização é apagado e nenhuma cobrança ou fatura é criada automaticamente.
-- A reativação deve ser feita após a contratação, com o fluxo de assinatura e confirmação de pagamento correspondente.
+- A página `/plans` apresenta os produtos e planos da Família Agillex, com os valores da tabela publicada em `agillex.com.br`.
+- O checkout pós-trial exige a sessão autenticada do proprietário do workspace e cria uma assinatura recorrente no cartão. A conta só é reativada quando o webhook do Asaas confirma o pagamento.
+- A intenção de checkout é vinculada ao workspace, ao usuário, ao cliente Asaas e ao plano. O evento confirmado atualiza o plano da organização e encerra o marcador de trial usado pelo bloqueio de acesso.
+- O checkout pós-trial exige `ASAAS_WEBHOOK_TOKEN`; sem essa configuração o webhook não libera acesso.
+- Antes da publicação desta funcionalidade, aplicar a migration `supabase/migrations/20261111_trial_upgrade_checkout.sql`.
 
 ---
 
@@ -56,6 +60,6 @@ Definir o fluxo de entrada e encerramento do Trial de 14 dias sem cartão para o
 
 ## 5. Estado da implementação
 
-- O encerramento do acesso é verificado pelo Hub sem depender de cron ou workflow externo.
+- O encerramento e a reativação do acesso são verificados pelo Hub, sem depender de cron ou workflow externo.
 - Não existe rotina agendada ativa de trials na VPS do Hub nem na hospedagem cPanel da AllLogic.
-- A régua de notificações D-3/D-1 e a reativação automática após pagamento não estão implementadas.
+- A régua de notificações D-3/D-1 não está implementada.

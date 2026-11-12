@@ -65,6 +65,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith('/favicon.ico') ||
     pathname.startsWith('/api/webhooks') || // Webhooks WhatsApp e Asaas usam suas próprias chaves
     pathname.startsWith('/checkout') || // Checkout público de clientes
+    pathname.startsWith('/plans') ||
     pathname.startsWith('/trial-expired') ||
     pathname.startsWith('/api/checkout') ||
     pathname.startsWith('/api/auth') // Rotas de login/logout

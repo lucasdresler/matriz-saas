@@ -36,6 +36,7 @@ export interface AsaasSubscriptionInput {
   nextDueDate: string; // YYYY-MM-DD
   cycle: 'MONTHLY' | 'YEARLY';
   description: string;
+  externalReference?: string;
   creditCard?: AsaasCreditCard;
   creditCardHolderInfo?: AsaasCreditCardHolderInfo;
 }
@@ -46,6 +47,32 @@ export interface AsaasPaymentInput {
   value: number;
   dueDate: string;
   description: string;
+  externalReference?: string;
+}
+
+interface AsaasCustomerRecord {
+  id: string;
+  name?: string;
+  email?: string;
+}
+
+interface AsaasListResponse<T> {
+  data?: T[];
+}
+
+export interface AsaasSubscriptionResponse {
+  id: string;
+  status?: string;
+}
+
+export interface AsaasPaymentResponse {
+  id: string;
+  status?: string;
+  value?: number;
+  clientPaymentDate?: string;
+  bankSlipUrl?: string;
+  invoiceUrl?: string;
+  [key: string]: unknown;
 }
 
 function getEnvVariable(name: string): string {
@@ -67,10 +94,14 @@ export class AsaasService {
     this.isConfigured = Boolean(this.apiKey && this.apiKey !== 'sua_chave_asaas_aqui');
   }
 
+  hasCredentials(): boolean {
+    return this.isConfigured;
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     if (!this.isConfigured) {
       console.warn(`[AsaasService] Chave de API não configurada. Executando em modo de simulação para ${endpoint}`);
-      return this.mockResponse<T>(endpoint, options);
+      return this.mockResponse<T>(endpoint);
     }
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -99,20 +130,20 @@ export class AsaasService {
 
     if (this.isConfigured) {
       // 1. Tentar buscar por CPF/CNPJ
-      const searchRes: any = await this.request(`/customers?cpfCnpj=${cleanCpfCnpj}`);
-      if (searchRes.data && searchRes.data.length > 0) {
+      const searchRes = await this.request<AsaasListResponse<AsaasCustomerRecord>>(`/customers?cpfCnpj=${cleanCpfCnpj}`);
+      if (searchRes.data?.length) {
         return { id: searchRes.data[0].id };
       }
 
       // 2. Se não encontrar, tentar por e-mail
-      const emailRes: any = await this.request(`/customers?email=${encodeURIComponent(input.email)}`);
-      if (emailRes.data && emailRes.data.length > 0) {
+      const emailRes = await this.request<AsaasListResponse<AsaasCustomerRecord>>(`/customers?email=${encodeURIComponent(input.email)}`);
+      if (emailRes.data?.length) {
         return { id: emailRes.data[0].id };
       }
     }
 
     // 3. Criar novo cliente
-    const createRes: any = await this.request('/customers', {
+    const createRes = await this.request<AsaasCustomerRecord>('/customers', {
       method: 'POST',
       body: JSON.stringify({
         name: input.name,
@@ -130,14 +161,15 @@ export class AsaasService {
   /**
    * Cria uma assinatura recorrente (Cartão de Crédito ou PIX Recorrente)
    */
-  async createSubscription(input: AsaasSubscriptionInput): Promise<any> {
-    const payload: any = {
+  async createSubscription(input: AsaasSubscriptionInput): Promise<AsaasSubscriptionResponse> {
+    const payload: Record<string, unknown> = {
       customer: input.customer,
       billingType: input.billingType,
       value: input.value,
       nextDueDate: input.nextDueDate,
       cycle: input.cycle,
       description: input.description,
+      externalReference: input.externalReference,
     };
 
     if (input.billingType === 'CREDIT_CARD' && input.creditCard) {
@@ -167,8 +199,8 @@ export class AsaasService {
   /**
    * Cria uma cobrança avulsa (usado para PIX dinâmico ou Boleto inicial)
    */
-  async createPayment(input: AsaasPaymentInput): Promise<any> {
-    return this.request('/payments', {
+  async createPayment(input: AsaasPaymentInput): Promise<AsaasPaymentResponse> {
+    return this.request<AsaasPaymentResponse>('/payments', {
       method: 'POST',
       body: JSON.stringify({
         customer: input.customer,
@@ -176,6 +208,7 @@ export class AsaasService {
         value: input.value,
         dueDate: input.dueDate,
         description: input.description,
+        externalReference: input.externalReference,
       }),
     });
   }
@@ -190,14 +223,14 @@ export class AsaasService {
   /**
    * Consulta o status de um pagamento
    */
-  async getPayment(paymentId: string): Promise<any> {
-    return this.request(`/payments/${paymentId}`);
+  async getPayment(paymentId: string): Promise<AsaasPaymentResponse> {
+    return this.request<AsaasPaymentResponse>(`/payments/${paymentId}`);
   }
 
   /**
    * Simulação local robusta para testes e ambiente de homologação
    */
-  private mockResponse<T>(endpoint: string, options: RequestInit): T {
+  private mockResponse<T>(endpoint: string): T {
     const timestamp = Date.now();
     const id = `mock_${timestamp}`;
 

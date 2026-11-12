@@ -23,9 +23,10 @@ import { SAAS_PLANS, PlanConfig, ModuleType, BillingCycle, BillingMethod } from 
 import './checkout.css';
 
 interface CheckoutSuccessData {
-  status: 'active' | 'trial' | 'pending';
+  status: 'active' | 'trial' | 'pending' | 'failed';
   message: string;
   plan: string;
+  intentId?: string;
   trialEndDate?: string;
   domain?: string;
   provisioning?: {
@@ -90,11 +91,17 @@ const MODULE_HEADER_CONTENT: Record<
   },
 };
 
+const UPGRADE_MODULES: ModuleType[] = ['combo', 'agenda', 'atendimento', 'cobranca', 'reputacao', 'ged'];
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
+  const isUpgrade = searchParams.get('upgrade') === 'true';
 
   // Parâmetros iniciais da URL
-  const initialModule = (searchParams.get('modulo') as ModuleType) || 'combo';
+  const requestedModule = searchParams.get('modulo') as ModuleType | null;
+  const initialModule = isUpgrade && requestedModule && !UPGRADE_MODULES.includes(requestedModule)
+    ? 'combo'
+    : requestedModule || 'combo';
   const initialDomain = searchParams.get('dominio') || '';
   const initialPlanParam = searchParams.get('plano') || '';
   const initialPlanId =
@@ -107,7 +114,7 @@ function CheckoutContent() {
       ? 'hospedagem_profissional'
       : 'combo');
   const initialCycle = (searchParams.get('ciclo') as BillingCycle) || 'monthly';
-  const initialTrial = searchParams.get('trial') === 'true' && initialModule !== 'hospedagem';
+  const initialTrial = !isUpgrade && searchParams.get('trial') === 'true' && initialModule !== 'hospedagem';
   const initialEmail = searchParams.get('email') || '';
   const initialName = searchParams.get('nome') || searchParams.get('name') || '';
   const initialCompanyName = searchParams.get('empresa') || searchParams.get('companyName') || '';
@@ -147,6 +154,8 @@ function CheckoutContent() {
     phone: initialPhone,
     cpfCnpj: '',
     companyName: initialCompanyName,
+    postalCode: '',
+    addressNumber: '',
   });
 
   // Cartão de crédito
@@ -160,9 +169,39 @@ function CheckoutContent() {
   // Estados de processamento
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [loginRequired, setLoginRequired] = useState(false);
   const [successData, setSuccessData] = useState<CheckoutSuccessData | null>(null);
   const [pixData, setPixData] = useState<{ qrCode: string; copyPaste: string; paymentId: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [upgradeIntentId, setUpgradeIntentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isUpgrade) return;
+
+    let active = true;
+    fetch('/api/checkout/upgrade/context')
+      .then(async (response) => {
+        const data = await response.json();
+        if (response.status === 401) {
+          setLoginRequired(true);
+        }
+        if (!response.ok) throw new Error(data.error || 'Não foi possível carregar os dados da conta.');
+        return data;
+      })
+      .then((data) => {
+        if (!active) return;
+        setFormData((current) => ({ ...current, ...data.account }));
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setErrorMsg(error instanceof Error ? error.message : 'Não foi possível carregar os dados da conta.');
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isUpgrade]);
 
   // Filtrar planos do módulo ativo (sem duplicatas)
   const availablePlans = Array.from(
@@ -212,10 +251,50 @@ function CheckoutContent() {
     };
   }, [pixData, currentPlan.name, currentPlan.id, domain, formData.email, formData.name]);
 
+  useEffect(() => {
+    if (!upgradeIntentId) return;
+
+    let active = true;
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`/api/checkout/upgrade/status?intentId=${encodeURIComponent(upgradeIntentId)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Não foi possível verificar o pagamento.');
+        if (!active || !successData) return;
+
+        if (data.status === 'active') {
+          setSuccessData({
+            ...successData,
+            status: 'active',
+            message: 'Pagamento confirmado. Seu workspace está liberado para acesso.',
+          });
+          setUpgradeIntentId(null);
+        } else if (data.status === 'failed') {
+          setSuccessData({
+            ...successData,
+            status: 'failed',
+            message: 'Não foi possível confirmar a assinatura. Tente novamente ou fale com o suporte.',
+          });
+          setUpgradeIntentId(null);
+        }
+      } catch (error) {
+        console.error('[Checkout Upgrade] Falha ao verificar status:', error);
+      }
+    };
+
+    void checkStatus();
+    const interval = setInterval(checkStatus, 4000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [upgradeIntentId, successData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
+    setLoginRequired(false);
 
     try {
       // Decompor validade do cartão
@@ -240,6 +319,7 @@ function CheckoutContent() {
         planId: currentPlan.id,
         cycle,
         billingMethod,
+        upgrade: isUpgrade,
         isTrial: selectedModule === 'hospedagem' ? false : isTrial,
         domain: domain.trim(),
         creditCard:
@@ -254,7 +334,7 @@ function CheckoutContent() {
             : undefined,
       };
 
-      const res = await fetch('/api/checkout', {
+      const res = await fetch(isUpgrade ? '/api/checkout/upgrade' : '/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -266,7 +346,15 @@ function CheckoutContent() {
         throw new Error(data.error || 'Ocorreu um erro ao processar o checkout.');
       }
 
-      if (data.billingMethod === 'PIX' && data.copyPaste) {
+      if (data.upgrade && data.intentId) {
+        setSuccessData({
+          status: 'pending',
+          intentId: data.intentId,
+          plan: data.plan,
+          message: data.message,
+        });
+        setUpgradeIntentId(data.intentId);
+      } else if (data.billingMethod === 'PIX' && data.copyPaste) {
         setPixData({
           qrCode: data.qrCodeBase64,
           copyPaste: data.copyPaste,
@@ -417,7 +505,13 @@ function CheckoutContent() {
               </div>
 
               <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--color-primary)', marginBottom: '8px' }}>
-                {isTrial ? 'Período de Teste Ativado com Sucesso!' : 'Assinatura Confirmada!'}
+                {successData.status === 'pending'
+                  ? 'Aguardando confirmação do pagamento'
+                  : successData.status === 'failed'
+                  ? 'Não foi possível concluir a contratação'
+                  : isTrial
+                  ? 'Período de Teste Ativado com Sucesso!'
+                  : 'Assinatura Confirmada!'}
               </h1>
               <p style={{ color: 'var(--color-text-muted)', fontSize: '15px', maxWidth: '480px', margin: '0 auto 24px', lineHeight: 1.6 }}>
                 {successData.message}
@@ -499,8 +593,14 @@ function CheckoutContent() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '14px' }}>
                   <span style={{ color: 'var(--color-text-muted)' }}>Status da Conta:</span>
-                  <span style={{ color: 'var(--color-success)', fontWeight: 700, textTransform: 'uppercase' }}>
-                    {isTrial ? 'Teste Grátis (14 Dias)' : 'Ativo e Liberado'}
+                  <span style={{ color: successData.status === 'active' || isTrial ? 'var(--color-success)' : 'var(--color-text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                    {successData.status === 'pending'
+                      ? 'Pagamento em processamento'
+                      : successData.status === 'failed'
+                      ? 'Não contratado'
+                      : isTrial
+                      ? 'Teste Grátis (14 Dias)'
+                      : 'Ativo e Liberado'}
                   </span>
                 </div>
                 {successData.trialEndDate && (
@@ -524,13 +624,25 @@ function CheckoutContent() {
                   <span>Acessar Painel cPanel</span>
                   <ArrowRight size={18} />
                 </a>
+              ) : successData.status === 'pending' ? (
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>
+                  Assim que o Asaas confirmar o pagamento, esta tela atualizará e liberará seu workspace.
+                </p>
               ) : (
                 <a
-                  href={isTrial ? `/login?switch=true&email=${encodeURIComponent(formData.email)}` : '/'}
+                  href={successData.status === 'failed'
+                    ? '/plans?upgrade=true'
+                    : isTrial
+                    ? `/login?switch=true&email=${encodeURIComponent(formData.email)}`
+                    : '/'}
                   className="checkout-submit-btn btn-interactive"
                   style={{ maxWidth: '300px', margin: '0 auto', textDecoration: 'none' }}
                 >
-                  <span>{isTrial ? 'Fazer login no Agillex Hub' : 'Acessar Painel do Agillex Hub'}</span>
+                  <span>{successData.status === 'failed'
+                    ? 'Escolher outro plano'
+                    : isTrial
+                    ? 'Fazer login no Agillex Hub'
+                    : 'Acessar Painel do Agillex Hub'}</span>
                   <ArrowRight size={18} />
                 </a>
               )}
@@ -658,6 +770,33 @@ function CheckoutContent() {
 
                   <button
                     type="button"
+                    onClick={() => setSelectedModule('cobranca')}
+                    className={`checkout-module-btn ${selectedModule === 'cobranca' ? 'checkout-module-btn--active' : ''}`}
+                  >
+                    <CreditCard size={16} />
+                    <span>Agillex Cobrança</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedModule('reputacao')}
+                    className={`checkout-module-btn ${selectedModule === 'reputacao' ? 'checkout-module-btn--active' : ''}`}
+                  >
+                    <ShieldCheck size={16} />
+                    <span>Agillex Reputação</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedModule('ged')}
+                    className={`checkout-module-btn ${selectedModule === 'ged' ? 'checkout-module-btn--active' : ''}`}
+                  >
+                    <FileText size={16} />
+                    <span>Agillex GED</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => {
                       setSelectedModule('atendimento');
                     }}
@@ -678,6 +817,7 @@ function CheckoutContent() {
                     <span>Agillex Agenda</span>
                   </button>
 
+                  {!isUpgrade && (
                   <button
                     type="button"
                     onClick={() => {
@@ -689,6 +829,7 @@ function CheckoutContent() {
                     <Server size={16} />
                     <span>Hospedagem Gerenciada</span>
                   </button>
+                  )}
                 </div>
               </div>
 
@@ -712,7 +853,12 @@ function CheckoutContent() {
                   </button>
                 </div>
 
-                {selectedModule !== 'hospedagem' ? (
+                {isUpgrade ? (
+                  <span className="checkout-trial-pill">
+                    <Lock size={16} />
+                    <span>Contratação do plano para este workspace</span>
+                  </span>
+                ) : selectedModule !== 'hospedagem' ? (
                   <button
                     type="button"
                     onClick={() => setIsTrial(!isTrial)}
@@ -761,6 +907,7 @@ function CheckoutContent() {
                         placeholder="Ex: Clínica Vitta ou Consultoria Ribeiro"
                         value={formData.companyName}
                         onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                        disabled={isUpgrade}
                         className="checkout-text-input"
                       />
                     </div>
@@ -801,6 +948,7 @@ function CheckoutContent() {
                           placeholder="Nome do responsável"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          disabled={isUpgrade}
                           className="checkout-text-input"
                         />
                       </div>
@@ -819,6 +967,34 @@ function CheckoutContent() {
                       </div>
                     </div>
 
+                    {isUpgrade && (
+                      <div className="checkout-row">
+                        <div>
+                          <label className="checkout-field-label">CEP de cobrança</label>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            required
+                            placeholder="00000-000"
+                            value={formData.postalCode}
+                            onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                            className="checkout-text-input"
+                          />
+                        </div>
+                        <div>
+                          <label className="checkout-field-label">Número do endereço de cobrança</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Número"
+                            value={formData.addressNumber}
+                            onChange={(e) => setFormData({ ...formData, addressNumber: e.target.value })}
+                            className="checkout-text-input"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     <div className="checkout-row">
                       <div>
                         <label className="checkout-field-label">
@@ -830,6 +1006,7 @@ function CheckoutContent() {
                           placeholder="seu@email.com"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          disabled={isUpgrade}
                           className="checkout-text-input"
                         />
                       </div>
@@ -861,10 +1038,17 @@ function CheckoutContent() {
                     ) : (
                       /* Seleção e dados de pagamento */
                       <div style={{ marginTop: '14px' }}>
+                        {isUpgrade ? (
+                          <p style={{ margin: '0 0 12px', color: 'var(--color-text-muted)', fontSize: '13px', lineHeight: 1.5 }}>
+                            A assinatura será cobrada no cartão conforme o ciclo escolhido. Seu workspace será reativado após a confirmação do pagamento.
+                          </p>
+                        ) : (
                         <label className="checkout-field-label" style={{ marginBottom: '10px' }}>
                           Forma de Pagamento
                         </label>
+                        )}
 
+                        {!isUpgrade && (
                         <div className="checkout-method-tabs">
                           <button
                             type="button"
@@ -893,6 +1077,7 @@ function CheckoutContent() {
                             <span>Boleto</span>
                           </button>
                         </div>
+                        )}
 
                         {billingMethod === 'CREDIT_CARD' && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1003,6 +1188,14 @@ function CheckoutContent() {
                         }}
                       >
                         {errorMsg}
+                        {loginRequired && (
+                          <a
+                            href={`/login?redirect=${encodeURIComponent(`/checkout?upgrade=true&modulo=${selectedModule}&plano=${currentPlan.id}&ciclo=${cycle}`)}`}
+                            style={{ display: 'block', marginTop: '8px', color: 'var(--color-primary)', fontWeight: 700 }}
+                          >
+                            Entrar na minha conta
+                          </a>
+                        )}
                       </div>
                     )}
 
@@ -1017,6 +1210,8 @@ function CheckoutContent() {
                           ? 'Processando...'
                           : isTrial
                           ? 'Iniciar Teste de 14 Dias Grátis'
+                          : isUpgrade
+                          ? `Contratar plano (R$ ${totalPrice.toFixed(2).replace('.', ',')})`
                           : billingMethod === 'PIX'
                           ? `Gerar PIX de R$ ${totalPrice.toFixed(2).replace('.', ',')}`
                           : `Confirmar Assinatura (R$ ${totalPrice.toFixed(2).replace('.', ',')})`}

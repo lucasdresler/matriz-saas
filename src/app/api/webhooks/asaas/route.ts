@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { whmService } from '@/lib/whm';
 import { agillexCobrancaService } from '@/lib/cobranca';
+import { activatePaidTrialUpgrade } from '@/lib/trial-upgrade';
 
 export async function POST(request: Request) {
   try {
@@ -15,6 +16,13 @@ export async function POST(request: Request) {
 
     const payload = await request.json();
     const { event, payment, subscription } = payload;
+    const externalReference = payment?.externalReference || subscription?.externalReference;
+    const isTrialUpgrade = typeof externalReference === 'string'
+      && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(externalReference);
+    if (isTrialUpgrade && !webhookToken) {
+      console.error('[Asaas Webhook] ASAAS_WEBHOOK_TOKEN é obrigatório para reativar workspaces.');
+      return NextResponse.json({ error: 'Webhook sem autenticação configurada.' }, { status: 503 });
+    }
 
     console.log(`[Asaas Webhook] Evento recebido: ${event}`, {
       paymentId: payment?.id,
@@ -49,6 +57,14 @@ export async function POST(request: Request) {
       case 'PAYMENT_CONFIRMED':
       case 'PAYMENT_RECEIVED': {
         console.log(`[Asaas Webhook] Pagamento liquidado com sucesso: ${payment?.id}`);
+
+        if (isTrialUpgrade) {
+          await activatePaidTrialUpgrade({
+            externalReference,
+            subscriptionId: payment?.subscription,
+            customerId: payment?.customer,
+          });
+        }
 
         // 1. Notificação de confirmação e agradecimento via WhatsApp
         if (customerPhone && payment?.id) {
@@ -112,8 +128,11 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ received: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Asaas Webhook] Erro ao processar:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erro desconhecido ao processar o webhook.' },
+      { status: 500 }
+    );
   }
 }

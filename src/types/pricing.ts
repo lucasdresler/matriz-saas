@@ -390,8 +390,8 @@ export const SAAS_PLANS: Record<string, PlanConfig> = {
     badge: 'Alta Performance',
     tagline: 'Para empresas de alto fluxo que necessitam de capacidade expandida.',
     priceMonthly: 149.00,
-    priceYearlyMonthly: 119.00,
-    annualTotal: 1428.00,
+    priceYearlyMonthly: 139.00,
+    annualTotal: 1668.00,
     features: [
       'Até 600 cobranças ativas/mês no WhatsApp',
       'Régua inteligente multicanal com alta prioridade',
@@ -424,8 +424,8 @@ export const SAAS_PLANS: Record<string, PlanConfig> = {
     badge: 'Mais Escolhido',
     tagline: 'Para clínicas, salões e consultórios com fluxo ativo diário.',
     priceMonthly: 79.00,
-    priceYearlyMonthly: 59.00,
-    annualTotal: 708.00,
+    priceYearlyMonthly: 69.00,
+    annualTotal: 828.00,
     features: [
       'Até 250 convites de avaliação/mês no WhatsApp',
       'Respostas automáticas no Google Maps com Inteligência Artificial',
@@ -440,8 +440,8 @@ export const SAAS_PLANS: Record<string, PlanConfig> = {
     badge: 'Alta Performance',
     tagline: 'Para redes, franquias ou empresas de alto volume de atendimentos.',
     priceMonthly: 129.00,
-    priceYearlyMonthly: 99.00,
-    annualTotal: 1188.00,
+    priceYearlyMonthly: 139.00,
+    annualTotal: 1668.00,
     features: [
       'Até 800 convites de avaliação/mês no WhatsApp',
       'Múltiplas unidades e perfis no Google Maps',
@@ -494,8 +494,8 @@ export const SAAS_PLANS: Record<string, PlanConfig> = {
     badge: 'Alta Performance',
     tagline: 'Para contabilidades, departamentos jurídicos e empresas de alto volume de arquivos.',
     priceMonthly: 149.00,
-    priceYearlyMonthly: 119.00,
-    annualTotal: 1428.00,
+    priceYearlyMonthly: 139.00,
+    annualTotal: 1668.00,
     storage: '500 GB',
     features: [
       'Até 500 GB de Armazenamento de Alta Velocidade',
