@@ -776,6 +776,7 @@ function CheckoutContent() {
               </div>
 
               {/* Grid Principal de 2 Colunas */}
+              {/* Versão campos aumentados - v3 */}
               <div className="checkout-layout-grid">
                 {/* Coluna 1: Dados do Negócio e Pagamento */}
                 <div className="checkout-card card-interactive">
