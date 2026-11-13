@@ -44,6 +44,11 @@ async function verifyEdgeToken(token: string): Promise<SessionPayload | null> {
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const hostname = req.nextUrl.hostname.toLowerCase();
+  const isKnownHubHost = [
+    'hub.alllogiconline.com.br',
+    'hub.agillex.com.br',
+  ].includes(hostname);
 
   // 1. Se o usuário já está autenticado e tenta acessar /login, redireciona para a home ou página solicitada
   if (pathname === '/login') {
@@ -53,6 +58,18 @@ export async function proxy(req: NextRequest) {
       return NextResponse.next();
     }
     if (session) {
+      const expectedHost = session.role === 'super_admin'
+        ? 'hub.alllogiconline.com.br'
+        : 'hub.agillex.com.br';
+
+      if (isKnownHubHost && hostname !== expectedHost) {
+        const destination = new URL(req.url);
+        destination.protocol = 'https:';
+        destination.hostname = expectedHost;
+        destination.port = '';
+        return NextResponse.redirect(destination);
+      }
+
       const redirectPath = req.nextUrl.searchParams.get('redirect') || '/';
       return NextResponse.redirect(new URL(redirectPath, req.url));
     }
@@ -100,6 +117,27 @@ export async function proxy(req: NextRequest) {
       loginUrl.searchParams.set('redirect', pathname);
     }
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (isKnownHubHost) {
+    const expectedHost = session.role === 'super_admin'
+      ? 'hub.alllogiconline.com.br'
+      : 'hub.agillex.com.br';
+
+    if (hostname !== expectedHost) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { error: 'Acesso não permitido neste ambiente.' },
+          { status: 403 }
+        );
+      }
+
+      const destination = new URL(req.url);
+      destination.protocol = 'https:';
+      destination.hostname = expectedHost;
+      destination.port = '';
+      return NextResponse.redirect(destination);
+    }
   }
 
   if (session.role !== 'super_admin' && session.userId && session.email) {

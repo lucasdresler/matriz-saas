@@ -86,6 +86,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Restringir cada perfil ao seu ambiente institucional.
+    const hostname = req.nextUrl.hostname.toLowerCase();
+
+    if (
+      hostname === 'hub.agillex.com.br' &&
+      userData.role === 'super_admin'
+    ) {
+      return NextResponse.json(
+        { error: 'A administração corporativa deve ser acessada pelo AllLogic Hub.' },
+        { status: 403 }
+      );
+    }
+
+    if (
+      hostname === 'hub.alllogiconline.com.br' &&
+      userData.role !== 'super_admin'
+    ) {
+      return NextResponse.json(
+        { error: 'Clientes devem acessar o Agillex Hub.' },
+        { status: 403 }
+      );
+    }
+
     // 4. Gerar Token de Sessão Assinado
     const token = await signSessionToken({
       userId: userData.id,
