@@ -231,10 +231,10 @@
   box-shadow: 0 0 20px rgba(0, 245, 212, 0.35);
 }
 
-/* Grid de 2 colunas */
+/* Grid de 2 colunas - coluna do formulário mais larga para facilitar digitação */
 .checkout-layout-grid {
   display: grid;
-  gridTemplateColumns: 1fr 1fr;
+  gridTemplateColumns: 1.5fr 1fr;
   gap: 24px;
   alignItems: start;
 }
@@ -273,7 +273,7 @@
 .checkout-form-group {
   display: flex;
   flexDirection: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .checkout-field-label {
@@ -287,15 +287,16 @@
 
 .checkout-text-input {
   width: 100%;
-  padding: 12px 14px;
+  padding: 16px 18px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: rgba(13, 23, 50, 0.4);
   color: var(--text-main);
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-family: inherit;
   transition: all 0.2s;
   outline: none;
+  line-height: 1.5;
 }
 
 .checkout-text-input:focus {
@@ -310,8 +311,8 @@
 .checkout-row {
   display: grid;
   gridTemplateColumns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 16px;
+  gap: 18px;
+  margin-bottom: 20px;
 }
 
 /* Tabs de pagamento */
