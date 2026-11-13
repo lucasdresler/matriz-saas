@@ -718,19 +718,6 @@ function CheckoutContent() {
                     <span>Agillex Agenda</span>
                   </button>
 
-                  {!isUpgrade && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedModule('hospedagem');
-                      setIsTrial(false);
-                    }}
-                    className={`checkout-module-btn ${selectedModule === 'hospedagem' ? 'checkout-module-btn--active' : ''}`}
-                  >
-                    <Server size={16} />
-                    <span>Hospedagem Gerenciada</span>
-                  </button>
-                  )}
                 </div>
               </div>
 
