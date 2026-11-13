@@ -47,7 +47,7 @@ function LoginForm() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#060B18',
+        backgroundColor: 'var(--login-bg, #060B18)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

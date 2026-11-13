@@ -150,7 +150,7 @@ input, textarea, select {
 /* COMPONENTES COMPARTILHADOS - PADRÃO AGILLEX                                */
 /* ========================================================================== */
 
-.btn-primary {
+body.agillex-theme .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -168,13 +168,13 @@ input, textarea, select {
   box-shadow: 0 0 20px rgba(31, 111, 255, 0.4);
 }
 
-.btn-primary:hover {
+body.agillex-theme .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 30px rgba(31, 111, 255, 0.55);
   filter: brightness(1.05);
 }
 
-.btn-secondary {
+body.agillex-theme .btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -191,13 +191,13 @@ input, textarea, select {
   transition: all 0.2s ease;
 }
 
-.btn-secondary:hover {
+body.agillex-theme .btn-secondary:hover {
   background: rgba(31, 111, 255, 0.2);
   border-color: rgba(31, 111, 255, 0.4);
   transform: translateY(-2px);
 }
 
-.card {
+body.agillex-theme .card {
   background: #0F172A;
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 14px;
@@ -205,12 +205,12 @@ input, textarea, select {
   transition: all 0.2s ease;
 }
 
-.card:hover {
+body.agillex-theme .card:hover {
   border-color: rgba(31, 111, 255, 0.35);
   box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.5);
 }
 
-.badge {
+body.agillex-theme .badge {
   display: inline-block;
   font-size: 0.75rem;
   font-weight: 700;
@@ -223,29 +223,29 @@ input, textarea, select {
   box-shadow: 0 0 10px rgba(0, 245, 212, 0.4);
 }
 
-.badge-blue {
+body.agillex-theme .badge-blue {
   background: #1F6FFF;
   color: #060B18;
   box-shadow: 0 0 10px rgba(31, 111, 255, 0.4);
 }
 
-.badge-violet {
+body.agillex-theme .badge-violet {
   background: #8B5CF6;
   color: #fff;
   box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
 }
 
-.gradient-text {
+body.agillex-theme .gradient-text {
   background: linear-gradient(to right, #fff, #00F5D4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.section-header {
+body.agillex-theme .section-header {
   margin-bottom: 24px;
 }
 
-.section-eyebrow {
+body.agillex-theme .section-eyebrow {
   display: inline-block;
   font-size: 0.8rem;
   font-weight: 700;
@@ -255,7 +255,7 @@ input, textarea, select {
   margin-bottom: 8px;
 }
 
-.section-title {
+body.agillex-theme .section-title {
   font-size: clamp(2rem, 5vw, 3.2rem);
   font-weight: 800;
   color: #fff;
@@ -263,7 +263,7 @@ input, textarea, select {
   line-height: 1.2;
 }
 
-.section-subtitle {
+body.agillex-theme .section-subtitle {
   color: #94A3B8;
   font-size: 1rem;
   line-height: 1.7;
@@ -271,7 +271,7 @@ input, textarea, select {
   max-width: 760px;
 }
 
-.page-container {
+body.agillex-theme .page-container {
   maxWidth: 1180px;
   margin: 0 auto;
   padding: 48px 20px;
@@ -280,6 +280,9 @@ input, textarea, select {
 }
 
 /* ========================================================================== */
+
+body:not(.agillex-theme) { --login-bg: #0B132B; }
+
 /* RESPONSIVIDADE MOBILE & TABLET                                             */
 /* ========================================================================== */
 
