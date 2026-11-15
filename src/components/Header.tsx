@@ -111,7 +111,7 @@ export default function Header() {
                 ECOSSISTEMA
               </span>
             </div>
-            <div style={{ fontSize: '0.68rem', color: '#64748B', letterSpacing: '0.04em', marginTop: '1px' }}>
+            <div style={{ fontSize: '0.68rem', color: '#94A3B8', letterSpacing: '0.04em', marginTop: '1px' }}>
               Por AllLogic Online
             </div>
           </div>
@@ -293,7 +293,7 @@ export default function Header() {
             style={{
               fontSize: '0.72rem',
               textTransform: 'uppercase',
-              color: '#64748B',
+              color: '#94A3B8',
               fontWeight: 700,
               letterSpacing: '0.05em',
             }}

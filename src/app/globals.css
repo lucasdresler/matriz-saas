@@ -9,9 +9,10 @@
   --border-hover: rgba(31, 111, 255, 0.28);
   --border-active: rgba(31, 111, 255, 0.5);
 
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --text-muted: #64748B;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E2E8F0;
+  --text-muted: #94A3B8;
+  --text-subtle: #CBD5E1;
   --text-inverse: #060E1E;
 
   /* Cores Institucionais AllLogic Online */
@@ -264,7 +265,7 @@ body.agillex-theme .section-title {
 }
 
 body.agillex-theme .section-subtitle {
-  color: #94A3B8;
+  color: #CBD5E1;
   font-size: 1rem;
   line-height: 1.7;
   margin: 0;

@@ -72,7 +72,7 @@ export default function Footer() {
               Ecossistema integrado de Atendimento IA 24/7, Agendamento Online Sincronizado, Funil CRM Kanban, Agillex Pay R$ 1,99 e Gestão Operacional.
             </p>
 
-            <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
+            <div style={{ fontSize: '0.78rem', color: '#94A3B8' }}>
               Uma marca da <strong>AllLogic Online</strong><br />
               Engenharia de Soluções Digitais
             </div>
@@ -283,7 +283,7 @@ export default function Footer() {
             justifyContent: 'space-between',
             gap: '16px',
             fontSize: '0.78rem',
-            color: '#64748B',
+            color: '#94A3B8',
           }}
         >
           <div>
