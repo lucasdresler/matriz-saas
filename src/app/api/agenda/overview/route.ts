@@ -56,32 +56,7 @@ export async function GET(req: NextRequest) {
       [orgId]
     );
 
-    // Se a organização ainda não tiver profissionais cadastrados, inicializa com profissional padrão
-    let professionals = profsRes.rows;
-    if (professionals.length === 0) {
-      const defaultProf = await query(
-        `INSERT INTO professionals (
-           organization_id, name, specialty, service_commission_pct, product_commission_pct, is_active
-         ) VALUES ($1, $2, 'Atendimento Geral', 30.00, 10.00, true)
-         RETURNING id, name, specialty, phone, email, avatar_url,
-                   service_commission_pct::float as service_commission_pct,
-                   product_commission_pct::float as product_commission_pct,
-                   is_active, created_at;`,
-        [orgId, settings.name ? `Equipe ${settings.name}` : 'Profissional Principal']
-      );
-      professionals = defaultProf.rows;
-
-      // Grade padrão Segunda a Sábado 09:00 - 19:00
-      for (let day = 1; day <= 6; day++) {
-        await query(
-          `INSERT INTO professional_availability (
-             professional_id, day_of_week, start_time, end_time, break_start, break_end, is_active
-           ) VALUES ($1, $2, '09:00', '19:00', '12:00', '13:00', true)
-           ON CONFLICT (professional_id, day_of_week) DO NOTHING;`,
-          [professionals[0].id, day]
-        );
-      }
-    }
+    const professionals = profsRes.rows;
 
     // Buscar disponibilidade de cada profissional
     const profIds = professionals.map((p: any) => p.id);

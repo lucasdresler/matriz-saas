@@ -304,6 +304,22 @@ export default function AgendaModule({
     }
   };
 
+  // Excluir / Desativar Profissional
+  const handleDeleteProf = async (profId: string, name: string) => {
+    if (!confirm(`Deseja realmente remover o profissional "${name}"?`)) return;
+    try {
+      const res = await fetch(`/api/agenda/professionals?id=${profId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data?.success) {
+        await loadAgendaData();
+      }
+    } catch (err) {
+      console.error('Erro ao excluir profissional:', err);
+    }
+  };
+
   // Salvar Pacote
   const handleSavePackage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1078,81 +1094,159 @@ export default function AgendaModule({
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-            {professionals.map((prof) => (
-              <div
-                key={prof.id}
-                style={{
-                  padding: '20px',
-                  borderRadius: '12px',
-                  backgroundColor: 'var(--bg-surface)',
-                  border: '1px solid var(--border-subtle)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                    <div
+            {professionals.length > 0 ? (
+              professionals.map((prof) => (
+                <div
+                  key={prof.id}
+                  style={{
+                    padding: '20px',
+                    borderRadius: '12px',
+                    backgroundColor: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                      <div
+                        style={{
+                          width: '46px',
+                          height: '46px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                          color: '#60A5FA',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1.1rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {prof.name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#fff' }}>{prof.name}</h4>
+                        <span style={{ fontSize: '0.76rem', color: '#60A5FA' }}>{prof.specialty || 'Atendimento'}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px', padding: '10px', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: '8px' }}>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Comissão Serviços</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#34D399' }}>{prof.service_commission_pct}%</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Comissão Produtos</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#A78BFA' }}>{prof.product_commission_pct}%</div>
+                      </div>
+                    </div>
+
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                      <strong>Grade Semanal:</strong> Segunda a Sábado (09:00 - 19:00 com pausa)
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px', marginTop: '12px' }}>
+                    <button
+                      onClick={() => handleOpenEditProf(prof)}
                       style={{
-                        width: '46px',
-                        height: '46px',
-                        borderRadius: '50%',
-                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                        color: '#60A5FA',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.1rem',
-                        fontWeight: 700,
+                        gap: '5px',
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                        color: '#60A5FA',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
                       }}
                     >
-                      {prof.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#fff' }}>{prof.name}</h4>
-                      <span style={{ fontSize: '0.76rem', color: '#60A5FA' }}>{prof.specialty || 'Atendimento'}</span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px', padding: '10px', backgroundColor: 'var(--bg-surface-elevated)', borderRadius: '8px' }}>
-                    <div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Comissão Serviços</div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#34D399' }}>{prof.service_commission_pct}%</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Comissão Produtos</div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#A78BFA' }}>{prof.product_commission_pct}%</div>
-                    </div>
-                  </div>
-
-                  <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                    <strong>Grade Semanal:</strong> Segunda a Sábado (09:00 - 19:00 com pausa)
+                      <Pencil size={13} /> Editar Escala & Dados
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProf(prof.id, prof.name)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        color: '#F87171',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                      title="Excluir profissional"
+                    >
+                      <Trash2 size={13} /> Excluir
+                    </button>
                   </div>
                 </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px', marginTop: '12px' }}>
-                  <button
-                    onClick={() => handleOpenEditProf(prof)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      padding: '5px 10px',
-                      borderRadius: '6px',
-                      backgroundColor: 'rgba(59, 130, 246, 0.12)',
-                      color: '#60A5FA',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <Pencil size={13} /> Editar Escala & Dados
-                  </button>
+              ))
+            ) : (
+              <div
+                style={{
+                  gridColumn: '1 / -1',
+                  padding: '48px 24px',
+                  borderRadius: '14px',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px dashed var(--border-subtle)',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '12px',
+                }}
+              >
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                    color: '#60A5FA',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Users size={26} />
                 </div>
+                <div>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>
+                    Nenhum profissional cadastrado ainda
+                  </h4>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', maxWidth: '420px', margin: '0 auto' }}>
+                    Cadastre os membros da sua equipe para definir os serviços que realizam, comissões individuais e grade semanal de atendimento.
+                  </p>
+                </div>
+                <button
+                  onClick={handleOpenNewProf}
+                  style={{
+                    marginTop: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '9px 18px',
+                    borderRadius: '8px',
+                    backgroundColor: '#2563EB',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Plus size={15} /> Cadastrar Profissional
+                </button>
               </div>
-            ))}
+            )}
           </div>
         </div>
       )}
