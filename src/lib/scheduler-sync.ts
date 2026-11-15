@@ -266,3 +266,142 @@ export async function syncPackageToScheduler(
     console.warn('[SchedulerSync] Aviso ao sincronizar pacote:', err?.message || err);
   }
 }
+
+export async function syncOrganizationToScheduler(
+  orgSlug: string,
+  data: {
+    name?: string;
+    responsibleName?: string;
+    tradeName?: string;
+    corporateName?: string;
+    cnpjCpf?: string;
+    phone?: string;
+    whatsappPhone?: string;
+    businessEmail?: string;
+    instagram?: string;
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    address?: string;
+    logoUrl?: string;
+    bannerUrl?: string;
+    bio?: string;
+    brandColor?: string;
+    secondaryColor?: string;
+    bgColor?: string;
+    openingTime?: string;
+    closingTime?: string;
+    workDays?: string;
+    slotIntervalMinutes?: number;
+    maxAdvanceDays?: number;
+    requirePixDeposit?: boolean;
+    pixModel?: string;
+    pixDepositAmount?: number;
+    pixKeyType?: string;
+    pixKey?: string;
+  }
+) {
+  if (!orgSlug) return;
+  try {
+    const pool = getSchedulerPool();
+    const estRes = await pool.query(
+      'SELECT id FROM estabelecimento WHERE slug = $1 LIMIT 1;',
+      [orgSlug]
+    );
+    const estId = estRes.rows[0]?.id;
+    if (!estId) return;
+
+    // Montar endereco formatado caso nao esteja explicito
+    let fullAddress = data.address || '';
+    if (!fullAddress && (data.street || data.city)) {
+      const parts: string[] = [];
+      if (data.street) parts.push(data.number ? `${data.street}, ${data.number}` : data.street);
+      if (data.complement) parts.push(data.complement);
+      if (data.neighborhood) parts.push(data.neighborhood);
+      if (data.city || data.state) parts.push(data.city && data.state ? `${data.city} - ${data.state}` : (data.city || data.state || ''));
+      if (data.zipCode) parts.push(`CEP ${data.zipCode}`);
+      fullAddress = parts.join(' - ');
+    }
+
+    await pool.query(
+      `UPDATE estabelecimento
+       SET 
+         nome = COALESCE($1, nome),
+         nome_responsavel = COALESCE($2, nome_responsavel),
+         nome_fantasia = COALESCE($3, nome_fantasia),
+         razao_social = COALESCE($4, razao_social),
+         cnpj_cpf = COALESCE($5, cnpj_cpf),
+         telefone = COALESCE($6, telefone),
+         whatsapp = COALESCE($7, whatsapp),
+         email_comercial = COALESCE($8, email_comercial),
+         instagram = COALESCE($9, instagram),
+         logradouro = COALESCE($10, logradouro),
+         numero = COALESCE($11, numero),
+         complemento = COALESCE($12, complemento),
+         bairro = COALESCE($13, bairro),
+         cidade = COALESCE($14, cidade),
+         estado = COALESCE($15, estado),
+         cep = COALESCE($16, cep),
+         endereco_estabelecimento = COALESCE($17, endereco_estabelecimento),
+         logotipo = COALESCE($18, logotipo),
+         foto_capa = COALESCE($19, foto_capa),
+         bio = COALESCE($20, bio),
+         cor_primaria = COALESCE($21, cor_primaria),
+         cor_secundaria = COALESCE($22, cor_secundaria),
+         cor_fundo = COALESCE($23, cor_fundo),
+         horario_abertura = COALESCE($24, horario_abertura),
+         horario_fechamento = COALESCE($25, horario_fechamento),
+         dias_funcionamento = COALESCE($26, dias_funcionamento),
+         intervalo_slot_minutos = COALESCE($27, intervalo_slot_minutos),
+         dias_antecedencia_agendamento = COALESCE($28, dias_antecedencia_agendamento),
+         pagamento_online_ativo = COALESCE($29, pagamento_online_ativo),
+         pagamento_tipo = COALESCE($30, pagamento_tipo),
+         pagamento_sinal_valor = COALESCE($31, pagamento_sinal_valor),
+         tipo_chave_pix = COALESCE($32, tipo_chave_pix),
+         chave_pix_estabelecimento = COALESCE($33, chave_pix_estabelecimento)
+       WHERE id = $34;`,
+      [
+        data.name ? data.name.trim() : null,
+        data.responsibleName ? data.responsibleName.trim() : null,
+        data.tradeName ? data.tradeName.trim() : null,
+        data.corporateName ? data.corporateName.trim() : null,
+        data.cnpjCpf ? data.cnpjCpf.trim() : null,
+        data.phone ? data.phone.trim() : null,
+        data.whatsappPhone ? data.whatsappPhone.trim() : null,
+        data.businessEmail ? data.businessEmail.trim() : null,
+        data.instagram ? data.instagram.trim() : null,
+        data.street ? data.street.trim() : null,
+        data.number ? data.number.trim() : null,
+        data.complement ? data.complement.trim() : null,
+        data.neighborhood ? data.neighborhood.trim() : null,
+        data.city ? data.city.trim() : null,
+        data.state ? data.state.trim() : null,
+        data.zipCode ? data.zipCode.trim() : null,
+        fullAddress ? fullAddress.trim() : null,
+        data.logoUrl ? data.logoUrl.trim() : null,
+        data.bannerUrl ? data.bannerUrl.trim() : null,
+        data.bio ? data.bio.trim() : null,
+        data.brandColor ? data.brandColor.trim() : null,
+        data.secondaryColor ? data.secondaryColor.trim() : null,
+        data.bgColor ? data.bgColor.trim() : null,
+        data.openingTime ? data.openingTime.trim() : null,
+        data.closingTime ? data.closingTime.trim() : null,
+        data.workDays ? data.workDays.trim() : null,
+        data.slotIntervalMinutes !== undefined ? data.slotIntervalMinutes : null,
+        data.maxAdvanceDays !== undefined ? data.maxAdvanceDays : null,
+        data.requirePixDeposit !== undefined ? data.requirePixDeposit : null,
+        data.pixModel ? data.pixModel.trim() : null,
+        data.pixDepositAmount !== undefined ? data.pixDepositAmount : null,
+        data.pixKeyType ? data.pixKeyType.trim() : null,
+        data.pixKey ? data.pixKey.trim() : null,
+        estId,
+      ]
+    );
+  } catch (err: any) {
+    console.warn('[SchedulerSync] Aviso ao sincronizar organizacao:', err?.message || err);
+  }
+}

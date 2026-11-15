@@ -32,11 +32,14 @@ export async function GET(req: NextRequest) {
     // 1. Configurações da organização
     const orgRes = await query(
       `SELECT 
-         id, name, slug, brand_color, logo_url, banner_url, bio,
-         address, city, state, zip_code,
+         id, name, slug, brand_color, secondary_color, bg_color, logo_url, banner_url, bio,
+         responsible_name, trade_name, corporate_name, cnpj_cpf,
+         street, number, complement, neighborhood, address, city, state, zip_code,
+         phone, business_email, instagram, whatsapp_phone,
+         opening_time, closing_time, work_days,
          slot_interval_minutes, max_advance_days, min_cancel_hours,
-         require_pix_deposit, pix_deposit_amount, pix_deposit_percent,
-         asaas_wallet_id
+         require_pix_deposit, pix_model, pix_deposit_amount, pix_deposit_percent,
+         pix_key_type, pix_key, asaas_wallet_id
        FROM organizations
        WHERE id = $1 LIMIT 1;`,
       [orgId]

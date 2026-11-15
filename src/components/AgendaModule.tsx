@@ -32,6 +32,12 @@ import {
   X,
   CreditCard,
   FileCheck,
+  Building2,
+  MapPin,
+  Palette,
+  Download,
+  Globe,
+  Mail,
 } from 'lucide-react';
 import { Appointment, ServiceItem } from '@/types';
 
@@ -206,7 +212,83 @@ export default function AgendaModule({
     }
   }, [currentOrg?.id]);
 
-  // Salvar Configurações da Página Pública & Sinal Pix
+  const [cepLoading, setCepLoading] = useState(false);
+
+  // Paletas de Cores Recomendadas (Presets)
+  const COLOR_PRESETS = [
+    {
+      id: 'classico',
+      name: 'Agillex Clássico',
+      desc: 'Azul-marinho estrutural, champagne dourado e fundo marfim.',
+      primary: '#14213D',
+      secondary: '#E5C78B',
+      bg: '#F6F1E8',
+    },
+    {
+      id: 'elegance',
+      name: 'Elegance Gold',
+      desc: 'Preto nobre acetinado, ouro real e fundo platina limpo.',
+      primary: '#0F172A',
+      secondary: '#D4AF37',
+      bg: '#F8FAFC',
+    },
+    {
+      id: 'modern_navy',
+      name: 'Modern Blue',
+      desc: 'Azul royal tecnológico, turquesa e fundo suave.',
+      primary: '#1E40AF',
+      secondary: '#38BDF8',
+      bg: '#F0F9FF',
+    },
+    {
+      id: 'emerald',
+      name: 'Esmeralda & Saúde',
+      desc: 'Verde esmeralda profundo, menta fresca e fundo acolhedor.',
+      primary: '#064E3B',
+      secondary: '#34D399',
+      bg: '#F0FDF4',
+    },
+    {
+      id: 'rose_beauty',
+      name: 'Beauty Rosé',
+      desc: 'Vinho rosé sofisticado, ouro rosé e fundo bege suave.',
+      primary: '#881337',
+      secondary: '#FB7185',
+      bg: '#FFF1F2',
+    },
+  ];
+
+  // Busca Automática de CEP (ViaCEP)
+  const handleSearchCep = async () => {
+    const cleanCep = (settings.zip_code || '').replace(/\D/g, '');
+    if (cleanCep.length !== 8) {
+      alert('Por favor, informe um CEP válido com 8 dígitos.');
+      return;
+    }
+    try {
+      setCepLoading(true);
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        setSettings((prev: any) => ({
+          ...prev,
+          street: data.logradouro || prev.street || '',
+          neighborhood: data.bairro || prev.neighborhood || '',
+          city: data.localidade || prev.city || '',
+          state: data.uf || prev.state || '',
+        }));
+      } else {
+        alert('CEP não encontrado na base dos Correios.');
+      }
+    } catch (e) {
+      console.warn('Erro ao consultar CEP:', e);
+      alert('Não foi possível consultar o CEP no momento.');
+    } finally {
+      setCepLoading(false);
+    }
+  };
+
+  // Salvar Configurações da Empresa & Agenda
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -216,20 +298,41 @@ export default function AgendaModule({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           organizationId: currentOrg.id,
-          brandColor: settings.brand_color,
-          logoUrl: settings.logo_url,
-          bannerUrl: settings.banner_url,
-          bio: settings.bio,
+          name: settings.name,
+          responsibleName: settings.responsible_name,
+          tradeName: settings.trade_name,
+          corporateName: settings.corporate_name,
+          cnpjCpf: settings.cnpj_cpf,
+          street: settings.street,
+          number: settings.number,
+          complement: settings.complement,
+          neighborhood: settings.neighborhood,
           address: settings.address,
           city: settings.city,
           state: settings.state,
           zipCode: settings.zip_code,
+          phone: settings.phone,
+          whatsappPhone: settings.whatsapp_phone,
+          businessEmail: settings.business_email,
+          instagram: settings.instagram,
+          brandColor: settings.brand_color,
+          secondaryColor: settings.secondary_color,
+          bgColor: settings.bg_color,
+          logoUrl: settings.logo_url,
+          bannerUrl: settings.banner_url,
+          bio: settings.bio,
+          openingTime: settings.opening_time,
+          closingTime: settings.closing_time,
+          workDays: settings.work_days,
           slotIntervalMinutes: settings.slot_interval_minutes,
           maxAdvanceDays: settings.max_advance_days,
           minCancelHours: settings.min_cancel_hours,
           requirePixDeposit: settings.require_pix_deposit,
+          pixModel: settings.pix_model,
           pixDepositAmount: settings.pix_deposit_amount,
           pixDepositPercent: settings.pix_deposit_percent,
+          pixKeyType: settings.pix_key_type,
+          pixKey: settings.pix_key,
         }),
       });
       const data = await res.json();
@@ -950,7 +1053,7 @@ export default function AgendaModule({
             whiteSpace: 'nowrap',
           }}
         >
-          <Settings size={16} /> Página Pública & Sinal Pix
+          <Building2 size={16} /> Meu Negócio & Configurações
         </button>
       </div>
 
@@ -2017,91 +2120,493 @@ export default function AgendaModule({
       )}
 
       {/* ======================================================== */}
-      {/* SUB-ABA 6: PÁGINA PÚBLICA & SINAL PIX                     */}
+      {/* SUB-ABA 6: MEU NEGÓCIO & CONFIGURAÇÕES DA AGENDA         */}
       {/* ======================================================== */}
       {subTab === 'settings' && (
         <form onSubmit={handleSaveSettings} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-          {/* Card 1: Canal de Divulgação Online */}
+          {/* Header da Seção */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Building2 size={22} color="#60A5FA" /> Meu Negócio & Configurações da Agenda
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', marginTop: '3px' }}>
+                Gerencie os dados cadastrais da sua empresa, endereço, canais de contato, identidade visual, horários e pagamentos online.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {settingsSavedToast && (
+                <span style={{ fontSize: '0.82rem', color: '#34D399', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <CheckCheck size={16} /> Salvo com sucesso!
+                </span>
+              )}
+              <button
+                type="submit"
+                disabled={settingsSaving}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 22px',
+                  borderRadius: '8px',
+                  backgroundColor: '#2563EB',
+                  color: '#fff',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 10px rgba(37, 99, 235, 0.35)',
+                }}
+              >
+                {settingsSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                {settingsSaving ? 'Salvando...' : 'Salvar Alterações'}
+              </button>
+            </div>
+          </div>
+
+          {/* Card 1: Canal de Divulgação Online & QR Code */}
           <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)', padding: '22px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>
-              Divulgação da Página Pública de Agendamento
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Globe size={18} color="#60A5FA" /> Divulgação da Vitrine Pública 24/7
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '16px' }}>
-              Este é o endereço direto e limpo que seus clientes usam para agendar pelo celular.
+              Compartilhe seu link exclusivo com clientes no WhatsApp, Instagram ou imprima o QR Code para a recepção do seu espaço.
             </p>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', backgroundColor: 'var(--bg-surface-elevated)', padding: '14px 18px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ flex: 1, minWidth: '240px' }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>URL Pública de Autoatendimento 24/7</div>
-                <div style={{ fontSize: '0.96rem', fontWeight: 700, color: '#38BDF8', wordBreak: 'break-all' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', alignItems: 'center' }}>
+              <div style={{ backgroundColor: 'var(--bg-surface-elevated)', padding: '16px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Endereço Web Exclusivo</div>
+                <div style={{ fontSize: '0.96rem', fontWeight: 700, color: '#38BDF8', wordBreak: 'break-all', marginBottom: '12px' }}>
                   {publicUrl}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => window.open(publicUrl, '_blank')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: '#2563EB',
+                      color: '#fff',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: 'none',
+                    }}
+                  >
+                    <ExternalLink size={14} /> Abrir Página
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(publicUrl);
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      color: copiedLink ? '#34D399' : '#fff',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-hover)',
+                    }}
+                  >
+                    {copiedLink ? <CheckCheck size={14} color="#34D399" /> : <Copy size={14} />}
+                    {copiedLink ? 'Copiado!' : 'Copiar Link'}
+                  </button>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => window.open(publicUrl, '_blank')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 14px',
-                    borderRadius: '8px',
-                    backgroundColor: '#2563EB',
-                    color: '#fff',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    border: 'none',
-                  }}
-                >
-                  <ExternalLink size={14} /> Abrir Página
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(publicUrl);
-                    setCopiedLink(true);
-                    setTimeout(() => setCopiedLink(false), 2000);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 14px',
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                    color: copiedLink ? '#34D399' : '#fff',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    border: '1px solid var(--border-hover)',
-                  }}
-                >
-                  {copiedLink ? <CheckCheck size={14} color="#34D399" /> : <Copy size={14} />}
-                  {copiedLink ? 'Copiado!' : 'Copiar'}
-                </button>
+              <div style={{ backgroundColor: 'var(--bg-surface-elevated)', padding: '14px 18px', borderRadius: '10px', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(publicUrl)}&margin=4`}
+                  alt="QR Code da Agenda"
+                  style={{ width: '84px', height: '84px', borderRadius: '8px', backgroundColor: '#fff', padding: '4px' }}
+                />
+                <div>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#fff' }}>QR Code do Balcão</div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                    Ideal para adesivos, flyers ou display na recepção.
+                  </div>
+                  <a
+                    href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(publicUrl)}&margin=10`}
+                    download={`qrcode-${currentOrg?.slug || 'agenda'}.png`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                      color: '#60A5FA',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <Download size={13} /> Baixar QR Code (PNG)
+                  </a>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Card 2: Identidade Visual & Apresentação */}
+          {/* Card 2: Identificação do Estabelecimento & Dados Cadastrais */}
           <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)', padding: '22px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>
-              Identidade Visual & Cores da Página Pública
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Building2 size={18} color="#60A5FA" /> Identificação & Dados do Negócio
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '18px' }}>
-              Personalize como seus clientes veem a página de agendamento online no celular.
+              Informações cadastrais e contratuais da sua empresa ou consultório.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Nome do Estabelecimento *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Salão Bonitão"
+                  value={settings.name || ''}
+                  onChange={(e) => setSettings({ ...settings, name: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Nome do Responsável / Proprietário *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Carlos Silva"
+                  value={settings.responsible_name || ''}
+                  onChange={(e) => setSettings({ ...settings, responsible_name: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Nome Fantasia (Comercial / Fachada)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Bonitão Barbearia & Spa"
+                  value={settings.trade_name || ''}
+                  onChange={(e) => setSettings({ ...settings, trade_name: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Razão Social (Registro Oficial)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Silva & Santos Serviços de Beleza LTDA"
+                  value={settings.corporate_name || ''}
+                  onChange={(e) => setSettings({ ...settings, corporate_name: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  CPF ou CNPJ
+                </label>
+                <input
+                  type="text"
+                  placeholder="00.000.000/0000-00 ou 000.000.000-00"
+                  value={settings.cnpj_cpf || ''}
+                  onChange={(e) => setSettings({ ...settings, cnpj_cpf: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Categoria do Estabelecimento
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Salão de Beleza, Barbearia, Clínica, Pet Shop"
+                  value={settings.category || ''}
+                  onChange={(e) => setSettings({ ...settings, category: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Endereço & Localização do Estabelecimento */}
+          <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)', padding: '22px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MapPin size={18} color="#60A5FA" /> Endereço & Localização Física
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '18px' }}>
+              Endereço exibido na página de agendamento e nas mensagens de confirmação enviadas aos clientes.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  CEP
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    placeholder="00000-000"
+                    value={settings.zip_code || ''}
+                    onChange={(e) => setSettings({ ...settings, zip_code: e.target.value })}
+                    style={{ flex: 1, padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSearchCep}
+                    disabled={cepLoading}
+                    style={{
+                      padding: '9px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(59, 130, 246, 0.18)',
+                      color: '#60A5FA',
+                      border: '1px solid rgba(59, 130, 246, 0.35)',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {cepLoading ? 'Buscando...' : 'Buscar CEP'}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Logradouro (Rua, Avenida, Praça)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Rua das Flores"
+                  value={settings.street || ''}
+                  onChange={(e) => setSettings({ ...settings, street: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Número
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: 123"
+                  value={settings.number || ''}
+                  onChange={(e) => setSettings({ ...settings, number: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Complemento
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Sala 4, Bloco B"
+                  value={settings.complement || ''}
+                  onChange={(e) => setSettings({ ...settings, complement: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Bairro
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Centro"
+                  value={settings.neighborhood || ''}
+                  onChange={(e) => setSettings({ ...settings, neighborhood: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Cidade
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: São Paulo"
+                  value={settings.city || ''}
+                  onChange={(e) => setSettings({ ...settings, city: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Estado (UF)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: SP"
+                  maxLength={2}
+                  value={settings.state || ''}
+                  onChange={(e) => setSettings({ ...settings, state: e.target.value.toUpperCase() })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Canais de Contato & Redes Sociais */}
+          <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)', padding: '22px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Phone size={18} color="#60A5FA" /> Canais de Contato & Redes Sociais
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '18px' }}>
+              Facilite a comunicação direta dos clientes com a sua recepção.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  WhatsApp Oficial de Atendimento *
+                </label>
+                <input
+                  type="text"
+                  placeholder="(11) 98765-4321"
+                  value={settings.whatsapp_phone || ''}
+                  onChange={(e) => setSettings({ ...settings, whatsapp_phone: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '3px', display: 'block' }}>
+                  Acionado no botão &ldquo;Falar no WhatsApp&rdquo; da vitrine.
+                </span>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Telefone Fixo / Comercial
+                </label>
+                <input
+                  type="text"
+                  placeholder="(11) 3456-7890"
+                  value={settings.phone || ''}
+                  onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  E-mail Comercial
+                </label>
+                <input
+                  type="email"
+                  placeholder="contato@seunegocio.com.br"
+                  value={settings.business_email || ''}
+                  onChange={(e) => setSettings({ ...settings, business_email: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
+                  Instagram Oficial
+                </label>
+                <input
+                  type="text"
+                  placeholder="@seunegocio"
+                  value={settings.instagram || ''}
+                  onChange={(e) => setSettings({ ...settings, instagram: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 5: Identidade Visual, Paleta de Cores & Vitrine Pública */}
+          <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)', padding: '22px' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Palette size={18} color="#60A5FA" /> Identidade Visual, Cores & Apresentação da Vitrine
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '18px' }}>
+              Personalize o branding e as cores aplicadas tanto no painel quanto na vitrine do seu cliente.
+            </p>
+
+            {/* Temas Prontos Recomendados */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '0.82rem', color: '#fff', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
+                Temas Prontos Recomendados (1 Clique)
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                {COLOR_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      setSettings({
+                        ...settings,
+                        brand_color: preset.primary,
+                        secondary_color: preset.secondary,
+                        bg_color: preset.bg,
+                      });
+                    }}
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-surface-elevated)',
+                      border: settings.brand_color?.toUpperCase() === preset.primary.toUpperCase() ? '2px solid #3B82F6' : '1px solid var(--border-subtle)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff' }}>{preset.name}</span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: preset.primary, display: 'inline-block' }} />
+                        <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: preset.secondary, display: 'inline-block' }} />
+                        <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: preset.bg, display: 'inline-block', border: '1px solid #666' }} />
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: '1.2' }}>{preset.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Ajuste Fino de Cores */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '18px' }}>
               <div>
                 <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
-                  Cor Primária da Marca (Botões e Destaques)
+                  Cor Primária (Botões e Títulos)
                 </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="color"
                     value={settings.brand_color || '#2563EB'}
@@ -2119,75 +2624,198 @@ export default function AgendaModule({
 
               <div>
                 <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                  Cor Secundária (Preços e Destaques)
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="color"
+                    value={settings.secondary_color || '#E5C78B'}
+                    onChange={(e) => setSettings({ ...settings, secondary_color: e.target.value })}
+                    style={{ width: '42px', height: '38px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'transparent' }}
+                  />
+                  <input
+                    type="text"
+                    value={settings.secondary_color || '#E5C78B'}
+                    onChange={(e) => setSettings({ ...settings, secondary_color: e.target.value })}
+                    style={{ flex: 1, padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                  Cor de Fundo da Vitrine
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="color"
+                    value={settings.bg_color || '#F6F1E8'}
+                    onChange={(e) => setSettings({ ...settings, bg_color: e.target.value })}
+                    style={{ width: '42px', height: '38px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: 'transparent' }}
+                  />
+                  <input
+                    type="text"
+                    value={settings.bg_color || '#F6F1E8'}
+                    onChange={(e) => setSettings({ ...settings, bg_color: e.target.value })}
+                    style={{ flex: 1, padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Imagens & Biografia */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px', marginBottom: '18px' }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
                   URL do Logotipo da Empresa
                 </label>
                 <input
                   type="text"
-                  placeholder="https://suaempresa.com.br/logo.png"
+                  placeholder="https://exemplo.com/logo.png"
                   value={settings.logo_url || ''}
                   onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
                   style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
                 />
               </div>
 
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                  URL da Foto de Capa / Banner da Vitrine
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://exemplo.com/banner.jpg"
+                  value={settings.banner_url || ''}
+                  onChange={(e) => setSettings({ ...settings, banner_url: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
-                  Biografia / Apresentação da Empresa (Visível no Topo da Página)
+                  Biografia / Apresentação Curta (Exibida no topo da página de agendamento)
                 </label>
                 <textarea
-                  rows={3}
-                  placeholder="Ex: Especialistas em cuidados pessoais e bem-estar com atendimento personalizado."
+                  rows={2}
+                  placeholder="Ex: Especialistas em atendimento de excelência com agendamento online em poucos segundos."
                   value={settings.bio || ''}
                   onChange={(e) => setSettings({ ...settings, bio: e.target.value })}
                   style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem', resize: 'vertical' }}
                 />
               </div>
+            </div>
 
-              <div>
-                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
-                  Endereço do Local de Atendimento
-                </label>
-                <input
-                  type="text"
-                  placeholder="Rua Exemplo, 123"
-                  value={settings.address || ''}
-                  onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
-                />
+            {/* Demonstração em Tempo Real (Live Preview) */}
+            <div style={{ backgroundColor: 'var(--bg-surface-elevated)', borderRadius: '10px', padding: '16px', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircle2 size={16} color="#34D399" /> Demonstração em Tempo Real da Vitrine do Cliente
               </div>
+              <div
+                style={{
+                  borderRadius: '10px',
+                  padding: '16px',
+                  backgroundColor: settings.bg_color || '#F6F1E8',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  maxWidth: '440px',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <div
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      backgroundColor: settings.brand_color || '#14213D',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '1.1rem',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {settings.logo_url ? (
+                      <img src={settings.logo_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      (settings.name || 'A').substring(0, 1).toUpperCase()
+                    )}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 700, color: settings.brand_color || '#14213D' }}>
+                      {settings.name || 'Seu Estabelecimento'}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                      {settings.bio || 'Especialistas em atendimento online.'}
+                    </div>
+                  </div>
+                </div>
 
-              <div>
-                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
-                  Cidade / Estado
-                </label>
-                <input
-                  type="text"
-                  placeholder="São Paulo - SP"
-                  value={settings.city ? `${settings.city} - ${settings.state || ''}` : ''}
-                  onChange={(e) => {
-                    const parts = e.target.value.split('-');
-                    setSettings({
-                      ...settings,
-                      city: parts[0]?.trim() || '',
-                      state: parts[1]?.trim() || '',
-                    });
+                <div style={{ backgroundColor: '#fff', padding: '10px 12px', borderRadius: '8px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: settings.brand_color || '#14213D' }}>Corte & Estilo Completo</div>
+                    <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>30 min</div>
+                  </div>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 700, color: settings.secondary_color || '#E5C78B' }}>
+                    R$ 50,00
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  style={{
+                    width: '100%',
+                    padding: '9px',
+                    borderRadius: '8px',
+                    backgroundColor: settings.brand_color || '#14213D',
+                    color: '#fff',
+                    border: 'none',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'default',
                   }}
-                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
-                />
+                >
+                  Avançar para Escolher Horário →
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Card 3: Regras de Agendamento */}
+          {/* Card 6: Horários de Funcionamento & Regras da Agenda */}
           <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)', padding: '22px' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>
-              Regras & Intervalos de Agendamento
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Clock size={18} color="#60A5FA" /> Horários de Funcionamento & Regras da Agenda
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '18px' }}>
-              Defina a duração dos slots de horário e com que antecedência os clientes podem agendar.
+              Defina o expediente geral, dias abertos para reserva e a grade de slots de atendimento.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '18px' }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                  Horário de Abertura
+                </label>
+                <input
+                  type="time"
+                  value={settings.opening_time || '09:00'}
+                  onChange={(e) => setSettings({ ...settings, opening_time: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                  Horário de Fechamento
+                </label>
+                <input
+                  type="time"
+                  value={settings.closing_time || '19:00'}
+                  onChange={(e) => setSettings({ ...settings, closing_time: e.target.value })}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                />
+              </div>
+
               <div>
                 <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
                   Intervalo entre Horários (Slots da Agenda)
@@ -2214,7 +2842,7 @@ export default function AgendaModule({
                   style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
                 >
                   <option value={7}>Até 7 dias no futuro</option>
-                  <option value={15}>Até 15 dias no futuro</option>
+                  <option value={14}>Até 14 dias no futuro</option>
                   <option value={30}>Até 30 dias no futuro (Recomendado)</option>
                   <option value={60}>Até 60 dias no futuro</option>
                 </select>
@@ -2236,9 +2864,61 @@ export default function AgendaModule({
                 </select>
               </div>
             </div>
+
+            {/* Dias de Funcionamento */}
+            <div>
+              <label style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
+                Dias de Funcionamento da Empresa
+              </label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {[
+                  { id: '0', label: 'Domingo' },
+                  { id: '1', label: 'Segunda-feira' },
+                  { id: '2', label: 'Terça-feira' },
+                  { id: '3', label: 'Quarta-feira' },
+                  { id: '4', label: 'Quinta-feira' },
+                  { id: '5', label: 'Sexta-feira' },
+                  { id: '6', label: 'Sábado' },
+                ].map((d) => {
+                  const currentDays = (settings.work_days || '1,2,3,4,5,6').split(',');
+                  const isChecked = currentDays.includes(d.id);
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => {
+                        let updated: string[];
+                        if (isChecked) {
+                          updated = currentDays.filter((x: string) => x !== d.id);
+                        } else {
+                          updated = [...currentDays, d.id].sort();
+                        }
+                        setSettings({ ...settings, work_days: updated.join(',') });
+                      }}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        backgroundColor: isChecked ? 'rgba(59, 130, 246, 0.2)' : 'var(--bg-surface-elevated)',
+                        color: isChecked ? '#60A5FA' : 'var(--text-muted)',
+                        border: isChecked ? '1px solid #3B82F6' : '1px solid var(--border-subtle)',
+                        fontSize: '0.8rem',
+                        fontWeight: isChecked ? 700 : 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isChecked ? '#3B82F6' : '#64748B' }} />
+                      {d.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          {/* Card 4: Sinal Pix Anti No-Show (Agillex Pay) */}
+          {/* Card 7: Agillex Pay — Pagamentos Online & Sinal Anti No-Show */}
           <div
             style={{
               backgroundColor: 'var(--bg-surface)',
@@ -2259,10 +2939,10 @@ export default function AgendaModule({
                   </span>
                 </div>
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff' }}>
-                  Sinal / Adiantamento Pix Anti No-Show
+                  Pagamentos Online & Sinal Pix Anti No-Show
                 </h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', maxWidth: '650px' }}>
-                  Exija um adiantamento no agendamento para travar a vaga e reduzir no-shows em até 85%. O valor é descontado no atendimento presencial.
+                  Cobre um adiantamento no agendamento para travar a vaga e reduzir faltas em até 85%. O valor é acertado com conciliação automática via Pix.
                 </p>
               </div>
 
@@ -2284,29 +2964,80 @@ export default function AgendaModule({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <div>
                   <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
-                    Valor Fixo do Sinal (R$)
+                    Modelo de Cobrança
+                  </label>
+                  <select
+                    value={settings.pix_model || 'sinal'}
+                    onChange={(e) => setSettings({ ...settings, pix_model: e.target.value })}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                  >
+                    <option value="sinal">Sinal de Confirmação (Valor Fixo para travar a vaga)</option>
+                    <option value="integral">Valor Integral (100% dos serviços agendados)</option>
+                  </select>
+                </div>
+
+                {settings.pix_model !== 'integral' && (
+                  <div>
+                    <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                      Valor Fixo do Sinal (R$)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.50"
+                      min="5"
+                      placeholder="Ex: 30.00"
+                      value={settings.pix_deposit_amount || ''}
+                      onChange={(e) => setSettings({ ...settings, pix_deposit_amount: parseFloat(e.target.value) || 0 })}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                    />
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '3px', display: 'block' }}>
+                      Exemplo: R$ 30,00 cobrados via Pix no agendamento.
+                    </span>
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                    Tipo da Chave Pix
+                  </label>
+                  <select
+                    value={settings.pix_key_type || 'cpf_cnpj'}
+                    onChange={(e) => setSettings({ ...settings, pix_key_type: e.target.value })}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
+                  >
+                    <option value="cpf_cnpj">CPF / CNPJ</option>
+                    <option value="email">E-mail</option>
+                    <option value="telefone">Celular / Telefone</option>
+                    <option value="aleatoria">Chave Aleatória (EVP)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '6px' }}>
+                    Sua Chave Pix para Recebimento
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Ex: 30.00"
-                    value={settings.pix_deposit_amount || ''}
-                    onChange={(e) => setSettings({ ...settings, pix_deposit_amount: parseFloat(e.target.value) || 0 })}
+                    type="text"
+                    placeholder="Digite sua chave Pix"
+                    value={settings.pix_key || ''}
+                    onChange={(e) => setSettings({ ...settings, pix_key: e.target.value })}
                     style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
                   />
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
-                    Cobrado imediatamente via Pix Copia e Cola no agendamento.
-                  </span>
+                </div>
+
+                <div style={{ gridColumn: '1 / -1', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '8px', padding: '12px 14px', fontSize: '0.82rem', color: '#6EE7B7' }}>
+                  <strong>Taxa de Intermediação Agillex Pay:</strong> R$ 1,99 por agendamento pago com sucesso.<br />
+                  Você recebe o valor líquido diretamente via Pix instantâneo, sem nenhuma mensalidade ou custo fixo.
                 </div>
               </div>
             )}
           </div>
 
-          {/* Botão de Salvar Configurações */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
+          {/* Botão Inferior de Salvar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', paddingBottom: '30px' }}>
             {settingsSavedToast && (
-              <span style={{ fontSize: '0.82rem', color: '#34D399', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <CheckCheck size={16} /> Configurações salvas com sucesso!
+              <span style={{ fontSize: '0.84rem', color: '#34D399', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <CheckCheck size={18} /> Configurações salvas e sincronizadas com sucesso!
               </span>
             )}
             <button
@@ -2316,15 +3047,15 @@ export default function AgendaModule({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '11px 24px',
+                padding: '12px 28px',
                 borderRadius: '8px',
                 backgroundColor: '#2563EB',
                 color: '#fff',
-                fontSize: '0.86rem',
+                fontSize: '0.9rem',
                 fontWeight: 700,
                 border: 'none',
                 cursor: 'pointer',
-                boxShadow: '0 2px 10px rgba(37, 99, 235, 0.35)',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
               }}
             >
               {settingsSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
