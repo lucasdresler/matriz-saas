@@ -31,6 +31,7 @@ interface CheckoutSuccessData {
   plan: string;
   intentId?: string;
   trialEndDate?: string;
+  tempPassword?: string;
   domain?: string;
   provisioning?: {
     domain: string;
@@ -474,6 +475,41 @@ function CheckoutContent() {
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Box de Credenciais do Teste Gratuito */}
+              {isTrial && successData.tempPassword && (
+                <div
+                  style={{
+                    background: 'rgba(0, 245, 212, 0.08)',
+                    border: '1px solid rgba(0, 245, 212, 0.35)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '16px 20px',
+                    maxWidth: '420px',
+                    margin: '0 auto 20px',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: '#00F5D4', fontWeight: 700, fontSize: '15px' }}>
+                    <Lock size={18} />
+                    <span>Seus Dados de Acesso Provisórios</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '6px' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>E-mail:</span>
+                      <strong style={{ color: '#fff' }}>{formData.email}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', paddingBottom: '6px' }}>
+                      <span style={{ color: 'var(--color-text-muted)' }}>Senha Provisória:</span>
+                      <code style={{ background: 'rgba(0, 245, 212, 0.15)', color: '#00F5D4', padding: '2px 8px', borderRadius: '4px', fontWeight: 800, fontSize: '14px', letterSpacing: '0.04em' }}>
+                        {successData.tempPassword}
+                      </code>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '10px', marginBottom: 0, lineHeight: 1.4 }}>
+                    🔒 Altere sua senha após o primeiro acesso. Enviamos também esta confirmação para seu WhatsApp.
+                  </p>
                 </div>
               )}
 

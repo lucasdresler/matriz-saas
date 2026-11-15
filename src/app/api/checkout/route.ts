@@ -307,7 +307,8 @@ export async function POST(request: Request) {
         plan: plan.name,
         companyName: targetCompanyName,
         trialEndDate: trialEndDate.toISOString(),
-        message: 'Teste gratuito ativado! Enviamos a senha provisória pelo WhatsApp informado.',
+        tempPassword,
+        message: 'Teste gratuito ativado! Enviamos sua senha provisória pelo WhatsApp informado.',
       });
     }
 

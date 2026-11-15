@@ -4,7 +4,7 @@ export const SESSION_COOKIE_NAME = 'agillex_session';
 const AUTH_SECRET = process.env.AUTH_SECRET || 'AllLogicAgillexHubSecretKey2026MasterKey!';
 
 export function generateTemporaryPassword(): string {
-  return crypto.randomBytes(24).toString('base64url');
+  return process.env.DEFAULT_TRIAL_PASSWORD || 'mudar123';
 }
 
 /**
