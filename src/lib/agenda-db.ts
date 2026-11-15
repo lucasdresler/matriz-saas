@@ -19,7 +19,7 @@ export async function ensureAgendaTables() {
         ADD COLUMN IF NOT EXISTS trade_name VARCHAR(255),
         ADD COLUMN IF NOT EXISTS corporate_name VARCHAR(255),
         ADD COLUMN IF NOT EXISTS cnpj_cpf VARCHAR(50),
-        ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'Salão de Beleza',
+        ADD COLUMN IF NOT EXISTS business_segment VARCHAR(100),
         ADD COLUMN IF NOT EXISTS street VARCHAR(255),
         ADD COLUMN IF NOT EXISTS number VARCHAR(50),
         ADD COLUMN IF NOT EXISTS complement VARCHAR(100),

@@ -2,27 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/auth';
 
-function getModules(category: string | null, slug: string) {
+function getModules(category: string | null, slug: string, plan?: string | null) {
   if (slug === 'alllogic') {
     return { agenda: true, atendimento: true, crm: true, cobranca: true, reputacao: true, ged: true };
   }
 
-  switch (category) {
-    case 'combo':
-      return { agenda: true, atendimento: true, crm: true, cobranca: true, reputacao: false, ged: false };
-    case 'agenda':
-      return { agenda: true, atendimento: false, crm: false, cobranca: false, reputacao: false, ged: false };
-    case 'atendimento':
-      return { agenda: false, atendimento: true, crm: false, cobranca: false, reputacao: false, ged: false };
-    case 'cobranca':
-      return { agenda: false, atendimento: false, crm: false, cobranca: true, reputacao: false, ged: false };
-    case 'reputacao':
-      return { agenda: false, atendimento: false, crm: false, cobranca: false, reputacao: true, ged: false };
-    case 'ged':
-      return { agenda: false, atendimento: false, crm: false, cobranca: false, reputacao: false, ged: true };
-    default:
-      return { agenda: false, atendimento: false, crm: false, cobranca: false, reputacao: false, ged: false };
-  }
+  const p = (plan || '').toLowerCase();
+  const c = (category || '').toLowerCase();
+
+  const isCombo = c === 'combo' || p.includes('combo') || p.includes('pro') || p.includes('enterprise');
+  const isAgenda = isCombo || c === 'agenda' || p.includes('agenda') || slug === 'salao-bonitao';
+  const isAtendimento = isCombo || c === 'atendimento' || p.includes('atende') || p.includes('whatsapp');
+  const isCrm = isAgenda || isAtendimento || isCombo || c === 'crm';
+  const isCobranca = isCombo || c === 'cobranca' || p.includes('cobranca') || p.includes('cobrança') || p.includes('asaas');
+  const isReputacao = isCombo || c === 'reputacao' || p.includes('reputacao') || p.includes('reputação');
+  const isGed = isCombo || c === 'ged' || p.includes('ged') || p.includes('documento');
+
+  return {
+    agenda: isAgenda,
+    atendimento: isAtendimento,
+    crm: isCrm,
+    cobranca: isCobranca,
+    reputacao: isReputacao,
+    ged: isGed,
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -68,7 +71,7 @@ export async function GET(request: NextRequest) {
       whatsappStatus: row.whatsapp_status || 'disconnected',
       aiActive: Boolean(row.ai_active),
       totalLeads: Number(row.total_leads || 0),
-      modules: getModules(row.category, row.slug),
+      modules: getModules(row.category, row.slug, row.plan),
     }));
 
     return NextResponse.json({ success: true, organizations });

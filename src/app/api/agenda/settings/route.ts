@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
            pix_deposit_percent = $33,
            pix_key_type = $34,
            pix_key = $35,
-           category = $36
+           business_segment = $36
        WHERE id = $37;`,
       [
         cleanName || null,
