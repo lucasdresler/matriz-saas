@@ -162,6 +162,16 @@ export default function AgendaModule({
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [rescheduleSaving, setRescheduleSaving] = useState(false);
 
+  // Modal e Edição de Clientes da Agenda
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<any | null>(null);
+  const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
+  const [clientEmail, setClientEmail] = useState('');
+  const [clientSaving, setClientSaving] = useState(false);
+  const [clientDeleting, setClientDeleting] = useState(false);
+  const [clientSearch, setClientSearch] = useState('');
+
   // Estado de salvamento das configurações
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSavedToast, setSettingsSavedToast] = useState(false);
@@ -528,6 +538,103 @@ export default function AgendaModule({
       console.error('Erro ao atualizar status:', err);
     }
   };
+
+  // Gestão de Clientes da Agenda (Editar / Salvar / Excluir)
+  const handleOpenNewClient = () => {
+    setEditingClient(null);
+    setClientName('');
+    setClientPhone('');
+    setClientEmail('');
+    setClientModalOpen(true);
+  };
+
+  const handleOpenEditClient = (client: any) => {
+    setEditingClient(client);
+    setClientName(client.name || '');
+    setClientPhone(client.phone || '');
+    setClientEmail(client.email || '');
+    setClientModalOpen(true);
+  };
+
+  const handleSaveClient = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!clientName.trim()) {
+      alert('Por favor, informe o nome do cliente.');
+      return;
+    }
+
+    try {
+      setClientSaving(true);
+      const res = await fetch('/api/agenda/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingClient?.id,
+          organizationId: currentOrg.id,
+          name: clientName.trim(),
+          phone: clientPhone.trim(),
+          email: clientEmail.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (data?.success) {
+        setClientModalOpen(false);
+        setEditingClient(null);
+        setClientName('');
+        setClientPhone('');
+        setClientEmail('');
+        await loadAgendaData();
+      } else {
+        alert(data?.error || 'Erro ao salvar cliente.');
+      }
+    } catch (err) {
+      console.error('Erro ao salvar cliente:', err);
+      alert('Erro inesperado ao salvar cliente.');
+    } finally {
+      setClientSaving(false);
+    }
+  };
+
+  const handleDeleteClient = async (clientId: string, clientName: string) => {
+    if (!confirm(`Deseja realmente excluir o cliente "${clientName}" da base da agenda?`)) {
+      return;
+    }
+
+    try {
+      setClientDeleting(true);
+      const res = await fetch(`/api/agenda/clients?id=${clientId}&orgId=${currentOrg.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (data?.success) {
+        if (editingClient?.id === clientId) {
+          setClientModalOpen(false);
+          setEditingClient(null);
+        }
+        await loadAgendaData();
+      } else {
+        alert(data?.error || 'Erro ao excluir cliente.');
+      }
+    } catch (err) {
+      console.error('Erro ao excluir cliente:', err);
+      alert('Erro inesperado ao excluir cliente.');
+    } finally {
+      setClientDeleting(false);
+    }
+  };
+
+  // Clientes filtrados por busca
+  const filteredClients = useMemo(() => {
+    if (!clientSearch.trim()) return clients;
+    const q = clientSearch.toLowerCase();
+    return clients.filter((c: any) =>
+      (c.name && c.name.toLowerCase().includes(q)) ||
+      (c.phone && c.phone.includes(q)) ||
+      (c.email && c.email.toLowerCase().includes(q))
+    );
+  }, [clients, clientSearch]);
 
   // Marcar Comissão como Paga
   const handlePayCommission = async (commissionId: string) => {
@@ -1427,11 +1534,54 @@ export default function AgendaModule({
       {/* ======================================================== */}
       {subTab === 'clients' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff' }}>Base de Clientes da Agenda</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-              Histórico consolidado de clientes que agendaram via página pública ou atendimento no WhatsApp.
-            </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff' }}>Base de Clientes da Agenda</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                Histórico consolidado de clientes que agendaram via página pública ou atendimento no WhatsApp.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ position: 'relative', width: '240px' }}>
+                <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  value={clientSearch}
+                  onChange={(e) => setClientSearch(e.target.value)}
+                  placeholder="Buscar clientes..."
+                  style={{
+                    width: '100%',
+                    padding: '7px 10px 7px 32px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                    color: '#fff',
+                    fontSize: '0.78rem',
+                  }}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleOpenNewClient}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  backgroundColor: '#2563EB',
+                  color: '#fff',
+                  border: 'none',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                <Plus size={14} /> Novo Cliente
+              </button>
+            </div>
           </div>
 
           <div className="table-wrapper" style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)' }}>
@@ -1446,8 +1596,8 @@ export default function AgendaModule({
                 </tr>
               </thead>
               <tbody>
-                {clients.length > 0 ? (
-                  clients.map((c) => (
+                {filteredClients.length > 0 ? (
+                  filteredClients.map((c) => (
                     <tr key={c.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                       <td style={{ padding: '14px 16px', fontWeight: 600, color: '#fff' }}>{c.name}</td>
                       <td style={{ padding: '14px 16px', color: '#60A5FA' }}>{c.phone || '-'}</td>
@@ -1458,36 +1608,84 @@ export default function AgendaModule({
                         </span>
                       </td>
                       <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                        {c.phone && (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                          {c.phone && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const cleanPhone = c.phone.replace(/\D/g, '');
+                                window.open(`https://wa.me/55${cleanPhone}`, '_blank');
+                              }}
+                              title="Abrir conversa no WhatsApp"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                color: '#34D399',
+                                border: '1px solid rgba(16, 185, 129, 0.3)',
+                                fontSize: '0.74rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <Phone size={12} /> Abrir WhatsApp
+                            </button>
+                          )}
+
                           <button
-                            onClick={() => {
-                              const cleanPhone = c.phone.replace(/\D/g, '');
-                              window.open(`https://wa.me/55${cleanPhone}`, '_blank');
-                            }}
+                            type="button"
+                            onClick={() => handleOpenEditClient(c)}
+                            title="Editar dados cadastrais do cliente"
                             style={{
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '4px',
-                              padding: '4px 10px',
+                              padding: '5px 10px',
                               borderRadius: '6px',
-                              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                              color: '#34D399',
-                              border: '1px solid rgba(16, 185, 129, 0.3)',
-                              fontSize: '0.75rem',
+                              backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                              color: '#60A5FA',
+                              border: '1px solid rgba(59, 130, 246, 0.3)',
+                              fontSize: '0.74rem',
                               fontWeight: 600,
                               cursor: 'pointer',
                             }}
                           >
-                            <Phone size={12} /> Abrir WhatsApp
+                            <Pencil size={12} /> Editar
                           </button>
-                        )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteClient(c.id, c.name)}
+                            title="Excluir cliente da agenda"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '5px 10px',
+                              borderRadius: '6px',
+                              backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                              color: '#F87171',
+                              border: '1px solid rgba(239, 68, 68, 0.25)',
+                              fontSize: '0.74rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <Trash2 size={12} /> Excluir
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td colSpan={5} style={{ padding: '36px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      Nenhum cliente registrado ainda. Clientes são sincronizados automaticamente conforme realizam reservas.
+                      {clients.length === 0
+                        ? 'Nenhum cliente registrado ainda. Clientes são sincronizados automaticamente ou podem ser adicionados no botão "Novo Cliente".'
+                        : `Nenhum cliente encontrado para o termo "${clientSearch}".`}
                     </td>
                   </tr>
                 )}
@@ -3107,6 +3305,205 @@ export default function AgendaModule({
                 >
                   {rescheduleSaving ? 'Salvando...' : 'Confirmar Reagendamento'}
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL: EDITAR / NOVO CLIENTE DA AGENDA                   */}
+      {/* ======================================================== */}
+      {clientModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
+          }}
+          onClick={() => {
+            if (!clientSaving && !clientDeleting) setClientModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '16px',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ padding: '8px', borderRadius: '8px', backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA' }}>
+                  <Users size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+                    {editingClient ? 'Editar Cliente da Agenda' : 'Novo Cliente da Agenda'}
+                  </h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                    {editingClient ? 'Atualize os dados cadastrais do cliente' : 'Cadastre um cliente manualmente na base'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setClientModalOpen(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveClient} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                  Nome Completo *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  placeholder="Ex: Maria Silva"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    color: '#fff',
+                    fontSize: '0.86rem',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                  Telefone / WhatsApp
+                </label>
+                <input
+                  type="text"
+                  value={clientPhone}
+                  onChange={(e) => setClientPhone(e.target.value)}
+                  placeholder="Ex: (11) 98765-4321"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    color: '#fff',
+                    fontSize: '0.86rem',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                  E-mail
+                </label>
+                <input
+                  type="email"
+                  value={clientEmail}
+                  onChange={(e) => setClientEmail(e.target.value)}
+                  placeholder="Ex: cliente@email.com"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    border: '1px solid var(--border-subtle)',
+                    color: '#fff',
+                    fontSize: '0.86rem',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: editingClient ? 'space-between' : 'flex-end', alignItems: 'center', marginTop: '10px', gap: '10px' }}>
+                {editingClient && (
+                  <button
+                    type="button"
+                    disabled={clientSaving || clientDeleting}
+                    onClick={() => handleDeleteClient(editingClient.id, editingClient.name)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                      color: '#F87171',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Trash2 size={14} /> Excluir Cliente
+                  </button>
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setClientModalOpen(false)}
+                    disabled={clientSaving || clientDeleting}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: 'transparent',
+                      color: 'var(--text-secondary)',
+                      border: '1px solid var(--border-subtle)',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={clientSaving || clientDeleting}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      backgroundColor: '#10B981',
+                      color: '#fff',
+                      border: 'none',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {clientSaving ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" /> Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={14} /> Salvar Cliente
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
