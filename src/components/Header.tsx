@@ -44,7 +44,7 @@ export default function Header() {
         style={{
           maxWidth: '1280px',
           margin: '0 auto',
-          padding: '14px 24px',
+          padding: '16px 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -63,32 +63,32 @@ export default function Header() {
         >
           <div
             style={{
-              width: '40px',
-              height: '40px',
+              width: '44px',
+              height: '44px',
               borderRadius: '12px',
               background: 'linear-gradient(135deg, #1F6FFF 0%, #00F5D4 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(0, 245, 212, 0.4)',
+              boxShadow: '0 0 22px rgba(0, 245, 212, 0.45)',
               flexShrink: 0,
             }}
           >
-            <Bot size={22} color="#060B18" strokeWidth={2.4} />
+            <Bot size={24} color="#060B18" strokeWidth={2.4} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span
                 style={{
                   fontFamily: "'Orbitron', 'Inter', sans-serif",
-                  fontSize: '1.42rem',
+                  fontSize: '1.55rem',
                   fontWeight: 900,
                   fontStyle: 'italic',
                   letterSpacing: '0.04em',
                   background: 'linear-gradient(95deg, #FFFFFF 20%, #00F5D4 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  filter: 'drop-shadow(0 0 10px rgba(0, 245, 212, 0.4))',
+                  filter: 'drop-shadow(0 0 12px rgba(0, 245, 212, 0.45))',
                   transform: 'skewX(-6deg)',
                   display: 'inline-block',
                 }}
@@ -97,7 +97,7 @@ export default function Header() {
               </span>
               <span
                 style={{
-                  fontSize: '0.62rem',
+                  fontSize: '0.66rem',
                   background: 'rgba(0, 245, 212, 0.15)',
                   color: '#00F5D4',
                   padding: '2px 8px',
@@ -111,7 +111,7 @@ export default function Header() {
                 ECOSSISTEMA
               </span>
             </div>
-            <div style={{ fontSize: '0.68rem', color: '#94A3B8', letterSpacing: '0.04em', marginTop: '1px' }}>
+            <div style={{ fontSize: '0.72rem', color: '#94A3B8', letterSpacing: '0.04em', marginTop: '1px' }}>
               Por AllLogic Online
             </div>
           </div>

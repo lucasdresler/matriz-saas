@@ -1360,23 +1360,24 @@ export default function MatrizDashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div
               style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
                 background: 'linear-gradient(135deg, #1F6FFF 0%, #00F5D4 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 20px rgba(31, 111, 255, 0.4)',
+                boxShadow: '0 0 20px rgba(0, 245, 212, 0.4)',
+                flexShrink: 0,
               }}
             >
-              <Bot size={20} color="#fff" />
+              <Bot size={22} color="#060B18" strokeWidth={2.4} />
             </div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.02em', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                Agillex Hub <span style={{ fontSize: '0.62rem', background: 'rgba(0, 245, 212, 0.15)', color: '#00F5D4', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(0, 245, 212, 0.3)' }}>PRO</span>
+              <div style={{ fontWeight: 800, fontSize: '1.16rem', letterSpacing: '-0.02em', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                Agillex Hub <span style={{ fontSize: '0.64rem', background: 'rgba(0, 245, 212, 0.15)', color: '#00F5D4', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(0, 245, 212, 0.3)', fontWeight: 700 }}>PRO</span>
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Engenharia de Soluções Digitais</div>
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Engenharia de Soluções Digitais</div>
             </div>
           </div>
           <button
