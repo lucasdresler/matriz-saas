@@ -301,16 +301,18 @@ body:not(.agillex-theme) { --login-bg: #0B132B; }
 
 .app-layout {
   display: flex;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
+  min-height: calc(100vh - 76px);
+  width: 100%;
   background-color: var(--bg-main);
   position: relative;
 }
 
 .app-sidebar {
   width: 260px;
-  height: 100vh;
+  min-height: calc(100vh - 76px);
+  max-height: calc(100vh - 76px);
+  position: sticky;
+  top: 76px;
   flex-shrink: 0;
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-subtle);
@@ -331,13 +333,15 @@ body:not(.agillex-theme) { --login-bg: #0B132B; }
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   width: 100%;
   min-width: 0;
 }
 
 .topbar-header {
   height: 64px;
+  position: sticky;
+  top: 76px;
+  z-index: 30;
   border-bottom: 1px solid var(--border-subtle);
   background-color: var(--bg-surface);
   display: flex;
@@ -349,8 +353,6 @@ body:not(.agillex-theme) { --login-bg: #0B132B; }
 
 .content-scroll {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
   padding: 24px;
 }
 

@@ -5679,8 +5679,9 @@ export default function MatrizDashboard() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 110,
-            padding: '16px',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
           }}
           onClick={() => setSelectedLeadDetails(null)}
         >
@@ -5693,8 +5694,9 @@ export default function MatrizDashboard() {
               borderRadius: '16px',
               padding: '24px',
               boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
-              maxHeight: '90vh',
+              maxHeight: 'calc(100vh - 48px)',
               overflowY: 'auto',
+              margin: 'auto',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -6166,8 +6168,9 @@ export default function MatrizDashboard() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 110,
-            padding: '16px',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
           }}
           onClick={() => setIsSettingsOpen(false)}
         >
@@ -6180,8 +6183,9 @@ export default function MatrizDashboard() {
               borderRadius: '16px',
               padding: '24px',
               boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
-              maxHeight: '90vh',
+              maxHeight: 'calc(100vh - 48px)',
               overflowY: 'auto',
+              margin: 'auto',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -6343,35 +6347,6 @@ export default function MatrizDashboard() {
                       <ExternalLink size={14} />
                     </a>
                   </div>
-                </div>
-
-                {/* Atalho para o painel administrativo da Agenda */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-                  <a
-                    href={`https://agenda.agillex.com.br/admin/login?slug=${currentOrg.slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 16px',
-                      borderRadius: '10px',
-                      backgroundColor: 'rgba(56, 189, 248, 0.08)',
-                      border: '1px solid rgba(56, 189, 248, 0.25)',
-                      color: '#fff',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Calendar size={18} style={{ color: '#38BDF8' }} />
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Acessar Painel da Agenda (Admin)</div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Gerenciar profissionais, serviços e horários</div>
-                      </div>
-                    </div>
-                    <ExternalLink size={14} style={{ color: '#38BDF8' }} />
-                  </a>
                 </div>
               </>
             )}
@@ -6590,8 +6565,9 @@ export default function MatrizDashboard() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 110,
-            padding: '16px',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
           }}
           onClick={() => setRescheduleApt(null)}
         >
@@ -6604,6 +6580,9 @@ export default function MatrizDashboard() {
               borderRadius: '16px',
               padding: '24px',
               boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              margin: 'auto',
             }}
             onClick={(e) => e.stopPropagation()}
           >

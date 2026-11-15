@@ -2111,8 +2111,9 @@ export default function AgendaModule({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 120,
-            padding: '16px',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
           }}
           onClick={() => {
             if (!profSaving) setProfModalOpen(false);
@@ -2122,8 +2123,9 @@ export default function AgendaModule({
             style={{
               width: '100%',
               maxWidth: '640px',
-              maxHeight: '90vh',
+              maxHeight: 'calc(100vh - 48px)',
               overflowY: 'auto',
+              margin: 'auto',
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '16px',
@@ -2344,8 +2346,9 @@ export default function AgendaModule({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 120,
-            padding: '16px',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
           }}
           onClick={() => {
             if (!pkgSaving) setPkgModalOpen(false);
@@ -2355,6 +2358,9 @@ export default function AgendaModule({
             style={{
               width: '100%',
               maxWidth: '480px',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              margin: 'auto',
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '16px',
@@ -2479,8 +2485,9 @@ export default function AgendaModule({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 120,
-            padding: '16px',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
           }}
           onClick={() => {
             if (!prodSaving) setProdModalOpen(false);
@@ -2490,6 +2497,9 @@ export default function AgendaModule({
             style={{
               width: '100%',
               maxWidth: '480px',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              margin: 'auto',
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '16px',
@@ -2616,8 +2626,9 @@ export default function AgendaModule({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 120,
-            padding: '16px',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
           }}
           onClick={() => {
             if (!saleSaving) setSaleModalOpen(false);
@@ -2627,6 +2638,9 @@ export default function AgendaModule({
             style={{
               width: '100%',
               maxWidth: '480px',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              margin: 'auto',
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '16px',
@@ -2775,8 +2789,9 @@ export default function AgendaModule({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 120,
-            padding: '16px',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
           }}
           onClick={() => {
             if (!debtSaving) setDebtModalOpen(false);
@@ -2786,6 +2801,9 @@ export default function AgendaModule({
             style={{
               width: '100%',
               maxWidth: '480px',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              margin: 'auto',
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '16px',
@@ -2898,8 +2916,9 @@ export default function AgendaModule({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 120,
-            padding: '16px',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
           }}
           onClick={() => {
             if (!debtPaySaving) setDebtPayModalOpen(false);
@@ -2909,6 +2928,9 @@ export default function AgendaModule({
             style={{
               width: '100%',
               maxWidth: '440px',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              margin: 'auto',
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '16px',
@@ -2999,8 +3021,9 @@ export default function AgendaModule({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 120,
-            padding: '16px',
+            zIndex: 1000,
+            padding: '24px 16px',
+            overflowY: 'auto',
           }}
           onClick={() => {
             if (!rescheduleSaving) setRescheduleApt(null);
@@ -3010,6 +3033,9 @@ export default function AgendaModule({
             style={{
               width: '100%',
               maxWidth: '440px',
+              maxHeight: 'calc(100vh - 48px)',
+              overflowY: 'auto',
+              margin: 'auto',
               backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '16px',
