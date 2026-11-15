@@ -95,14 +95,14 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 function isTabSupported(tab: DashboardTab, org: Organization): boolean {
-  if (tab === 'saas') return true;
+  if (tab === 'saas') return org.slug === 'alllogic';
   if (tab === 'agenda') return Boolean(org.modules?.agenda);
   if (tab === 'livechat' || tab === 'ai_brain' || tab === 'whatsapp') return Boolean(org.modules?.atendimento);
   if (tab === 'overview' || tab === 'kanban') return Boolean(org.modules?.crm);
   if (tab === 'cobranca') return Boolean(org.modules?.cobranca);
   if (tab === 'reputacao') return Boolean(org.modules?.reputacao);
   if (tab === 'ged') return Boolean(org.modules?.ged);
-  return true;
+  return false;
 }
 
 function getWorkspaceTab(tab: DashboardTab, org: Organization): DashboardTab {
@@ -114,7 +114,8 @@ function getWorkspaceTab(tab: DashboardTab, org: Organization): DashboardTab {
   if (org.modules?.reputacao) return 'reputacao';
   if (org.modules?.cobranca) return 'cobranca';
   if (org.modules?.ged) return 'ged';
-  return 'saas';
+  if (org.slug === 'alllogic') return 'saas';
+  return 'overview';
 }
 
 export default function MatrizDashboard() {
@@ -798,6 +799,9 @@ export default function MatrizDashboard() {
 
   // Organização Atual
   const handleTabChange = (tab: DashboardTab) => {
+    if (tab === 'saas' && !(currentUser?.role === 'super_admin' && currentOrg.slug === 'alllogic')) {
+      return;
+    }
     setActiveTab(tab);
     setMobileSidebarOpen(false);
     if (tab === 'livechat') {
@@ -1745,35 +1749,37 @@ export default function MatrizDashboard() {
             </div>
           )}
 
-          {/* ADMIN MASTER */}
-          <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
-            <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, padding: '0 8px', marginBottom: '4px', letterSpacing: '0.05em' }}>
-              Gestão Master
-            </div>
-            <button
-              onClick={() => handleTabChange('saas')}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '9px 12px',
-                borderRadius: '8px',
-                backgroundColor: activeTab === 'saas' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
-                color: activeTab === 'saas' ? '#A78BFA' : 'var(--text-secondary)',
-                fontWeight: activeTab === 'saas' ? 600 : 400,
-                border: activeTab === 'saas' ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid transparent',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Building2 size={18} />
-                <span style={{ fontSize: '0.86rem' }}>Painel SaaS & MRR</span>
+          {/* ADMIN MASTER (Exclusivo do Fundador/Dono na AllLogic Online & Agillex) */}
+          {currentUser?.role === 'super_admin' && currentOrg.slug === 'alllogic' && (
+            <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, padding: '0 8px', marginBottom: '4px', letterSpacing: '0.05em' }}>
+                Gestão Master
               </div>
-              <span style={{ fontSize: '0.65rem', background: '#8B5CF6', color: '#fff', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
-                ADMIN
-              </span>
-            </button>
-          </div>
+              <button
+                onClick={() => handleTabChange('saas')}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: activeTab === 'saas' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+                  color: activeTab === 'saas' ? '#A78BFA' : 'var(--text-secondary)',
+                  fontWeight: activeTab === 'saas' ? 600 : 400,
+                  border: activeTab === 'saas' ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid transparent',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Building2 size={18} />
+                  <span style={{ fontSize: '0.86rem' }}>Painel SaaS & MRR</span>
+                </div>
+                <span style={{ fontSize: '0.65rem', background: '#8B5CF6', color: '#fff', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                  ADMIN
+                </span>
+              </button>
+            </div>
+          )}
         </nav>
 
         {/* Rodapé da Sidebar com Status do Usuário */}
@@ -3297,7 +3303,7 @@ export default function MatrizDashboard() {
           {/* ======================================================== */}
           {/* ABA 7: GESTÃO SAAS & AGÊNCIA (SUPER ADMIN)               */}
           {/* ======================================================== */}
-          {activeTab === 'saas' && (
+          {activeTab === 'saas' && currentUser?.role === 'super_admin' && currentOrg.slug === 'alllogic' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div
                 style={{
