@@ -106,8 +106,8 @@ function isTabSupported(tab: DashboardTab, org: Organization): boolean {
 }
 
 function getWorkspaceTab(tab: DashboardTab, org: Organization): DashboardTab {
-  if (isTabSupported(tab, org)) return tab;
   if (org.modules?.agenda && !org.modules?.crm && !org.modules?.atendimento) return 'agenda';
+  if (isTabSupported(tab, org)) return tab;
   if (org.modules?.atendimento && !org.modules?.crm) return 'livechat';
   if (org.modules?.crm) return 'overview';
   if (org.modules?.agenda) return 'agenda';
@@ -115,7 +115,7 @@ function getWorkspaceTab(tab: DashboardTab, org: Organization): DashboardTab {
   if (org.modules?.cobranca) return 'cobranca';
   if (org.modules?.ged) return 'ged';
   if (org.slug === 'alllogic') return 'saas';
-  return 'overview';
+  return 'agenda';
 }
 
 export default function MatrizDashboard() {
@@ -1452,7 +1452,10 @@ export default function MatrizDashboard() {
                     key={org.id}
                     onClick={() => {
                       setActiveOrgId(org.id);
-                      setActiveTab((tab) => getWorkspaceTab(tab, org));
+                      const targetTab = (org.modules?.agenda && !org.modules?.crm && !org.modules?.atendimento)
+                        ? 'agenda'
+                        : getWorkspaceTab(activeTab, org);
+                      setActiveTab(targetTab);
                       const workspaceLeads = leads.filter((lead) => (
                         lead.orgId === org.id
                         || (

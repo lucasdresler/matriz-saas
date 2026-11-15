@@ -3,6 +3,7 @@ import { query } from '@/lib/db';
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/auth';
 
 function getModules(category: string | null, slug: string, plan?: string | null) {
+  // O workspace master AllLogic possui todos os módulos para gestão corporativa
   if (slug === 'alllogic') {
     return { agenda: true, atendimento: true, crm: true, cobranca: true, reputacao: true, ged: true };
   }
@@ -10,21 +11,81 @@ function getModules(category: string | null, slug: string, plan?: string | null)
   const p = (plan || '').toLowerCase();
   const c = (category || '').toLowerCase();
 
-  const isCombo = c === 'combo' || p.includes('combo') || p.includes('pro') || p.includes('enterprise');
-  const isAgenda = isCombo || c === 'agenda' || p.includes('agenda') || slug === 'salao-bonitao';
-  const isAtendimento = isCombo || c === 'atendimento' || p.includes('atende') || p.includes('whatsapp');
-  const isCrm = isAgenda || isAtendimento || isCombo || c === 'crm';
-  const isCobranca = isCombo || c === 'cobranca' || p.includes('cobranca') || p.includes('cobrança') || p.includes('asaas');
-  const isReputacao = isCombo || c === 'reputacao' || p.includes('reputacao') || p.includes('reputação');
-  const isGed = isCombo || c === 'ged' || p.includes('ged') || p.includes('documento');
+  // Verifica se é plano combo (plano unificado / pacote completo com múltiplos módulos)
+  const isCombo = c === 'combo' || /\b(combo|enterprise|unificado)\b/i.test(p);
 
+  if (isCombo) {
+    return { agenda: true, atendimento: true, crm: true, cobranca: true, reputacao: true, ged: true };
+  }
+
+  // Se contratou exclusivamente Agillex Agenda (ou slug salao-bonitao)
+  if (c === 'agenda' || p.includes('agenda') || slug === 'salao-bonitao') {
+    return {
+      agenda: true,
+      atendimento: false,
+      crm: false,
+      cobranca: false,
+      reputacao: false,
+      ged: false,
+    };
+  }
+
+  // Se contratou exclusivamente Agillex Atende
+  if (c === 'atendimento' || p.includes('atende')) {
+    return {
+      agenda: false,
+      atendimento: true,
+      crm: true, // Atendimento usa CRM Kanban para leads do WhatsApp
+      cobranca: false,
+      reputacao: false,
+      ged: false,
+    };
+  }
+
+  // Se contratou exclusivamente Cobrança
+  if (c === 'cobranca' || p.includes('cobranca') || p.includes('cobrança')) {
+    return {
+      agenda: false,
+      atendimento: false,
+      crm: false,
+      cobranca: true,
+      reputacao: false,
+      ged: false,
+    };
+  }
+
+  // Se contratou exclusivamente Reputação
+  if (c === 'reputacao' || p.includes('reputacao') || p.includes('reputação')) {
+    return {
+      agenda: false,
+      atendimento: false,
+      crm: false,
+      cobranca: false,
+      reputacao: true,
+      ged: false,
+    };
+  }
+
+  // Se contratou exclusivamente GED
+  if (c === 'ged' || p.includes('ged')) {
+    return {
+      agenda: false,
+      atendimento: false,
+      crm: false,
+      cobranca: false,
+      reputacao: false,
+      ged: true,
+    };
+  }
+
+  // Fallback padrão seguro para Agenda única
   return {
-    agenda: isAgenda,
-    atendimento: isAtendimento,
-    crm: isCrm,
-    cobranca: isCobranca,
-    reputacao: isReputacao,
-    ged: isGed,
+    agenda: true,
+    atendimento: false,
+    crm: false,
+    cobranca: false,
+    reputacao: false,
+    ged: false,
   };
 }
 
