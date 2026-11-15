@@ -456,11 +456,13 @@ export default function MatrizDashboard() {
   const [serviceSaving, setServiceSaving] = useState(false);
 
   // Carregar Serviços do Backend
-  const loadServices = () => {
-    fetch('/api/services')
+  const loadServices = (targetOrgId?: string) => {
+    const orgToLoad = targetOrgId || activeOrgId;
+    const url = orgToLoad ? `/api/services?orgId=${encodeURIComponent(orgToLoad)}` : '/api/services';
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
-        if (data?.success && Array.isArray(data.services) && data.services.length > 0) {
+        if (data?.success && Array.isArray(data.services)) {
           const normalized = data.services.map((s: ServiceItem) => ({
             ...s,
             orgId: (!s.orgId || s.orgId === 'a0000000-0000-0000-0000-000000000001') ? 'org-alllogic' : s.orgId,
@@ -472,8 +474,10 @@ export default function MatrizDashboard() {
   };
 
   useEffect(() => {
-    loadServices();
-  }, []);
+    if (activeOrgId) {
+      loadServices(activeOrgId);
+    }
+  }, [activeOrgId]);
 
   // Estados para Configuração do Cérebro da IA & RAG (n8n & Banco)
   const [systemPrompt, setSystemPrompt] = useState<string>('');
@@ -573,6 +577,7 @@ export default function MatrizDashboard() {
     try {
       const payload = {
         id: editingService?.id,
+        organizationId: activeOrgId,
         name: serviceName.trim(),
         price: parseFloat(servicePrice.replace(/[^\d.,]/g, '').replace(',', '.')) || 0,
         durationMinutes: parseInt(serviceDuration, 10) || 30,
@@ -612,7 +617,7 @@ export default function MatrizDashboard() {
   const handleDeleteService = async (srvId: string, srvName: string) => {
     if (confirm(`Deseja realmente excluir o serviço "${srvName}"?`)) {
       setServices((prev) => prev.filter((s) => s.id !== srvId));
-      fetch(`/api/services?id=${srvId}`, { method: 'DELETE' }).catch(() => {});
+      fetch(`/api/services?id=${srvId}&orgId=${encodeURIComponent(activeOrgId)}`, { method: 'DELETE' }).catch(() => {});
     }
   };
 
