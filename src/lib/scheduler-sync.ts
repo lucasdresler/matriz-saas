@@ -315,6 +315,12 @@ export async function syncOrganizationToScheduler(
     const estId = estRes.rows[0]?.id;
     if (!estId) return;
 
+    const s = (v: any) => {
+      if (v === null || v === undefined) return null;
+      const str = String(v).trim();
+      return str.length > 0 ? str : null;
+    };
+
     // Montar endereco formatado caso nao esteja explicito
     let fullAddress = data.address || '';
     if (!fullAddress && (data.street || data.city)) {
@@ -365,39 +371,39 @@ export async function syncOrganizationToScheduler(
          chave_pix_estabelecimento = COALESCE($33, chave_pix_estabelecimento)
        WHERE id = $34;`,
       [
-        data.name ? data.name.trim() : null,
-        data.responsibleName ? data.responsibleName.trim() : null,
-        data.tradeName ? data.tradeName.trim() : null,
-        data.corporateName ? data.corporateName.trim() : null,
-        data.cnpjCpf ? data.cnpjCpf.trim() : null,
-        data.phone ? data.phone.trim() : null,
-        data.whatsappPhone ? data.whatsappPhone.trim() : null,
-        data.businessEmail ? data.businessEmail.trim() : null,
-        data.instagram ? data.instagram.trim() : null,
-        data.street ? data.street.trim() : null,
-        data.number ? data.number.trim() : null,
-        data.complement ? data.complement.trim() : null,
-        data.neighborhood ? data.neighborhood.trim() : null,
-        data.city ? data.city.trim() : null,
-        data.state ? data.state.trim() : null,
-        data.zipCode ? data.zipCode.trim() : null,
-        fullAddress ? fullAddress.trim() : null,
-        data.logoUrl ? data.logoUrl.trim() : null,
-        data.bannerUrl ? data.bannerUrl.trim() : null,
-        data.bio ? data.bio.trim() : null,
-        data.brandColor ? data.brandColor.trim() : null,
-        data.secondaryColor ? data.secondaryColor.trim() : null,
-        data.bgColor ? data.bgColor.trim() : null,
-        data.openingTime ? data.openingTime.trim() : null,
-        data.closingTime ? data.closingTime.trim() : null,
-        data.workDays ? data.workDays.trim() : null,
+        s(data.name),
+        s(data.responsibleName),
+        s(data.tradeName),
+        s(data.corporateName),
+        s(data.cnpjCpf),
+        s(data.phone),
+        s(data.whatsappPhone),
+        s(data.businessEmail),
+        s(data.instagram),
+        s(data.street),
+        s(data.number),
+        s(data.complement),
+        s(data.neighborhood),
+        s(data.city),
+        s(data.state),
+        s(data.zipCode),
+        s(fullAddress),
+        s(data.logoUrl),
+        s(data.bannerUrl),
+        s(data.bio),
+        s(data.brandColor),
+        s(data.secondaryColor),
+        s(data.bgColor),
+        s(data.openingTime),
+        s(data.closingTime),
+        s(data.workDays),
         data.slotIntervalMinutes !== undefined ? data.slotIntervalMinutes : null,
         data.maxAdvanceDays !== undefined ? data.maxAdvanceDays : null,
         data.requirePixDeposit !== undefined ? data.requirePixDeposit : null,
-        data.pixModel ? data.pixModel.trim() : null,
+        s(data.pixModel),
         data.pixDepositAmount !== undefined ? data.pixDepositAmount : null,
-        data.pixKeyType ? data.pixKeyType.trim() : null,
-        data.pixKey ? data.pixKey.trim() : null,
+        s(data.pixKeyType),
+        s(data.pixKey),
         estId,
       ]
     );

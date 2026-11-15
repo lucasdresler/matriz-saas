@@ -297,51 +297,57 @@ export default function AgendaModule({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          organizationId: currentOrg.id,
-          name: settings.name,
-          responsibleName: settings.responsible_name,
-          tradeName: settings.trade_name,
-          corporateName: settings.corporate_name,
-          cnpjCpf: settings.cnpj_cpf,
-          street: settings.street,
-          number: settings.number,
-          complement: settings.complement,
-          neighborhood: settings.neighborhood,
-          address: settings.address,
-          city: settings.city,
-          state: settings.state,
-          zipCode: settings.zip_code,
-          phone: settings.phone,
-          whatsappPhone: settings.whatsapp_phone,
-          businessEmail: settings.business_email,
-          instagram: settings.instagram,
-          brandColor: settings.brand_color,
-          secondaryColor: settings.secondary_color,
-          bgColor: settings.bg_color,
-          logoUrl: settings.logo_url,
-          bannerUrl: settings.banner_url,
-          bio: settings.bio,
-          openingTime: settings.opening_time,
-          closingTime: settings.closing_time,
-          workDays: settings.work_days,
-          slotIntervalMinutes: settings.slot_interval_minutes,
-          maxAdvanceDays: settings.max_advance_days,
-          minCancelHours: settings.min_cancel_hours,
-          requirePixDeposit: settings.require_pix_deposit,
-          pixModel: settings.pix_model,
-          pixDepositAmount: settings.pix_deposit_amount,
-          pixDepositPercent: settings.pix_deposit_percent,
-          pixKeyType: settings.pix_key_type,
-          pixKey: settings.pix_key,
+          organizationId: currentOrg?.id,
+          name: settings.name || '',
+          responsibleName: settings.responsible_name || '',
+          tradeName: settings.trade_name || '',
+          corporateName: settings.corporate_name || '',
+          cnpjCpf: settings.cnpj_cpf || '',
+          category: settings.category || '',
+          street: settings.street || '',
+          number: settings.number || '',
+          complement: settings.complement || '',
+          neighborhood: settings.neighborhood || '',
+          address: settings.address || '',
+          city: settings.city || '',
+          state: settings.state || '',
+          zipCode: settings.zip_code || '',
+          phone: settings.phone || '',
+          whatsappPhone: settings.whatsapp_phone || '',
+          businessEmail: settings.business_email || '',
+          instagram: settings.instagram || '',
+          brandColor: settings.brand_color || '#2563EB',
+          secondaryColor: settings.secondary_color || '#E5C78B',
+          bgColor: settings.bg_color || '#F6F1E8',
+          logoUrl: settings.logo_url || '',
+          bannerUrl: settings.banner_url || '',
+          bio: settings.bio || '',
+          openingTime: settings.opening_time || '09:00',
+          closingTime: settings.closing_time || '19:00',
+          workDays: settings.work_days || '1,2,3,4,5,6',
+          slotIntervalMinutes: settings.slot_interval_minutes || 30,
+          maxAdvanceDays: settings.max_advance_days || 30,
+          minCancelHours: settings.min_cancel_hours || 2,
+          requirePixDeposit: !!settings.require_pix_deposit,
+          pixModel: settings.pix_model || 'sinal',
+          pixDepositAmount: settings.pix_deposit_amount || 0,
+          pixDepositPercent: settings.pix_deposit_percent || 0,
+          pixKeyType: settings.pix_key_type || 'cpf_cnpj',
+          pixKey: settings.pix_key || '',
         }),
       });
       const data = await res.json();
-      if (data?.success) {
+      if (res.ok && data?.success) {
         setSettingsSavedToast(true);
         setTimeout(() => setSettingsSavedToast(false), 6000);
+        // Recarregar os dados para garantir que tudo sincronizou
+        loadAgendaData();
+      } else {
+        alert('Erro ao salvar configurações: ' + (data?.error || 'Verifique os dados e tente novamente.'));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao salvar configurações:', err);
+      alert('Erro de conexão ao salvar: ' + (err?.message || 'Tente novamente.'));
     } finally {
       setSettingsSaving(false);
     }

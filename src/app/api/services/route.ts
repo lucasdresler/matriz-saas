@@ -31,9 +31,9 @@ export async function GET(req: NextRequest) {
           `INSERT INTO services (
              organization_id, name, price, duration_minutes, description, is_active, created_at
            )
-           SELECT $1, $2, $3, $4, $5, true, NOW()
+           SELECT $1::uuid, $2::varchar, $3::numeric, $4::int, $5::text, true, NOW()
            WHERE NOT EXISTS (
-             SELECT 1 FROM services WHERE organization_id = $1 AND name = $2 AND is_active = true
+             SELECT 1 FROM services WHERE organization_id = $1::uuid AND name = $2::varchar AND is_active = true
            );`,
           [orgId, srv.name, srv.price, srv.durationMinutes, srv.description]
         );

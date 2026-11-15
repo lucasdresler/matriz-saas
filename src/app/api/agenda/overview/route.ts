@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     const orgRes = await query(
       `SELECT 
          id, name, slug, brand_color, secondary_color, bg_color, logo_url, banner_url, bio,
-         responsible_name, trade_name, corporate_name, cnpj_cpf,
+         responsible_name, trade_name, corporate_name, cnpj_cpf, category,
          street, number, complement, neighborhood, address, city, state, zip_code,
          phone, business_email, instagram, whatsapp_phone,
          opening_time, closing_time, work_days,

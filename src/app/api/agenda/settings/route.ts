@@ -3,72 +3,78 @@ import { query } from '@/lib/db';
 import { ensureAgendaTables } from '@/lib/agenda-db';
 import { syncOrganizationToScheduler } from '@/lib/scheduler-sync';
 
+function cleanStr(val: any, fallback = ''): string {
+  if (val === null || val === undefined) return fallback;
+  return String(val).trim();
+}
+
+function cleanNum(val: any, fallback = 0): number {
+  if (val === null || val === undefined) return fallback;
+  const num = Number(val);
+  return isNaN(num) ? fallback : num;
+}
+
+function cleanBool(val: any): boolean {
+  return val === true || val === 'true' || val === 1 || val === '1';
+}
+
 export async function POST(req: NextRequest) {
   try {
     await ensureAgendaTables();
     const body = await req.json();
-    const {
-      organizationId,
-      name,
-      responsibleName = '',
-      tradeName = '',
-      corporateName = '',
-      cnpjCpf = '',
-      street = '',
-      number = '',
-      complement = '',
-      neighborhood = '',
-      address = '',
-      city = '',
-      state = '',
-      zipCode = '',
-      phone = '',
-      whatsappPhone = '',
-      businessEmail = '',
-      instagram = '',
-      brandColor = '#2563EB',
-      secondaryColor = '#E5C78B',
-      bgColor = '#F6F1E8',
-      logoUrl = '',
-      bannerUrl = '',
-      bio = '',
-      openingTime = '09:00',
-      closingTime = '19:00',
-      workDays = '1,2,3,4,5,6',
-      slotIntervalMinutes = 30,
-      maxAdvanceDays = 30,
-      minCancelHours = 2,
-      requirePixDeposit = false,
-      pixModel = 'sinal',
-      pixDepositAmount = 0,
-      pixDepositPercent = 0,
-      pixKeyType = 'cpf_cnpj',
-      pixKey = '',
-    } = body;
 
-    let orgId = organizationId;
+    let orgId = body.organizationId;
     if (!orgId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgId)) {
       const orgRes = await query('SELECT id, slug, name FROM organizations LIMIT 1;');
       orgId = orgRes.rows[0]?.id;
     }
 
-    const slotInterval = parseInt(String(slotIntervalMinutes), 10) || 30;
-    const maxDays = parseInt(String(maxAdvanceDays), 10) || 30;
-    const minHours = parseInt(String(minCancelHours), 10) || 2;
-    const reqPix = requirePixDeposit === true || requirePixDeposit === 'true';
-    const pixAmount = parseFloat(String(pixDepositAmount)) || 0;
-    const pixPct = parseFloat(String(pixDepositPercent)) || 0;
+    const cleanName = cleanStr(body.name);
+    const cleanResponsible = cleanStr(body.responsibleName);
+    const cleanTrade = cleanStr(body.tradeName);
+    const cleanCorporate = cleanStr(body.corporateName);
+    const cleanCnpj = cleanStr(body.cnpjCpf);
+    const cleanCategory = cleanStr(body.category) || 'Salão de Beleza';
+    const cleanStreet = cleanStr(body.street);
+    const cleanNumber = cleanStr(body.number);
+    const cleanComplement = cleanStr(body.complement);
+    const cleanNeighborhood = cleanStr(body.neighborhood);
+    let cleanAddress = cleanStr(body.address);
+    const cleanCity = cleanStr(body.city);
+    const cleanState = cleanStr(body.state);
+    const cleanZip = cleanStr(body.zipCode);
+    const cleanPhone = cleanStr(body.phone);
+    const cleanWhatsapp = cleanStr(body.whatsappPhone);
+    const cleanEmail = cleanStr(body.businessEmail);
+    const cleanInstagram = cleanStr(body.instagram);
+    const cleanBrandColor = cleanStr(body.brandColor) || '#2563EB';
+    const cleanSecondaryColor = cleanStr(body.secondaryColor) || '#E5C78B';
+    const cleanBgColor = cleanStr(body.bgColor) || '#F6F1E8';
+    const cleanLogoUrl = cleanStr(body.logoUrl);
+    const cleanBannerUrl = cleanStr(body.bannerUrl);
+    const cleanBio = cleanStr(body.bio);
+    const cleanOpeningTime = cleanStr(body.openingTime) || '09:00';
+    const cleanClosingTime = cleanStr(body.closingTime) || '19:00';
+    const cleanWorkDays = cleanStr(body.workDays) || '1,2,3,4,5,6';
+    const cleanSlotInterval = cleanNum(body.slotIntervalMinutes, 30);
+    const cleanMaxDays = cleanNum(body.maxAdvanceDays, 30);
+    const cleanMinHours = cleanNum(body.minCancelHours, 2);
+    const cleanReqPix = cleanBool(body.requirePixDeposit);
+    const cleanPixModel = cleanStr(body.pixModel) || 'sinal';
+    const cleanPixAmount = cleanNum(body.pixDepositAmount, 0);
+    const cleanPixPct = cleanNum(body.pixDepositPercent, 0);
+    const cleanPixKeyType = cleanStr(body.pixKeyType) || 'cpf_cnpj';
+    const cleanPixKey = cleanStr(body.pixKey);
 
     // Montar endereco textual padrao se rua e numero existirem
-    let fullAddress = address.trim();
-    if (!fullAddress && (street || city)) {
+    if (!cleanAddress && (cleanStreet || cleanCity)) {
       const parts: string[] = [];
-      if (street) parts.push(number ? `${street.trim()}, ${number.trim()}` : street.trim());
-      if (complement) parts.push(complement.trim());
-      if (neighborhood) parts.push(neighborhood.trim());
-      if (city || state) parts.push(city && state ? `${city.trim()} - ${state.trim()}` : (city || state || '').trim());
-      if (zipCode) parts.push(`CEP ${zipCode.trim()}`);
-      fullAddress = parts.join(' - ');
+      if (cleanStreet) parts.push(cleanNumber ? `${cleanStreet}, ${cleanNumber}` : cleanStreet);
+      if (cleanComplement) parts.push(cleanComplement);
+      if (cleanNeighborhood) parts.push(cleanNeighborhood);
+      if (cleanCity || cleanState) parts.push(cleanCity && cleanState ? `${cleanCity} - ${cleanState}` : (cleanCity || cleanState));
+      if (cleanZip) parts.push(`CEP ${cleanZip}`);
+      cleanAddress = parts.join(' - ');
     }
 
     await query(
@@ -107,44 +113,46 @@ export async function POST(req: NextRequest) {
            pix_deposit_amount = $32,
            pix_deposit_percent = $33,
            pix_key_type = $34,
-           pix_key = $35
-       WHERE id = $36;`,
+           pix_key = $35,
+           category = $36
+       WHERE id = $37;`,
       [
-        name ? name.trim() : null,
-        responsibleName.trim(),
-        tradeName.trim(),
-        corporateName.trim(),
-        cnpjCpf.trim(),
-        street.trim(),
-        number.trim(),
-        complement.trim(),
-        neighborhood.trim(),
-        fullAddress,
-        city.trim(),
-        state.trim(),
-        zipCode.trim(),
-        phone.trim(),
-        whatsappPhone.trim(),
-        businessEmail.trim(),
-        instagram.trim(),
-        brandColor.trim() || '#2563EB',
-        secondaryColor.trim() || '#E5C78B',
-        bgColor.trim() || '#F6F1E8',
-        logoUrl.trim(),
-        bannerUrl.trim(),
-        bio.trim(),
-        openingTime.trim() || '09:00',
-        closingTime.trim() || '19:00',
-        workDays.trim() || '1,2,3,4,5,6',
-        slotInterval,
-        maxDays,
-        minHours,
-        reqPix,
-        pixModel.trim() || 'sinal',
-        pixAmount,
-        pixPct,
-        pixKeyType.trim() || 'cpf_cnpj',
-        pixKey.trim(),
+        cleanName || null,
+        cleanResponsible,
+        cleanTrade,
+        cleanCorporate,
+        cleanCnpj,
+        cleanStreet,
+        cleanNumber,
+        cleanComplement,
+        cleanNeighborhood,
+        cleanAddress,
+        cleanCity,
+        cleanState,
+        cleanZip,
+        cleanPhone,
+        cleanWhatsapp,
+        cleanEmail,
+        cleanInstagram,
+        cleanBrandColor,
+        cleanSecondaryColor,
+        cleanBgColor,
+        cleanLogoUrl,
+        cleanBannerUrl,
+        cleanBio,
+        cleanOpeningTime,
+        cleanClosingTime,
+        cleanWorkDays,
+        cleanSlotInterval,
+        cleanMaxDays,
+        cleanMinHours,
+        cleanReqPix,
+        cleanPixModel,
+        cleanPixAmount,
+        cleanPixPct,
+        cleanPixKeyType,
+        cleanPixKey,
+        cleanCategory,
         orgId,
       ]
     );
@@ -155,39 +163,39 @@ export async function POST(req: NextRequest) {
       const orgSlug = orgSlugRes.rows[0]?.slug;
       if (orgSlug) {
         await syncOrganizationToScheduler(orgSlug, {
-          name,
-          responsibleName,
-          tradeName,
-          corporateName,
-          cnpjCpf,
-          phone,
-          whatsappPhone,
-          businessEmail,
-          instagram,
-          street,
-          number,
-          complement,
-          neighborhood,
-          city,
-          state,
-          zipCode,
-          address: fullAddress,
-          logoUrl,
-          bannerUrl,
-          bio,
-          brandColor,
-          secondaryColor,
-          bgColor,
-          openingTime,
-          closingTime,
-          workDays,
-          slotIntervalMinutes: slotInterval,
-          maxAdvanceDays: maxDays,
-          requirePixDeposit: reqPix,
-          pixModel,
-          pixDepositAmount: pixAmount,
-          pixKeyType,
-          pixKey,
+          name: cleanName,
+          responsibleName: cleanResponsible,
+          tradeName: cleanTrade,
+          corporateName: cleanCorporate,
+          cnpjCpf: cleanCnpj,
+          phone: cleanPhone,
+          whatsappPhone: cleanWhatsapp,
+          businessEmail: cleanEmail,
+          instagram: cleanInstagram,
+          street: cleanStreet,
+          number: cleanNumber,
+          complement: cleanComplement,
+          neighborhood: cleanNeighborhood,
+          city: cleanCity,
+          state: cleanState,
+          zipCode: cleanZip,
+          address: cleanAddress,
+          logoUrl: cleanLogoUrl,
+          bannerUrl: cleanBannerUrl,
+          bio: cleanBio,
+          brandColor: cleanBrandColor,
+          secondaryColor: cleanSecondaryColor,
+          bgColor: cleanBgColor,
+          openingTime: cleanOpeningTime,
+          closingTime: cleanClosingTime,
+          workDays: cleanWorkDays,
+          slotIntervalMinutes: cleanSlotInterval,
+          maxAdvanceDays: cleanMaxDays,
+          requirePixDeposit: cleanReqPix,
+          pixModel: cleanPixModel,
+          pixDepositAmount: cleanPixAmount,
+          pixKeyType: cleanPixKeyType,
+          pixKey: cleanPixKey,
         });
       }
     } catch (syncErr) {
