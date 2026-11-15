@@ -259,12 +259,8 @@ export default function AgendaModule({
   ];
 
   // Busca Automática de CEP (ViaCEP)
-  const handleSearchCep = async () => {
-    const cleanCep = (settings.zip_code || '').replace(/\D/g, '');
-    if (cleanCep.length !== 8) {
-      alert('Por favor, informe um CEP válido com 8 dígitos.');
-      return;
-    }
+  const fetchCepData = async (cleanCep: string) => {
+    if (cleanCep.length !== 8) return;
     try {
       setCepLoading(true);
       const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
@@ -277,6 +273,9 @@ export default function AgendaModule({
           city: data.localidade || prev.city || '',
           state: data.uf || prev.state || '',
         }));
+        setTimeout(() => {
+          document.getElementById('input-numero-estabelecimento')?.focus();
+        }, 120);
       } else {
         alert('CEP não encontrado na base dos Correios.');
       }
@@ -286,6 +285,29 @@ export default function AgendaModule({
     } finally {
       setCepLoading(false);
     }
+  };
+
+  const handleCepChange = (rawVal: string) => {
+    const digits = rawVal.replace(/\D/g, '').slice(0, 8);
+    let formatted = digits;
+    if (digits.length > 5) {
+      formatted = `${digits.slice(0, 5)}-${digits.slice(5)}`;
+    }
+    setSettings((prev: any) => ({ ...prev, zip_code: formatted }));
+
+    // Ao digitar o 8º dígito, dispara busca e preenche rua, bairro, cidade e estado automaticamente
+    if (digits.length === 8) {
+      fetchCepData(digits);
+    }
+  };
+
+  const handleManualSearchCep = () => {
+    const cleanCep = (settings.zip_code || '').replace(/\D/g, '');
+    if (cleanCep.length !== 8) {
+      alert('Por favor, informe um CEP válido com 8 dígitos.');
+      return;
+    }
+    fetchCepData(cleanCep);
   };
 
   // Salvar Configurações da Empresa & Agenda
@@ -2389,21 +2411,25 @@ export default function AgendaModule({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
               <div>
                 <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '5px' }}>
-                  CEP
+                  CEP (Preenchimento Automático)
                 </label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                     type="text"
                     placeholder="00000-000"
+                    maxLength={9}
                     value={settings.zip_code || ''}
-                    onChange={(e) => setSettings({ ...settings, zip_code: e.target.value })}
+                    onChange={(e) => handleCepChange(e.target.value)}
                     style={{ flex: 1, padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
                   />
                   <button
                     type="button"
-                    onClick={handleSearchCep}
+                    onClick={handleManualSearchCep}
                     disabled={cepLoading}
                     style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
                       padding: '9px 14px',
                       borderRadius: '8px',
                       backgroundColor: 'rgba(59, 130, 246, 0.18)',
@@ -2415,6 +2441,7 @@ export default function AgendaModule({
                       whiteSpace: 'nowrap',
                     }}
                   >
+                    {cepLoading ? <Loader2 size={13} className="animate-spin" /> : null}
                     {cepLoading ? 'Buscando...' : 'Buscar CEP'}
                   </button>
                 </div>
@@ -2438,6 +2465,7 @@ export default function AgendaModule({
                   Número
                 </label>
                 <input
+                  id="input-numero-estabelecimento"
                   type="text"
                   placeholder="Ex: 123"
                   value={settings.number || ''}
