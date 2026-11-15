@@ -58,6 +58,16 @@ export async function ensureAgendaTables() {
       );
     `);
 
+    // 3.1 Vínculo de Serviços por Profissional
+    await query(`
+      CREATE TABLE IF NOT EXISTS public.professional_services (
+        professional_id UUID NOT NULL REFERENCES public.professionals(id) ON DELETE CASCADE,
+        service_id UUID NOT NULL REFERENCES public.services(id) ON DELETE CASCADE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+        PRIMARY KEY (professional_id, service_id)
+      );
+    `);
+
     // 4. Pacotes de Serviços
     await query(`
       CREATE TABLE IF NOT EXISTS public.service_packages (

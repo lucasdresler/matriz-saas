@@ -119,6 +119,7 @@ export async function syncProfessionalToScheduler(
     phone?: string;
     email?: string;
     isActive?: boolean;
+    serviceNames?: string[];
   }
 ) {
   if (!orgSlug) return;
@@ -158,19 +159,42 @@ export async function syncProfessionalToScheduler(
       profId = insRes.rows[0]?.id;
     }
 
-    // Vincular aos serviços ativos do estabelecimento
+    // Vincular aos serviços configurados ou a todos os ativos se não especificado
     if (profId && isActive) {
-      const servs = await pool.query(
-        'SELECT id FROM servico WHERE estabelecimento_id = $1 AND ativo = true;',
-        [estId]
-      );
-      for (const s of servs.rows) {
-        await pool.query(
-          `INSERT INTO profissional_servico (profissional_id, servico_id)
-           VALUES ($1, $2)
-           ON CONFLICT DO NOTHING;`,
-          [profId, s.id]
+      if (Array.isArray(prof.serviceNames)) {
+        // Remover vínculos anteriores e re-vincular apenas os selecionados
+        await pool.query('DELETE FROM profissional_servico WHERE profissional_id = $1;', [profId]);
+        if (prof.serviceNames.length > 0) {
+          const servs = await pool.query(
+            'SELECT id, nome FROM servico WHERE estabelecimento_id = $1 AND ativo = true;',
+            [estId]
+          );
+          const targetNames = prof.serviceNames.map((n) => n.trim().toLowerCase());
+          for (const s of servs.rows) {
+            if (targetNames.includes(s.nome.trim().toLowerCase())) {
+              await pool.query(
+                `INSERT INTO profissional_servico (profissional_id, servico_id)
+                 VALUES ($1, $2)
+                 ON CONFLICT DO NOTHING;`,
+                [profId, s.id]
+              );
+            }
+          }
+        }
+      } else {
+        // Modo padrão: vincular a todos os serviços ativos
+        const servs = await pool.query(
+          'SELECT id FROM servico WHERE estabelecimento_id = $1 AND ativo = true;',
+          [estId]
         );
+        for (const s of servs.rows) {
+          await pool.query(
+            `INSERT INTO profissional_servico (profissional_id, servico_id)
+             VALUES ($1, $2)
+             ON CONFLICT DO NOTHING;`,
+            [profId, s.id]
+          );
+        }
       }
 
       // Garantir grade semanal padrão ativa (0 a 6: Domingo a Sábado, 09:00 - 19:00)

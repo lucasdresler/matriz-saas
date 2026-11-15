@@ -58,9 +58,10 @@ export async function GET(req: NextRequest) {
 
     const professionals = profsRes.rows;
 
-    // Buscar disponibilidade de cada profissional
+    // Buscar disponibilidade e serviços de cada profissional
     const profIds = professionals.map((p: any) => p.id);
     let availability: any[] = [];
+    let profServices: any[] = [];
     if (profIds.length > 0) {
       const availRes = await query(
         `SELECT professional_id, day_of_week, start_time, end_time, break_start, break_end, is_active
@@ -70,11 +71,20 @@ export async function GET(req: NextRequest) {
         [profIds]
       );
       availability = availRes.rows;
+
+      const servRes = await query(
+        `SELECT professional_id, service_id
+         FROM professional_services
+         WHERE professional_id = ANY($1::uuid[]);`,
+        [profIds]
+      );
+      profServices = servRes.rows;
     }
 
     const professionalsWithSchedule = professionals.map((p: any) => ({
       ...p,
       availability: availability.filter((a: any) => a.professional_id === p.id),
+      service_ids: profServices.filter((s: any) => s.professional_id === p.id).map((s: any) => s.service_id),
     }));
 
     // 3. Pacotes de Serviços

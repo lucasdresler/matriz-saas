@@ -112,6 +112,7 @@ export default function AgendaModule({
     { day_of_week: 6, name: 'Sábado', start_time: '09:00', end_time: '18:00', break_start: '12:00', break_end: '13:00', is_active: true },
     { day_of_week: 7, name: 'Domingo', start_time: '09:00', end_time: '14:00', break_start: '12:00', break_end: '13:00', is_active: false },
   ]);
+  const [profServiceIds, setProfServiceIds] = useState<string[]>([]);
   const [profSaving, setProfSaving] = useState(false);
 
   // Modal de Pacote
@@ -252,6 +253,7 @@ export default function AgendaModule({
     setProfEmail('');
     setProfServiceComm('30');
     setProfProductComm('10');
+    setProfServiceIds(services.map((s) => s.id));
     setProfModalOpen(true);
   };
 
@@ -264,6 +266,11 @@ export default function AgendaModule({
     setProfEmail(prof.email || '');
     setProfServiceComm(String(prof.service_commission_pct || 30));
     setProfProductComm(String(prof.product_commission_pct || 10));
+    setProfServiceIds(
+      prof.service_ids && Array.isArray(prof.service_ids) && prof.service_ids.length > 0
+        ? prof.service_ids
+        : services.map((s) => s.id)
+    );
 
     // Se tiver disponibilidade, atualiza
     if (prof.availability && prof.availability.length > 0) {
@@ -300,6 +307,7 @@ export default function AgendaModule({
           serviceCommissionPct: profServiceComm,
           productCommissionPct: profProductComm,
           availability: profSchedule,
+          serviceIds: profServiceIds,
         }),
       });
       const data = await res.json();
@@ -1252,6 +1260,36 @@ export default function AgendaModule({
 
                     <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
                       <strong>Grade Semanal:</strong> Segunda a Sábado (09:00 - 19:00 com pausa)
+                    </div>
+
+                    <div style={{ marginTop: '10px', marginBottom: '8px' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        Serviços Habilitados:
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {services
+                          .filter((s) => (prof.service_ids || []).includes(s.id))
+                          .map((s) => (
+                            <span
+                              key={s.id}
+                              style={{
+                                fontSize: '0.7rem',
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                                color: '#93C5FD',
+                                border: '1px solid rgba(59, 130, 246, 0.25)',
+                              }}
+                            >
+                              ✂️ {s.name}
+                            </span>
+                          ))}
+                        {(!prof.service_ids || prof.service_ids.length === 0) && (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                            Nenhum serviço vinculado
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -2426,6 +2464,102 @@ export default function AgendaModule({
                     onChange={(e) => setProfProductComm(e.target.value)}
                     style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-subtle)', color: '#fff', fontSize: '0.84rem' }}
                   />
+                </div>
+              </div>
+
+              {/* Vínculo de Serviços Realizados */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 700 }}>
+                    ✂️ Serviços que este Profissional Realiza * ({profServiceIds.length} selecionados)
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setProfServiceIds(services.map((s) => s.id))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#60A5FA',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Selecionar Todos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProfServiceIds([])}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Limpar
+                    </button>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                    gap: '8px',
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-subtle)',
+                    maxHeight: '160px',
+                    overflowY: 'auto',
+                  }}
+                >
+                  {services.length > 0 ? (
+                    services.map((srv) => {
+                      const isChecked = profServiceIds.includes(srv.id);
+                      return (
+                        <label
+                          key={srv.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            backgroundColor: isChecked ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-surface)',
+                            border: isChecked ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid var(--border-subtle)',
+                            cursor: 'pointer',
+                            fontSize: '0.78rem',
+                            color: isChecked ? '#fff' : 'var(--text-secondary)',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setProfServiceIds([...profServiceIds, srv.id]);
+                              } else {
+                                setProfServiceIds(profServiceIds.filter((id) => id !== srv.id));
+                              }
+                            }}
+                          />
+                          <span style={{ fontWeight: isChecked ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {srv.name}
+                          </span>
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', gridColumn: '1 / -1' }}>
+                      Nenhum serviço cadastrado ainda. Cadastre serviços na aba &ldquo;Serviços&rdquo;.
+                    </span>
+                  )}
                 </div>
               </div>
 

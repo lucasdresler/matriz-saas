@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
       serviceCommissionPct = 0,
       productCommissionPct = 0,
       availability = [],
+      serviceIds = [],
     } = body;
 
     if (!name || !name.trim()) {
@@ -81,6 +82,37 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 1. Atualizar serviços vinculados (professional_services)
+    if (profId) {
+      await query('DELETE FROM professional_services WHERE professional_id = $1::uuid;', [profId]);
+      if (Array.isArray(serviceIds) && serviceIds.length > 0) {
+        for (const srvId of serviceIds) {
+          if (srvId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(srvId)) {
+            await query(
+              `INSERT INTO professional_services (professional_id, service_id)
+               VALUES ($1::uuid, $2::uuid)
+               ON CONFLICT DO NOTHING;`,
+              [profId, srvId]
+            );
+          }
+        }
+      }
+    }
+
+    // 2. Buscar nomes dos serviços vinculados para sincronizar com alllogic_scheduler
+    let serviceNames: string[] | undefined = undefined;
+    if (Array.isArray(serviceIds)) {
+      if (serviceIds.length > 0) {
+        const sRes = await query(
+          'SELECT name FROM services WHERE id = ANY($1::uuid[]);',
+          [serviceIds]
+        );
+        serviceNames = sRes.rows.map((r: any) => r.name);
+      } else {
+        serviceNames = [];
+      }
+    }
+
     // Sincronizar automaticamente com a agenda pública (alllogic_scheduler)
     try {
       const orgSlugRes = await query('SELECT slug FROM organizations WHERE id = $1 LIMIT 1;', [orgId]);
@@ -92,6 +124,7 @@ export async function POST(req: NextRequest) {
           phone: phone.trim(),
           email: email.trim(),
           isActive: true,
+          serviceNames,
         });
       }
     } catch (syncErr) {
