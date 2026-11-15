@@ -72,6 +72,7 @@ import {
   initialGedDocuments,
 } from '@/lib/mockData';
 import { Organization, Lead, LeadStatus, ChatMessage, Appointment, ServiceItem, KnowledgeDoc, SaaSClient, CobrancaRule, CobrancaNotificationLog, CobrancaStage, ReputacaoFeedback, ReputacaoConfig, GedDocument } from '@/types';
+import AgendaModule from '@/components/AgendaModule';
 
 type DashboardTab = 'overview' | 'kanban' | 'livechat' | 'agenda' | 'ai_brain' | 'whatsapp' | 'saas' | 'cobranca' | 'reputacao' | 'ged';
 type ImportedLeadRow = Record<string, unknown>;
@@ -454,7 +455,7 @@ export default function MatrizDashboard() {
   const [serviceSaving, setServiceSaving] = useState(false);
 
   // Carregar Serviços do Backend
-  useEffect(() => {
+  const loadServices = () => {
     fetch('/api/services')
       .then((r) => r.json())
       .then((data) => {
@@ -467,6 +468,10 @@ export default function MatrizDashboard() {
         }
       })
       .catch((err) => console.warn('Erro ao carregar serviços:', err));
+  };
+
+  useEffect(() => {
+    loadServices();
   }, []);
 
   // Estados para Configuração do Cérebro da IA & RAG (n8n & Banco)
@@ -2892,301 +2897,18 @@ export default function MatrizDashboard() {
           {/* ABA 4: AGILLEX AGENDA & CATÁLOGO DE SERVIÇOS            */}
           {/* ======================================================== */}
           {activeTab === 'agenda' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-              {/* Header do Módulo Agillex Agenda */}
-              <div
-                style={{
-                  padding: '20px 24px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%)',
-                  border: '1px solid rgba(59, 130, 246, 0.25)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '16px',
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#60A5FA', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Módulo Agillex Agenda
-                    </span>
-                    <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.2)', color: '#93C5FD', padding: '1px 8px', borderRadius: '99px', fontWeight: 600 }}>
-                      Plano Standalone ou Integrado
-                    </span>
-                  </div>
-                  <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#fff', margin: '2px 0 6px' }}>
-                    Agendamentos & Catálogo · {currentOrg.name}
-                  </h2>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '600px' }}>
-                    Página pública de autoatendimento, sincronização com Google Calendar e gestão de horários da sua equipe.
-                  </p>
-                </div>
-
-                {/* Ações da Página Pública de Agendamento */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={() => {
-                      const url = `https://agenda.agillex.com.br/${currentOrg.slug}`;
-                      window.open(url, '_blank');
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '9px 15px',
-                      borderRadius: '8px',
-                      backgroundColor: '#2563EB',
-                      color: '#fff',
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 10px rgba(37, 99, 235, 0.3)',
-                    }}
-                  >
-                    <ExternalLink size={15} /> Abrir Página Pública
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      const url = `https://agenda.agillex.com.br/${currentOrg.slug}`;
-                      navigator.clipboard.writeText(url);
-                      setCopiedLink(true);
-                      setTimeout(() => setCopiedLink(false), 2000);
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '9px 14px',
-                      borderRadius: '8px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid var(--border-hover)',
-                      color: copiedLink ? '#34D399' : '#fff',
-                      fontSize: '0.82rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {copiedLink ? <CheckCheck size={15} color="#34D399" /> : <Copy size={15} />}
-                    {copiedLink ? 'Link Copiado!' : 'Copiar Link'}
-                  </button>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#60A5FA', fontSize: '0.78rem', fontWeight: 600 }}>
-                    <CalendarCheck2 size={15} /> Google Calendar: Conectado
-                  </div>
-                </div>
-              </div>
-
-              {/* 4 Cards de Métricas do Agillex Agenda */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-                <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Total de Agendamentos</div>
-                  <div style={{ fontSize: '1.7rem', fontWeight: 700, color: '#fff' }}>{orgAppointments.length}</div>
-                  <div style={{ fontSize: '0.72rem', color: '#60A5FA', marginTop: '4px' }}>Registrados na plataforma</div>
-                </div>
-
-                <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Status das Reservas</div>
-                  <div style={{ fontSize: '1.7rem', fontWeight: 700, color: '#34D399' }}>
-                    {orgAppointments.filter((a) => a.status === 'confirmed').length}
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>100% Confirmados</div>
-                </div>
-
-                <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Serviços no Catálogo</div>
-                  <div style={{ fontSize: '1.7rem', fontWeight: 700, color: '#A78BFA' }}>{orgServices.length}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>Disponíveis para agendar</div>
-                </div>
-
-                <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>Agillex Pay (Intermediação)</div>
-                  <div style={{ fontSize: '1.7rem', fontWeight: 700, color: '#10B981' }}>R$ 1,99</div>
-                  <div style={{ fontSize: '0.72rem', color: '#34D399', marginTop: '4px', fontWeight: 600 }}>● Taxa fixa por agendamento pago</div>
-                </div>
-              </div>
-
-              {/* Seção 1: Catálogo de Serviços */}
-              <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)', padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>Catálogo de Serviços da Empresa</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
-                      Serviços que seus clientes encontram ao agendar pelo link web ou pelo WhatsApp.
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button
-                      onClick={handleOpenNewService}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        background: 'linear-gradient(135deg, #1F6FFF, #1754C7)',
-                        border: 'none',
-                        color: '#fff',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                      }}
-                    >
-                      <Plus size={14} /> Novo Serviço
-                    </button>
-                    <span style={{ fontSize: '0.75rem', color: '#60A5FA', background: 'rgba(59, 130, 246, 0.1)', padding: '4px 10px', borderRadius: '6px', fontWeight: 600 }}>
-                      {orgServices.length} serviços cadastrados
-                    </span>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
-                  {orgServices.map((srv) => (
-                    <div
-                      key={srv.id}
-                      style={{
-                        padding: '16px',
-                        borderRadius: '10px',
-                        backgroundColor: 'var(--bg-surface-elevated)',
-                        border: '1px solid var(--border-subtle)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                          <h4 style={{ fontSize: '0.92rem', fontWeight: 600, color: '#fff' }}>{srv.name}</h4>
-                          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#34D399' }}>
-                            R$ {srv.price.toFixed(2).replace('.', ',')}
-                          </span>
-                        </div>
-                        <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: '14px' }}>
-                          {srv.description}
-                        </p>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <button
-                            onClick={() => handleOpenEditService(srv)}
-                            style={{
-                              padding: '4px 8px',
-                              borderRadius: '6px',
-                              backgroundColor: 'rgba(31, 111, 255, 0.1)',
-                              border: '1px solid rgba(31, 111, 255, 0.25)',
-                              color: '#60A5FA',
-                              fontSize: '0.72rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                            }}
-                            title="Editar este serviço"
-                          >
-                            <Pencil size={12} /> Editar
-                          </button>
-                          <button
-                            onClick={() => handleDeleteService(srv.id, srv.name)}
-                            style={{
-                              padding: '4px 8px',
-                              borderRadius: '6px',
-                              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                              border: '1px solid rgba(239, 68, 68, 0.2)',
-                              color: '#F87171',
-                              fontSize: '0.72rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                            }}
-                            title="Excluir este serviço"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Seção 2: Tabela de Agendamentos */}
-              <div className="table-wrapper" style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '14px', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>Próximos Agendamentos</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
-                      Sincronizados com o Google Calendar e notificados via WhatsApp.
-                    </p>
-                  </div>
-                  <span style={{ fontSize: '0.75rem', background: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA', padding: '3px 8px', borderRadius: '6px', fontWeight: 600 }}>
-                    {orgAppointments.length} agendados
-                  </span>
-                </div>
-
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: 'var(--bg-surface-elevated)', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                      <th style={{ padding: '12px 16px' }}>Cliente</th>
-                      <th style={{ padding: '12px 16px' }}>Serviço</th>
-                      <th style={{ padding: '12px 16px' }}>Data & Horário</th>
-                      <th style={{ padding: '12px 16px' }}>Local / Profissional</th>
-                      <th style={{ padding: '12px 16px' }}>Duração</th>
-                      <th style={{ padding: '12px 16px' }}>Status</th>
-                      <th style={{ padding: '12px 16px' }}>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orgAppointments.length > 0 ? (
-                      orgAppointments.map((apt) => (
-                        <tr key={apt.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                          <td style={{ padding: '14px 16px', fontWeight: 600, color: '#fff' }}>{apt.leadName}</td>
-                          <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>{apt.serviceName}</td>
-                          <td style={{ padding: '14px 16px', color: '#34D399', fontWeight: 600 }}>{apt.date} às {apt.time}</td>
-                          <td style={{ padding: '14px 16px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>{apt.location || 'Consultório Principal'}</td>
-                          <td style={{ padding: '14px 16px', color: 'var(--text-muted)' }}>{apt.durationMinutes} min</td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <span style={{ fontSize: '0.72rem', background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', padding: '2px 8px', borderRadius: '99px', fontWeight: 600 }}>
-                              Confirmado (Online)
-                            </span>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <button
-                              onClick={() => {
-                                setRescheduleApt(apt);
-                                setRescheduleDate(apt.date);
-                                setRescheduleTime(apt.time);
-                                setRescheduleSuccess(false);
-                              }}
-                              style={{
-                                color: '#38BDF8',
-                                background: 'none',
-                                border: 'none',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                textDecoration: 'underline',
-                              }}
-                            >
-                              Remarcar
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                          Nenhum agendamento registrado ainda para esta empresa. Compartilhe o link da página pública para receber agendamentos!
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <AgendaModule
+              currentOrg={currentOrg}
+              services={orgServices}
+              onRefreshServices={loadServices}
+              appointments={orgAppointments}
+              onRefreshAppointments={() => {
+                loadServices();
+              }}
+              onOpenNewService={handleOpenNewService}
+              onOpenEditService={handleOpenEditService}
+              onDeleteService={handleDeleteService}
+            />
           )}
 
           {/* ======================================================== */}
