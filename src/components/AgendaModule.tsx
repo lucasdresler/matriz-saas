@@ -338,7 +338,7 @@ export default function AgendaModule({
       const data = await res.json();
       if (data?.success) {
         setSettingsSavedToast(true);
-        setTimeout(() => setSettingsSavedToast(false), 3000);
+        setTimeout(() => setSettingsSavedToast(false), 6000);
       }
     } catch (err) {
       console.error('Erro ao salvar configurações:', err);
@@ -2135,11 +2135,26 @@ export default function AgendaModule({
               </p>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {settingsSavedToast && (
-                <span style={{ fontSize: '0.82rem', color: '#34D399', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <CheckCheck size={16} /> Salvo com sucesso!
-                </span>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                    border: '1px solid #10B981',
+                    color: '#34D399',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    boxShadow: '0 0 12px rgba(16, 185, 129, 0.3)',
+                  }}
+                >
+                  <CheckCheck size={18} color="#34D399" />
+                  <span>✓ Alterações salvas com sucesso!</span>
+                </div>
               )}
               <button
                 type="submit"
@@ -3034,11 +3049,26 @@ export default function AgendaModule({
           </div>
 
           {/* Botão Inferior de Salvar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', paddingBottom: '30px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '14px', paddingBottom: '30px' }}>
             {settingsSavedToast && (
-              <span style={{ fontSize: '0.84rem', color: '#34D399', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <CheckCheck size={18} /> Configurações salvas e sincronizadas com sucesso!
-              </span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '9px 16px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                  border: '1px solid #10B981',
+                  color: '#34D399',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  boxShadow: '0 0 14px rgba(16, 185, 129, 0.35)',
+                }}
+              >
+                <CheckCheck size={20} color="#34D399" />
+                <span>✓ Configurações salvas e sincronizadas com sucesso!</span>
+              </div>
             )}
             <button
               type="submit"
