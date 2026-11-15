@@ -1395,100 +1395,122 @@ export default function MatrizDashboard() {
           </button>
         </div>
 
-        {/* WORKSPACE SWITCHER MULTI-TENANT */}
+        {/* IDENTIFICAÇÃO DA EMPRESA / WORKSPACE */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
           <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.05em' }}>
-            Empresa / Workspace
+            Empresa
           </div>
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
+          {currentUser?.role === 'super_admin' && organizations.length > 1 && currentOrg.slug === 'alllogic' ? (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--bg-surface-elevated)',
+                  border: '1px solid var(--border-subtle)',
+                  color: '#fff',
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: currentOrg.logoColor, flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {currentOrg.name}
+                  </span>
+                </div>
+                <ChevronDown size={15} color="var(--text-muted)" />
+              </button>
+              {workspaceError && (
+                <div role="alert" style={{ color: '#FCA5A5', fontSize: '0.72rem', marginTop: '6px' }}>
+                  {workspaceError}
+                </div>
+              )}
+
+              {/* Menu Dropdown de Workspaces para Super Admin */}
+              {orgDropdownOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '110%',
+                    left: 0,
+                    right: 0,
+                    backgroundColor: 'var(--bg-surface-elevated)',
+                    border: '1px solid var(--border-hover)',
+                    borderRadius: '10px',
+                    boxShadow: 'var(--shadow-lg)',
+                    zIndex: 50,
+                    overflow: 'hidden',
+                    padding: '4px',
+                  }}
+                >
+                  {organizations.map((org) => (
+                    <button
+                      key={org.id}
+                      onClick={() => {
+                        setActiveOrgId(org.id);
+                        const targetTab = (org.modules?.agenda && !org.modules?.crm && !org.modules?.atendimento)
+                          ? 'agenda'
+                          : getWorkspaceTab(activeTab, org);
+                        setActiveTab(targetTab);
+                        const workspaceLeads = leads.filter((lead) => (
+                          lead.orgId === org.id
+                          || (
+                            org.slug === 'alllogic'
+                            && (lead.orgId === 'org-alllogic' || lead.orgId === 'a0000000-0000-0000-0000-000000000001')
+                          )
+                        ));
+                        const firstActiveLead = workspaceLeads.find((lead) => messages[lead.id]?.length > 0);
+                        setSelectedLeadId(firstActiveLead?.id || workspaceLeads[0]?.id || '');
+                        setOrgDropdownOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        backgroundColor: org.id === activeOrgId ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                        color: org.id === activeOrgId ? '#fff' : 'var(--text-secondary)',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: org.logoColor }} />
+                        <span>{org.name}</span>
+                      </div>
+                      {org.id === activeOrgId && <Check size={14} color="#10B981" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Visualização estática para o cliente: sem dropdown nem chevron */
+            <div
               style={{
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                gap: '8px',
                 padding: '9px 12px',
                 borderRadius: '8px',
                 backgroundColor: 'var(--bg-surface-elevated)',
                 border: '1px solid var(--border-subtle)',
                 color: '#fff',
-                textAlign: 'left',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: currentOrg.logoColor, flexShrink: 0 }} />
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {currentOrg.name}
-                </span>
-              </div>
-              <ChevronDown size={15} color="var(--text-muted)" />
-            </button>
-            {workspaceError && (
-              <div role="alert" style={{ color: '#FCA5A5', fontSize: '0.72rem', marginTop: '6px' }}>
-                {workspaceError}
-              </div>
-            )}
-
-            {/* Menu Dropdown de Workspaces */}
-            {orgDropdownOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '110%',
-                  left: 0,
-                  right: 0,
-                  backgroundColor: 'var(--bg-surface-elevated)',
-                  border: '1px solid var(--border-hover)',
-                  borderRadius: '10px',
-                  boxShadow: 'var(--shadow-lg)',
-                  zIndex: 50,
-                  overflow: 'hidden',
-                  padding: '4px',
-                }}
-              >
-                {organizations.map((org) => (
-                  <button
-                    key={org.id}
-                    onClick={() => {
-                      setActiveOrgId(org.id);
-                      const targetTab = (org.modules?.agenda && !org.modules?.crm && !org.modules?.atendimento)
-                        ? 'agenda'
-                        : getWorkspaceTab(activeTab, org);
-                      setActiveTab(targetTab);
-                      const workspaceLeads = leads.filter((lead) => (
-                        lead.orgId === org.id
-                        || (
-                          org.slug === 'alllogic'
-                          && (lead.orgId === 'org-alllogic' || lead.orgId === 'a0000000-0000-0000-0000-000000000001')
-                        )
-                      ));
-                      const firstActiveLead = workspaceLeads.find((lead) => messages[lead.id]?.length > 0);
-                      setSelectedLeadId(firstActiveLead?.id || workspaceLeads[0]?.id || '');
-                      setOrgDropdownOpen(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      backgroundColor: org.id === activeOrgId ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                      color: org.id === activeOrgId ? '#fff' : 'var(--text-secondary)',
-                      fontSize: '0.82rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: org.logoColor }} />
-                      <span>{org.name}</span>
-                    </div>
-                    {org.id === activeOrgId && <Check size={14} color="#10B981" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: currentOrg.logoColor || '#38BDF8', flexShrink: 0 }} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentOrg.name}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Links de Navegação Modular */}
