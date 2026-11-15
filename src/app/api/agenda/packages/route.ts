@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { ensureAgendaTables } from '@/lib/agenda-db';
+import { syncPackageToScheduler } from '@/lib/scheduler-sync';
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,6 +49,24 @@ export async function POST(req: NextRequest) {
         [orgId, name.trim(), description.trim(), numPrice, numDays, numSessions]
       );
       pkgId = insRes.rows[0]?.id;
+    }
+
+    // Sincronizar automaticamente com a agenda pública (alllogic_scheduler)
+    try {
+      const orgSlugRes = await query('SELECT slug FROM organizations WHERE id = $1 LIMIT 1;', [orgId]);
+      const orgSlug = orgSlugRes.rows[0]?.slug;
+      if (orgSlug) {
+        await syncPackageToScheduler(orgSlug, {
+          name: name.trim(),
+          description: description.trim(),
+          price: numPrice,
+          sessionsCount: numSessions,
+          validityDays: numDays,
+          isActive: true,
+        });
+      }
+    } catch (syncErr) {
+      console.warn('[Packages API] Falha na sincronização com scheduler:', syncErr);
     }
 
     return NextResponse.json({ success: true, packageId: pkgId });

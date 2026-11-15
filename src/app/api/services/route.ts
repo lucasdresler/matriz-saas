@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { initialServices } from '@/lib/mockData';
+import { syncServiceToScheduler, deleteServiceFromScheduler } from '@/lib/scheduler-sync';
 
 async function resolveOrganizationId(rawOrgId: string | null) {
   if (!rawOrgId || rawOrgId === 'org-alllogic') {
@@ -105,6 +106,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Sincronizar automaticamente com a página pública da Agenda (alllogic_scheduler)
+    try {
+      const orgSlugRes = await query('SELECT slug FROM organizations WHERE id = $1 LIMIT 1;', [orgId]);
+      const orgSlug = orgSlugRes.rows[0]?.slug;
+      if (orgSlug) {
+        await syncServiceToScheduler(orgSlug, {
+          name: name.trim(),
+          price: numPrice,
+          durationMinutes: numDuration,
+          description: description.trim(),
+          isActive: true,
+        });
+      }
+    } catch (syncErr) {
+      console.warn('[Services API] Falha na sincronização com scheduler:', syncErr);
+    }
+
     return NextResponse.json({
       success: true,
       serviceId: res.rows[0]?.id,
@@ -125,6 +143,18 @@ export async function DELETE(req: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: 'ID do serviço é obrigatório' }, { status: 400 });
     }
+
+    // Obter nome antes de desativar para sincronizar desativação na Agenda pública
+    try {
+      const srvRes = await query('SELECT name, organization_id FROM services WHERE id = $1::uuid LIMIT 1;', [id]);
+      if (srvRes.rows[0]) {
+        const orgSlugRes = await query('SELECT slug FROM organizations WHERE id = $1 LIMIT 1;', [srvRes.rows[0].organization_id]);
+        const orgSlug = orgSlugRes.rows[0]?.slug;
+        if (orgSlug) {
+          await deleteServiceFromScheduler(orgSlug, srvRes.rows[0].name);
+        }
+      }
+    } catch (_) {}
 
     await query(
       'UPDATE services SET is_active = false WHERE id = $1::uuid AND ($2::uuid IS NULL OR organization_id = $2::uuid);',
