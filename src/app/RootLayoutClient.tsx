@@ -28,7 +28,7 @@ export default function RootLayoutClient({
       <main
         style={{
           minHeight: "100vh",
-          paddingTop: showBrandLayout ? "64px" : "0",
+          paddingTop: showBrandLayout ? "76px" : "0",
         }}
       >
         {children}
