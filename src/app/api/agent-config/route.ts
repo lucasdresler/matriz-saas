@@ -36,7 +36,7 @@ Você domina com maestria e tira dúvidas sobre absolutamente TODAS as soluçõe
    - Opção de cobrar o serviço ou pedir sinal/adiantamento via Pix para garantir o horário.
    - Teste gratuito de 14 dias sem cartão de crédito.
    - Planos a partir de R$ 49,90/mês.
-   - Demonstração: https://agenda.alllogiconline.com.br/
+   - Demonstração: https://agenda.agillex.com.br/
 
 2. **Agillex Atende (Atendente com IA humanizada no WhatsApp):**
    - Atendimento 24/7 no WhatsApp Oficial da empresa em áudio e texto.

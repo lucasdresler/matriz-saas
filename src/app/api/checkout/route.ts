@@ -197,11 +197,27 @@ export async function POST(request: Request) {
                 [orgId, user.id]
               );
             } else {
+              // Gerar slug limpo e direto da empresa (ex: salao-bonitao)
+              let finalSlug = tenantSlug;
+              const existingSlug = await client.query('SELECT id FROM public.organizations WHERE slug = $1 LIMIT 1;', [finalSlug]);
+              if (existingSlug.rows.length > 0) {
+                let counter = 2;
+                while (true) {
+                  const candidate = `${tenantSlug}-${counter}`;
+                  const check = await client.query('SELECT id FROM public.organizations WHERE slug = $1 LIMIT 1;', [candidate]);
+                  if (check.rows.length === 0) {
+                    finalSlug = candidate;
+                    break;
+                  }
+                  counter++;
+                }
+              }
+
               const orgRes = await client.query(
                 `INSERT INTO public.organizations (name, slug, category, plan, whatsapp_phone)
                  VALUES ($1, $2, $3, $4, $5)
                  RETURNING id, created_at;`,
-                [targetCompanyName, `${tenantSlug}-${Date.now().toString().slice(-4)}`, plan.module, plan.name, cleanPhone]
+                [targetCompanyName, finalSlug, plan.module, plan.name, cleanPhone]
               );
               orgId = orgRes.rows[0]?.id;
               orgCreatedAt = orgRes.rows[0]?.created_at;

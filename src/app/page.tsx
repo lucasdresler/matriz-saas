@@ -2928,7 +2928,7 @@ export default function MatrizDashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => {
-                      const url = `https://agenda.alllogiconline.com.br/${currentOrg.slug}`;
+                      const url = `https://agenda.agillex.com.br/${currentOrg.slug}`;
                       window.open(url, '_blank');
                     }}
                     style={{
@@ -2950,7 +2950,7 @@ export default function MatrizDashboard() {
 
                   <button
                     onClick={() => {
-                      const url = `https://agenda.alllogiconline.com.br/${currentOrg.slug}`;
+                      const url = `https://agenda.agillex.com.br/${currentOrg.slug}`;
                       navigator.clipboard.writeText(url);
                       setCopiedLink(true);
                       setTimeout(() => setCopiedLink(false), 2000);
@@ -6573,11 +6573,11 @@ export default function MatrizDashboard() {
                         flex: 1,
                       }}
                     >
-                      {`https://agenda.alllogiconline.com.br/${currentOrg.slug}`}
+                      {`https://agenda.agillex.com.br/${currentOrg.slug}`}
                     </span>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(`https://agenda.alllogiconline.com.br/${currentOrg.slug}`);
+                        navigator.clipboard.writeText(`https://agenda.agillex.com.br/${currentOrg.slug}`);
                         setCopiedLink(true);
                         setTimeout(() => setCopiedLink(false), 2000);
                       }}
@@ -6599,7 +6599,7 @@ export default function MatrizDashboard() {
                       {copiedLink ? 'Copiado!' : 'Copiar'}
                     </button>
                     <a
-                      href={`https://agenda.alllogiconline.com.br/${currentOrg.slug}`}
+                      href={`https://agenda.agillex.com.br/${currentOrg.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
@@ -6620,7 +6620,7 @@ export default function MatrizDashboard() {
                 {/* Atalho para o painel administrativo da Agenda */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
                   <a
-                    href="https://agenda.alllogiconline.com.br/admin"
+                    href={`https://agenda.agillex.com.br/admin/login?slug=${currentOrg.slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -7065,7 +7065,7 @@ export default function MatrizDashboard() {
 
             <div style={{ paddingTop: '12px', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
               <a
-                href="https://agenda.alllogiconline.com.br/admin"
+                href={`https://agenda.agillex.com.br/admin/login?slug=${currentOrg.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
