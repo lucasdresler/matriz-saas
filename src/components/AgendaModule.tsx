@@ -936,23 +936,6 @@ export default function AgendaModule({
             {copiedLink ? <CheckCheck size={15} color="#34D399" /> : <Copy size={15} />}
             {copiedLink ? 'Link Copiado!' : 'Copiar Link'}
           </button>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              backgroundColor: 'rgba(59, 130, 246, 0.12)',
-              border: '1px solid rgba(59, 130, 246, 0.3)',
-              color: '#60A5FA',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-            }}
-          >
-            <CalendarCheck2 size={15} /> Google Calendar: Conectado
-          </div>
         </div>
       </div>
 
