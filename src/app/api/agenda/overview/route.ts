@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { ensureAgendaTables } from '@/lib/agenda-db';
+import { getSchedulerPool } from '@/lib/scheduler-sync';
 
 async function resolveOrganizationId(rawOrgId: string | null) {
   if (!rawOrgId) {
@@ -167,6 +168,45 @@ export async function GET(req: NextRequest) {
       [orgId]
     );
 
+    const clients = [...clientsRes.rows];
+    try {
+      const orgSlug = settings?.slug;
+      if (orgSlug) {
+        const pool = getSchedulerPool();
+        const estRes = await pool.query('SELECT id FROM estabelecimento WHERE slug = $1 LIMIT 1;', [orgSlug]);
+        const estId = estRes.rows[0]?.id;
+        if (estId) {
+          const cliRes = await pool.query(
+            `SELECT 
+               c.id::text as id,
+               c.nome as name,
+               c.telefone as phone,
+               COALESCE(c.email, '') as email,
+               'ativo' as status,
+               c.criado_em as created_at,
+               COUNT(a.id) as total_appointments
+             FROM cliente c
+             LEFT JOIN agendamento a ON a.cliente_id = c.id
+             WHERE c.estabelecimento_id = $1
+             GROUP BY c.id, c.nome, c.telefone, c.email, c.criado_em
+             ORDER BY c.criado_em DESC;`,
+            [estId]
+          );
+
+          const existingPhones = new Set(clients.map((cl: any) => (cl.phone || '').replace(/\D/g, '')));
+          for (const sCli of cliRes.rows) {
+            const cleanPhone = (sCli.phone || '').replace(/\D/g, '');
+            if (!cleanPhone || !existingPhones.has(cleanPhone)) {
+              clients.push(sCli);
+              if (cleanPhone) existingPhones.add(cleanPhone);
+            }
+          }
+        }
+      }
+    } catch (sCliErr: any) {
+      console.warn('[Agenda Overview API] Aviso ao buscar clientes do scheduler:', sCliErr?.message || sCliErr);
+    }
+
     return NextResponse.json({
       success: true,
       settings,
@@ -176,7 +216,7 @@ export async function GET(req: NextRequest) {
       sales: salesRes.rows,
       debts: debtsRes.rows,
       commissions: commissionsRes.rows,
-      clients: clientsRes.rows,
+      clients,
     });
   } catch (error: any) {
     console.error('[Agenda Overview API] Erro ao carregar dados:', error);

@@ -178,6 +178,9 @@ export default function AgendaModule({
   const [clientSaving, setClientSaving] = useState(false);
   const [clientDeleting, setClientDeleting] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
+  const [clientDeleteModalOpen, setClientDeleteModalOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [clientDeleteToast, setClientDeleteToast] = useState(false);
 
   // Estado de salvamento das configurações
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -735,24 +738,33 @@ export default function AgendaModule({
     }
   };
 
-  const handleDeleteClient = async (clientId: string, clientName: string) => {
-    if (!confirm(`Deseja realmente excluir o cliente "${clientName}" da base da agenda?`)) {
-      return;
-    }
+  const handleOpenDeleteClient = (clientId: string, clientName: string) => {
+    setClientToDelete({ id: clientId, name: clientName });
+    setClientDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteClient = async () => {
+    if (!clientToDelete) return;
 
     try {
       setClientDeleting(true);
-      const res = await fetch(`/api/agenda/clients?id=${clientId}&orgId=${currentOrg.id}`, {
+      const res = await fetch(`/api/agenda/clients?id=${encodeURIComponent(clientToDelete.id)}&orgId=${currentOrg.id}`, {
         method: 'DELETE',
       });
 
       const data = await res.json();
       if (data?.success) {
-        if (editingClient?.id === clientId) {
+        setClients((prev) => prev.filter((c) => c.id !== clientToDelete.id));
+        if (editingClient?.id === clientToDelete.id) {
           setClientModalOpen(false);
           setEditingClient(null);
         }
+        setClientDeleteModalOpen(false);
+        setClientToDelete(null);
+        setClientDeleteToast(true);
+        setTimeout(() => setClientDeleteToast(false), 4000);
         await loadAgendaData();
+        if (onRefreshAppointments) onRefreshAppointments();
       } else {
         alert(data?.error || 'Erro ao excluir cliente.');
       }
@@ -1827,7 +1839,7 @@ export default function AgendaModule({
 
                           <button
                             type="button"
-                            onClick={() => handleDeleteClient(c.id, c.name)}
+                            onClick={() => handleOpenDeleteClient(c.id, c.name)}
                             title="Excluir cliente da agenda"
                             style={{
                               display: 'inline-flex',
@@ -4368,7 +4380,7 @@ export default function AgendaModule({
                   <button
                     type="button"
                     disabled={clientSaving || clientDeleting}
-                    onClick={() => handleDeleteClient(editingClient.id, editingClient.name)}
+                    onClick={() => handleOpenDeleteClient(editingClient.id, editingClient.name)}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -4436,6 +4448,150 @@ export default function AgendaModule({
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE CLIENTE COM BOTÃO SALVAR AÇÃO */}
+      {clientDeleteModalOpen && clientToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+            padding: '24px 16px',
+          }}
+          onClick={() => {
+            if (!clientDeleting) setClientDeleteModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '16px',
+              padding: '26px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+              <div
+                style={{
+                  padding: '12px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                  color: '#EF4444',
+                  flexShrink: 0,
+                }}
+              >
+                <Trash2 size={24} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>
+                  Excluir Cliente da Agenda
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', lineHeight: '1.4' }}>
+                  Deseja excluir permanentemente o cadastro de <strong style={{ color: '#fff' }}>{clientToDelete.name}</strong>?
+                </p>
+              </div>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                fontSize: '0.78rem',
+                color: '#FCA5A5',
+                lineHeight: '1.4',
+              }}
+            >
+              ⚠️ Esta ação removerá o cliente de forma definitiva da base de dados e do histórico da agenda do {currentOrg?.name}. Os dados não voltarão ao atualizar a página.
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
+              <button
+                type="button"
+                disabled={clientDeleting}
+                onClick={() => setClientDeleteModalOpen(false)}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  backgroundColor: 'transparent',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-subtle)',
+                  fontSize: '0.84rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={clientDeleting}
+                onClick={handleConfirmDeleteClient}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 18px',
+                  borderRadius: '8px',
+                  backgroundColor: '#DC2626',
+                  color: '#fff',
+                  border: 'none',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  cursor: clientDeleting ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {clientDeleting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Excluindo e Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} /> Salvar e Confirmar Exclusão
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST DE FEEDBACK DE EXCLUSÃO */}
+      {clientDeleteToast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            backgroundColor: '#10B981',
+            color: '#fff',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontWeight: 600,
+            fontSize: '0.86rem',
+          }}
+        >
+          <CheckCircle2 size={18} /> Cliente excluído com sucesso do banco de dados!
         </div>
       )}
     </div>

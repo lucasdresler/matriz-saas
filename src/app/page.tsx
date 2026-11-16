@@ -473,9 +473,28 @@ export default function MatrizDashboard() {
       .catch((err) => console.warn('Erro ao carregar serviços:', err));
   };
 
+  // Carregar Agendamentos do Backend
+  const loadAppointments = (targetOrgId?: string) => {
+    const orgToLoad = targetOrgId || activeOrgId;
+    const url = orgToLoad ? `/api/agenda/appointments?orgId=${encodeURIComponent(orgToLoad)}` : '/api/agenda/appointments';
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.appointments)) {
+          const normalized = data.appointments.map((a: Appointment) => ({
+            ...a,
+            orgId: (!a.orgId || a.orgId === 'a0000000-0000-0000-0000-000000000001') ? 'org-alllogic' : a.orgId,
+          }));
+          setAppointments(normalized);
+        }
+      })
+      .catch((err) => console.warn('Erro ao carregar agendamentos:', err));
+  };
+
   useEffect(() => {
     if (activeOrgId) {
       loadServices(activeOrgId);
+      loadAppointments(activeOrgId);
     }
   }, [activeOrgId]);
 
@@ -3010,7 +3029,8 @@ export default function MatrizDashboard() {
               onRefreshServices={loadServices}
               appointments={orgAppointments}
               onRefreshAppointments={() => {
-                loadServices();
+                loadAppointments(activeOrgId);
+                loadServices(activeOrgId);
               }}
               onOpenNewService={handleOpenNewService}
               onOpenEditService={handleOpenEditService}
