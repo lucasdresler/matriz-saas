@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/auth';
+import { ensureAgendaTables } from '@/lib/agenda-db';
 
 function getModules(category: string | null, slug: string, plan?: string | null, enabledModules?: string[] | null) {
   // O workspace master AllLogic possui todos os módulos para gestão corporativa
@@ -114,6 +115,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureAgendaTables();
     const isSuperAdmin = user.role === 'super_admin';
     const organizationsRes = isSuperAdmin
       ? await query(

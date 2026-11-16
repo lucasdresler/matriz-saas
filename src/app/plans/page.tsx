@@ -1,5 +1,7 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { SAAS_PLANS, type ModuleType } from '@/types/pricing';
+import ExpiredAlert from './ExpiredAlert';
 
 const products: Array<{ module: ModuleType; name: string; description: string; color: string }> = [
   {
@@ -62,9 +64,10 @@ export default function PlansPage() {
   return (
     <main style={{ minHeight: '100vh', padding: '0', background: '#060B18', color: '#fff', fontFamily: 'var(--font-sans)' }}>
       <div className="page-container">
-        <Link href="/trial-expired" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.85rem' }}>
-          ← Voltar ao Hub
-        </Link>
+        <Suspense fallback={null}>
+          <ExpiredAlert />
+        </Suspense>
+
         <header style={{ maxWidth: '760px', margin: '36px auto 48px', textAlign: 'center' }}>
           <p className="section-eyebrow">Família Agillex</p>
           <h1 className="section-title">Escolha como continuar</h1>

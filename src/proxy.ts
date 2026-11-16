@@ -182,11 +182,11 @@ export async function proxy(req: NextRequest) {
       if (hasExpiredTrial && !hasAccess) {
         if (pathname.startsWith('/api/')) {
           return NextResponse.json(
-            { error: 'TRIAL_EXPIRED', message: 'O período de teste terminou. Seus dados continuam preservados.' },
+            { error: 'TRIAL_EXPIRED', message: 'O período de teste de 14 dias terminou. Seus dados continuam 100% preservados.' },
             { status: 402 }
           );
         }
-        return NextResponse.redirect(new URL('/trial-expired', req.url));
+        return NextResponse.redirect(new URL('/plans?expired=true', req.url));
       }
     } catch (error) {
       console.error('[Trial Access] Falha ao verificar validade do teste:', error);
