@@ -104,7 +104,7 @@ export default function Footer() {
             >
               <li>
                 <a
-                  href="https://agillex.com.br/#produtos"
+                  href="https://agillex.com.br/#hub"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="footer-link"
@@ -114,7 +114,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://agillex.com.br/#produtos"
+                  href="https://agillex.com.br/#atende"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="footer-link"
@@ -124,7 +124,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://agillex.com.br/#produtos"
+                  href="https://agillex.com.br/#agenda"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="footer-link"
@@ -134,7 +134,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://agillex.com.br/#produtos"
+                  href="https://agillex.com.br/#cobranca"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="footer-link"
@@ -144,7 +144,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://agillex.com.br/#produtos"
+                  href="https://agillex.com.br/#reputacao"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="footer-link"
@@ -154,7 +154,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://agillex.com.br/#produtos"
+                  href="https://agillex.com.br/#ged"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="footer-link"

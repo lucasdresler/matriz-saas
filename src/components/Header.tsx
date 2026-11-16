@@ -173,7 +173,7 @@ export default function Header() {
                 {products.map((p) => (
                   <a
                     key={p.id}
-                    href="https://agillex.com.br/#produtos"
+                    href={`https://agillex.com.br/#${p.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setProductsOpen(false)}
@@ -303,7 +303,7 @@ export default function Header() {
           {products.map((p) => (
             <a
               key={p.id}
-              href="https://agillex.com.br/#produtos"
+              href={`https://agillex.com.br/#${p.id}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}

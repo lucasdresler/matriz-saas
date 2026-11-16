@@ -187,7 +187,7 @@ export default function AgillexNavbar({ onOpenTrial }: NavbarProps) {
                 {products.map((p) => (
                   <a
                     key={p.id}
-                    href="https://agillex.com.br/#produtos"
+                    href={`https://agillex.com.br/#${p.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -326,7 +326,7 @@ export default function AgillexNavbar({ onOpenTrial }: NavbarProps) {
           {products.map((p) => (
             <a
               key={p.id}
-              href="https://agillex.com.br/#produtos"
+              href={`https://agillex.com.br/#${p.id}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{

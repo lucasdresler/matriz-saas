@@ -77,12 +77,12 @@ export default function AgillexFooter() {
               Família Agillex
             </div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <li><a href="https://agillex.com.br/#produtos" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agillex Hub (Painel SaaS)</a></li>
-              <li><a href="https://agillex.com.br/#produtos" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agilex Atende (WhatsApp IA)</a></li>
-              <li><a href="https://agillex.com.br/#produtos" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agillex Agenda (Google Calendar)</a></li>
-              <li><a href="https://agillex.com.br/#produtos" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agillex Cobrança (Pix R$ 1,99)</a></li>
-              <li><a href="https://agillex.com.br/#produtos" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agillex Reputação (Google 5★)</a></li>
-              <li><a href="https://agillex.com.br/#produtos" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agillex GED (Documentos com IA)</a></li>
+              <li><a href="https://agillex.com.br/#hub" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agillex Hub (Painel SaaS)</a></li>
+              <li><a href="https://agillex.com.br/#atende" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agilex Atende (WhatsApp IA)</a></li>
+              <li><a href="https://agillex.com.br/#agenda" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agillex Agenda (Google Calendar)</a></li>
+              <li><a href="https://agillex.com.br/#cobranca" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agillex Cobrança (Pix R$ 1,99)</a></li>
+              <li><a href="https://agillex.com.br/#reputacao" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agillex Reputação (Google 5★)</a></li>
+              <li><a href="https://agillex.com.br/#ged" target="_blank" rel="noopener noreferrer" style={{ color: '#94A3B8', textDecoration: 'none' }}>Agillex GED (Documentos com IA)</a></li>
             </ul>
           </div>
 
