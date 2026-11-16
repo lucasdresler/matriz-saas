@@ -267,34 +267,7 @@ export const initialCobrancaRules: CobrancaRule[] = [
 ];
 
 // Histórico de notificações disparadas pela régua
-export const initialCobrancaLogs: CobrancaNotificationLog[] = [
-  {
-    id: 'log-1',
-    orgId: 'org-alllogic',
-    customerName: 'Studio Bella Vita',
-    customerPhone: '5511999887766',
-    paymentId: 'pay_9823412',
-    value: 99.9,
-    stage: 'confirmado',
-    channel: 'whatsapp',
-    status: 'sent',
-    sentAt: 'Hoje às 14:32',
-    description: 'Agillex Agenda Pro — Mensalidade',
-  },
-  {
-    id: 'log-2',
-    orgId: 'org-alllogic',
-    customerName: 'Dr. Roberto Cardoso',
-    customerPhone: '5511988776655',
-    paymentId: 'pay_7621453',
-    value: 249.9,
-    stage: 'preventivo',
-    channel: 'whatsapp',
-    status: 'sent',
-    sentAt: 'Hoje às 09:15',
-    description: 'Agillex Hub Pro (Atendimento + CRM)',
-  },
-];
+export const initialCobrancaLogs: CobrancaNotificationLog[] = [];
 
 // Configuração padrão do Agillex Reputação
 export const initialReputacaoConfig: ReputacaoConfig = {

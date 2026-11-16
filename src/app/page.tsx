@@ -143,10 +143,10 @@ export default function MatrizDashboard() {
   // Estados do Agillex Cobrança (Régua Inteligente Asaas Pix)
   const [cobrancaRules, setCobrancaRules] = useState<CobrancaRule[]>(initialCobrancaRules);
   const [cobrancaLogs, setCobrancaLogs] = useState<CobrancaNotificationLog[]>(initialCobrancaLogs);
-  const [simName, setSimName] = useState('Dresler Ferreira');
-  const [simPhone, setSimPhone] = useState('11966381915');
-  const [simValue, setSimValue] = useState('149.90');
-  const [simDesc, setSimDesc] = useState('Hospedagem & Agillex Hub Pro');
+  const [simName, setSimName] = useState('');
+  const [simPhone, setSimPhone] = useState('');
+  const [simValue, setSimValue] = useState('');
+  const [simDesc, setSimDesc] = useState('');
   const [simStage, setSimStage] = useState<CobrancaStage>('preventivo');
   const [simLoading, setSimLoading] = useState(false);
   const [simResult, setSimResult] = useState<{ success: boolean; text?: string } | null>(null);
@@ -155,16 +155,16 @@ export default function MatrizDashboard() {
   const [reputacaoConfig] = useState<ReputacaoConfig>(initialReputacaoConfig);
   const [reputacaoFeedbacks, setReputacaoFeedbacks] = useState<ReputacaoFeedback[]>(initialReputacaoFeedbacks);
   const [repSimRating, setRepSimRating] = useState<number>(5);
-  const [repSimName, setRepSimName] = useState('Lucas Dresler');
-  const [repSimPhone, setRepSimPhone] = useState('11966381915');
-  const [repSimService, setRepSimService] = useState('Agillex Atende Pro');
+  const [repSimName, setRepSimName] = useState('');
+  const [repSimPhone, setRepSimPhone] = useState('');
+  const [repSimService, setRepSimService] = useState('');
   const [repSimLoading, setRepSimLoading] = useState(false);
   const [repSimResult, setRepSimResult] = useState<{ success: boolean; text?: string } | null>(null);
   // Gerador de Resposta IA para Reviews
-  const [reviewAuthor, setReviewAuthor] = useState('Gabriel Siqueira');
+  const [reviewAuthor, setReviewAuthor] = useState('');
   const [reviewRating, setReviewRating] = useState<number>(5);
-  const [reviewComment, setReviewComment] = useState('Melhor atendimento e suporte técnico que já contratei! A automação no WhatsApp dobrou nossas vendas.');
-  const [aiGeneratedReply, setAiGeneratedReply] = useState<string>('Olá, Gabriel Siqueira! Muito obrigado pela avaliação de 5 estrelas e pela confiança na AllLogic Online. É uma honra apoiar sua empresa com soluções digitais e inteligência artificial aqui em São Paulo e em todo o Brasil. Conte sempre com a nossa equipe!');
+  const [reviewComment, setReviewComment] = useState('');
+  const [aiGeneratedReply, setAiGeneratedReply] = useState<string>('');
   const [aiReplyLoading, setAiReplyLoading] = useState(false);
   const [replyCopied, setReplyCopied] = useState(false);
 
@@ -3636,10 +3636,10 @@ export default function MatrizDashboard() {
                     <Receipt size={18} style={{ color: '#60A5FA' }} />
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
-                    48
+                    {cobrancaLogs.length}
                   </div>
                   <div style={{ fontSize: '0.74rem', color: '#60A5FA', marginTop: '6px', fontWeight: 600 }}>
-                    ↑ 100% monitoradas via régua
+                    {cobrancaLogs.length > 0 ? `↑ ${cobrancaLogs.length} monitoradas via régua` : 'Nenhuma fatura pendente'}
                   </div>
                 </div>
 
@@ -3656,10 +3656,10 @@ export default function MatrizDashboard() {
                     <BadgePercent size={18} style={{ color: '#10B981' }} />
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#34D399', letterSpacing: '-0.02em' }}>
-                    94.2%
+                    0%
                   </div>
                   <div style={{ fontSize: '0.74rem', color: '#10B981', marginTop: '6px', fontWeight: 600 }}>
-                    ★ Alta adesão pelo WhatsApp
+                    Aguardando liquidações
                   </div>
                 </div>
 
@@ -3676,7 +3676,7 @@ export default function MatrizDashboard() {
                     <TrendingUp size={18} style={{ color: '#34D399' }} />
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
-                    R$ 4.890,00
+                    R$ 0,00
                   </div>
                   <div style={{ fontSize: '0.74rem', color: '#34D399', marginTop: '6px', fontWeight: 600 }}>
                     Sem protesto ou desgaste
@@ -3696,10 +3696,10 @@ export default function MatrizDashboard() {
                     <ShieldCheck size={18} style={{ color: '#F59E0B' }} />
                   </div>
                   <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FBBF24', letterSpacing: '-0.02em' }}>
-                    -78%
+                    0%
                   </div>
                   <div style={{ fontSize: '0.74rem', color: '#F59E0B', marginTop: '6px', fontWeight: 600 }}>
-                    Comparado a boleto tradicional
+                    Monitoramento ativo
                   </div>
                 </div>
               </div>
@@ -3974,14 +3974,14 @@ export default function MatrizDashboard() {
                           const activeRule = cobrancaRules.find((r) => r.stage === simStage);
                           const template = activeRule?.template || '';
                           return template
-                            .replace(/{nome}/g, simName || 'Cliente')
-                            .replace(/{valor}/g, simValue)
+                            .replace(/{nome}/g, simName.trim() || 'Nome do Cliente')
+                            .replace(/{valor}/g, simValue.trim() || '0,00')
                             .replace(/{vencimento}/g, 'Hoje')
-                            .replace(/{descricao}/g, simDesc)
-                            .replace(/{pixCopiaECola}/g, '00020101021226840014br.gov.bcb.pix2562alllogic-pix-exemplopay5204000053039865802BR5920AllLogic Online6009Sao Paulo62070503***6304ABCD');
+                            .replace(/{descricao}/g, simDesc.trim() || 'Serviço')
+                            .replace(/{pixCopiaECola}/g, '[Chave Pix Copia e Cola]');
                         })()}
                         <div style={{ textAlign: 'right', fontSize: '0.65rem', color: 'rgba(255, 255, 255, 0.6)', marginTop: '6px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
-                          <span>14:32</span>
+                          <span>Agora</span>
                           <CheckCheck size={14} style={{ color: '#53bdeb' }} />
                         </div>
                       </div>
@@ -4083,61 +4083,69 @@ export default function MatrizDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {cobrancaLogs.map((log) => (
-                        <tr key={log.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
-                          <td style={{ padding: '12px 14px', color: '#fff', fontWeight: 600 }}>
-                            {log.customerName}
-                          </td>
-                          <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>
-                            {log.customerPhone}
-                          </td>
-                          <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>
-                            {log.description || 'Assinatura AllLogic'}
-                          </td>
-                          <td style={{ padding: '12px 14px', color: '#34D399', fontWeight: 700 }}>
-                            R$ {log.value.toFixed(2).replace('.', ',')}
-                          </td>
-                          <td style={{ padding: '12px 14px' }}>
-                            <span
-                              style={{
-                                fontSize: '0.72rem',
-                                padding: '2px 8px',
-                                borderRadius: '99px',
-                                fontWeight: 600,
-                                backgroundColor:
-                                  log.stage === 'preventivo' ? 'rgba(59, 130, 246, 0.15)' :
-                                  log.stage === 'vencimento' ? 'rgba(245, 158, 11, 0.15)' :
-                                  log.stage === 'recuperacao' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                                color:
-                                  log.stage === 'preventivo' ? '#60A5FA' :
-                                  log.stage === 'vencimento' ? '#FBBF24' :
-                                  log.stage === 'recuperacao' ? '#F87171' : '#34D399',
-                              }}
-                            >
-                              {log.stage === 'preventivo' ? 'Aviso Preventivo' :
-                               log.stage === 'vencimento' ? 'Vencimento Hoje' :
-                               log.stage === 'recuperacao' ? 'Recuperação' : 'Confirmado'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 14px' }}>
-                            <span
-                              style={{
-                                fontSize: '0.72rem',
-                                padding: '2px 8px',
-                                borderRadius: '99px',
-                                fontWeight: 600,
-                                backgroundColor: log.status === 'sent' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-                                color: log.status === 'sent' ? '#34D399' : '#60A5FA',
-                              }}
-                            >
-                              {log.status === 'sent' ? 'Entregue' : 'Simulado'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 14px', color: 'var(--text-muted)' }}>
-                            {log.sentAt}
+                      {cobrancaLogs.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} style={{ padding: '36px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.84rem' }}>
+                            Nenhuma notificação registrada ainda. As notificações automáticas via webhook Asaas e simulações aparecerão aqui.
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        cobrancaLogs.map((log) => (
+                          <tr key={log.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                            <td style={{ padding: '12px 14px', color: '#fff', fontWeight: 600 }}>
+                              {log.customerName}
+                            </td>
+                            <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>
+                              {log.customerPhone}
+                            </td>
+                            <td style={{ padding: '12px 14px', color: 'var(--text-secondary)' }}>
+                              {log.description || 'Assinatura AllLogic'}
+                            </td>
+                            <td style={{ padding: '12px 14px', color: '#34D399', fontWeight: 700 }}>
+                              R$ {log.value.toFixed(2).replace('.', ',')}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <span
+                                style={{
+                                  fontSize: '0.72rem',
+                                  padding: '2px 8px',
+                                  borderRadius: '99px',
+                                  fontWeight: 600,
+                                  backgroundColor:
+                                    log.stage === 'preventivo' ? 'rgba(59, 130, 246, 0.15)' :
+                                    log.stage === 'vencimento' ? 'rgba(245, 158, 11, 0.15)' :
+                                    log.stage === 'recuperacao' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                  color:
+                                    log.stage === 'preventivo' ? '#60A5FA' :
+                                    log.stage === 'vencimento' ? '#FBBF24' :
+                                    log.stage === 'recuperacao' ? '#F87171' : '#34D399',
+                                }}
+                              >
+                                {log.stage === 'preventivo' ? 'Aviso Preventivo' :
+                                 log.stage === 'vencimento' ? 'Vencimento Hoje' :
+                                 log.stage === 'recuperacao' ? 'Recuperação' : 'Confirmado'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <span
+                                style={{
+                                  fontSize: '0.72rem',
+                                  padding: '2px 8px',
+                                  borderRadius: '99px',
+                                  fontWeight: 600,
+                                  backgroundColor: log.status === 'sent' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                                  color: log.status === 'sent' ? '#34D399' : '#60A5FA',
+                                }}
+                              >
+                                {log.status === 'sent' ? 'Entregue' : 'Simulado'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 14px', color: 'var(--text-muted)' }}>
+                              {log.sentAt}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
