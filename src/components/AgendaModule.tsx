@@ -807,6 +807,31 @@ export default function AgendaModule({
 
   // Filtragem dos Agendamentos
   const filteredAppointments = useMemo(() => {
+    const now = new Date();
+    const formatLocal = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const todayStr = formatLocal(now);
+
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = formatLocal(tomorrow);
+
+    // Semana corrente (Segunda-feira a Domingo)
+    const currentDayOfWeek = now.getDay(); // 0 = Dom, 1 = Seg, 2 = Ter...
+    const diffToMonday = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diffToMonday);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    const weekStartStr = formatLocal(monday);
+    const weekEndStr = formatLocal(sunday);
+
     return appointments.filter((apt) => {
       // Filtro de texto
       if (searchQuery.trim()) {
@@ -819,10 +844,14 @@ export default function AgendaModule({
       if (statusFilter !== 'all' && apt.status !== statusFilter) return false;
 
       // Filtro temporal
-      if (timeFilter !== 'all') {
-        const todayStr = new Date().toISOString().substring(0, 10);
-        if (timeFilter === 'today' && apt.date !== todayStr) return false;
+      if (timeFilter === 'today') {
+        if (apt.date !== todayStr) return false;
+      } else if (timeFilter === 'tomorrow') {
+        if (apt.date !== tomorrowStr) return false;
+      } else if (timeFilter === 'week') {
+        if (!apt.date || apt.date < weekStartStr || apt.date > weekEndStr) return false;
       }
+
       return true;
     });
   }, [appointments, searchQuery, statusFilter, timeFilter]);
