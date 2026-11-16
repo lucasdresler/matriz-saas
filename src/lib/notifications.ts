@@ -151,6 +151,33 @@ Caso precise de qualquer orientação ou queira tirar dúvidas com nossa equipe 
   }
 
   /**
+   * Notifica o cliente via WhatsApp sobre novo módulo ativado durante o período de teste
+   */
+  async notifyTrialModuleAdded(data: {
+    customerName: string;
+    phone: string;
+    email: string;
+    planName: string;
+    trialEndDate: string;
+    companyName: string;
+  }): Promise<boolean> {
+    const cleanPhone = data.phone.replace(/\D/g, '');
+    const dateFormatted = new Date(data.trialEndDate).toLocaleDateString('pt-BR');
+
+    const message = `Olá, *${data.customerName}*! 🚀\n\nO módulo *${data.planName}* foi ativado com sucesso para a empresa *${data.companyName}* no seu período de testes!\n\nSeu teste gratuito continua ativo até *${dateFormatted}* com todos os recursos liberados.\n\n👉 Acesse seu painel com seu login habitual: https://hub.agillex.com.br\n\nAproveite para explorar as novidades!`;
+
+    try {
+      if (cleanPhone.length >= 10) {
+        return await this.sendWhatsAppText(cleanPhone, message);
+      }
+    } catch (err: any) {
+      console.warn('[NotificationService] Falha ao enviar WhatsApp de módulo adicionado:', err.message);
+    }
+
+    return false;
+  }
+
+  /**
    * Notifica a equipe AllLogic sobre novo lead de teste gratuito iniciado
    */
   async notifyNewTrialLead(data: {

@@ -43,7 +43,8 @@ export async function ensureAgendaTables() {
         ADD COLUMN IF NOT EXISTS pix_deposit_percent NUMERIC(5, 2) DEFAULT 0.00,
         ADD COLUMN IF NOT EXISTS pix_key_type VARCHAR(50) DEFAULT 'cpf_cnpj',
         ADD COLUMN IF NOT EXISTS pix_key VARCHAR(255),
-        ADD COLUMN IF NOT EXISTS asaas_wallet_id VARCHAR(100);
+        ADD COLUMN IF NOT EXISTS asaas_wallet_id VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS enabled_modules TEXT[] DEFAULT NULL;
     `);
 
     // 2. Profissionais

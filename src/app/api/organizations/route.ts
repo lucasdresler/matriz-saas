@@ -2,10 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/auth';
 
-function getModules(category: string | null, slug: string, plan?: string | null) {
+function getModules(category: string | null, slug: string, plan?: string | null, enabledModules?: string[] | null) {
   // O workspace master AllLogic possui todos os módulos para gestão corporativa
   if (slug === 'alllogic') {
     return { agenda: true, atendimento: true, crm: true, cobranca: true, reputacao: true, ged: true };
+  }
+
+  // 1. Prioridade absoluta para módulos habilitados individualmente pelo cliente ou admin
+  if (Array.isArray(enabledModules) && enabledModules.length > 0) {
+    const list = enabledModules.map((m) => String(m).toLowerCase().trim());
+    const isCombo = list.includes('combo') || list.includes('all') || list.includes('enterprise');
+    if (isCombo) {
+      return { agenda: true, atendimento: true, crm: true, cobranca: true, reputacao: true, ged: true };
+    }
+    return {
+      agenda: list.includes('agenda'),
+      atendimento: list.includes('atendimento') || list.includes('atende'),
+      crm: list.includes('crm') || list.includes('atendimento') || list.includes('atende'),
+      cobranca: list.includes('cobranca') || list.includes('cobrança'),
+      reputacao: list.includes('reputacao') || list.includes('reputação'),
+      ged: list.includes('ged'),
+    };
   }
 
   const p = (plan || '').toLowerCase();
@@ -101,7 +118,7 @@ export async function GET(request: NextRequest) {
     const organizationsRes = isSuperAdmin
       ? await query(
           `SELECT o.id, o.name, o.slug, o.category, o.plan, o.whatsapp_phone,
-                  o.whatsapp_status, o.ai_active,
+                  o.whatsapp_status, o.ai_active, o.created_at, o.enabled_modules,
                   COUNT(DISTINCT l.id)::int AS total_leads
            FROM public.organizations o
            LEFT JOIN public.leads l ON l.organization_id = o.id
@@ -110,7 +127,7 @@ export async function GET(request: NextRequest) {
         )
       : await query(
           `SELECT o.id, o.name, o.slug, o.category, o.plan, o.whatsapp_phone,
-                  o.whatsapp_status, o.ai_active,
+                  o.whatsapp_status, o.ai_active, o.created_at, o.enabled_modules,
                   COUNT(DISTINCT l.id)::int AS total_leads
            FROM public.organization_members om
            JOIN public.organizations o ON o.id = om.organization_id
@@ -132,7 +149,9 @@ export async function GET(request: NextRequest) {
       whatsappStatus: row.whatsapp_status || 'disconnected',
       aiActive: Boolean(row.ai_active),
       totalLeads: Number(row.total_leads || 0),
-      modules: getModules(row.category, row.slug, row.plan),
+      createdAt: row.created_at,
+      enabledModules: row.enabled_modules || null,
+      modules: getModules(row.category, row.slug, row.plan, row.enabled_modules),
     }));
 
     return NextResponse.json({ success: true, organizations });

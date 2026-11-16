@@ -1072,20 +1072,53 @@ export default function MatrizDashboard() {
     }).catch(() => {});
   };
 
-  // Ativação / Desativação de Módulos (Simulação de Upgrade e Contratação Modular)
-  const handleToggleModule = (moduleId: 'agenda' | 'atendimento' | 'crm') => {
+  // Ativação / Desativação de Módulos (Sincronizado com backend e período de teste)
+  const handleToggleModule = async (moduleId: 'agenda' | 'atendimento' | 'crm' | 'cobranca' | 'reputacao' | 'ged') => {
+    if (!activeOrgId) return;
+    const currentStatus = Boolean(currentOrg.modules?.[moduleId]);
+    const targetStatus = !currentStatus;
+
+    // Atualização otimista na interface
     setOrganizations((prev) =>
       prev.map((org) => {
         if (org.id === activeOrgId) {
           const updatedModules = {
             ...org.modules,
-            [moduleId]: !org.modules[moduleId],
+            [moduleId]: targetStatus,
+            ...(moduleId === 'atendimento' && targetStatus ? { crm: true } : {}),
           };
           return { ...org, modules: updatedModules };
         }
         return org;
       })
     );
+
+    try {
+      const res = await fetch('/api/organizations/modules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orgId: activeOrgId,
+          module: moduleId,
+          enabled: targetStatus,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Não foi possível atualizar o módulo.');
+        // Reverte se houver erro
+        setOrganizations((prev) =>
+          prev.map((org) => {
+            if (org.id === activeOrgId) {
+              return { ...org, modules: { ...org.modules, [moduleId]: currentStatus } };
+            }
+            return org;
+          })
+        );
+      }
+    } catch (err) {
+      console.error('Falha ao sincronizar módulo:', err);
+    }
   };
 
   // Função para calcular o momento de atividade mais recente de um lead
@@ -1779,6 +1812,40 @@ export default function MatrizDashboard() {
               </button>
             </div>
           )}
+
+          {/* BOTÃO PARA EXPERIMENTAR E ATIVAR MAIS MÓDULOS NO TESTE */}
+          <div style={{ marginTop: '12px', padding: '0 4px' }}>
+            <button
+              onClick={() => setModuleModalOpen(true)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(0, 245, 212, 0.08)',
+                border: '1px dashed rgba(0, 245, 212, 0.35)',
+                color: '#00F5D4',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0, 245, 212, 0.16)';
+                e.currentTarget.style.borderColor = 'rgba(0, 245, 212, 0.6)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0, 245, 212, 0.08)';
+                e.currentTarget.style.borderColor = 'rgba(0, 245, 212, 0.35)';
+              }}
+            >
+              <Sparkles size={15} />
+              <span>Experimentar Mais Módulos</span>
+            </button>
+          </div>
 
           {/* ADMIN MASTER (Exclusivo do Fundador/Dono na AllLogic Online & Agillex) */}
           {currentUser?.role === 'super_admin' && currentOrg.slug === 'alllogic' && (
@@ -5674,6 +5741,159 @@ export default function MatrizDashboard() {
                   }}
                 >
                   {currentOrg.modules?.crm ? 'Ativo' : 'Ativar'}
+                </button>
+              </div>
+
+              {/* Módulo Agillex Cobrança */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: currentOrg.modules?.cobranca ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                  border: currentOrg.modules?.cobranca ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#10B981',
+                    }}
+                  >
+                    <Receipt size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>Agillex Cobrança</div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      Régua ativa no WhatsApp e Pix Asaas com taxa de R$ 1,99
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleModule('cobranca')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    backgroundColor: currentOrg.modules?.cobranca ? '#10B981' : 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {currentOrg.modules?.cobranca ? 'Ativo' : 'Ativar'}
+                </button>
+              </div>
+
+              {/* Módulo Agillex Reputação */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: currentOrg.modules?.reputacao ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                  border: currentOrg.modules?.reputacao ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid var(--border-subtle)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#F59E0B',
+                    }}
+                  >
+                    <Star size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>Agillex Reputação</div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      Acelerador 5 estrelas no Google Maps e proteção de marca
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleModule('reputacao')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    backgroundColor: currentOrg.modules?.reputacao ? '#F59E0B' : 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {currentOrg.modules?.reputacao ? 'Ativo' : 'Ativar'}
+                </button>
+              </div>
+
+              {/* Módulo Agillex GED */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: currentOrg.modules?.ged ? 'rgba(139, 92, 246, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                  border: currentOrg.modules?.ged ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid var(--border-subtle)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#8B5CF6',
+                    }}
+                  >
+                    <FolderOpen size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>Agillex GED</div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      Gestão de Documentos com OCR e alertas automáticos
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleModule('ged')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    backgroundColor: currentOrg.modules?.ged ? '#8B5CF6' : 'rgba(255, 255, 255, 0.1)',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {currentOrg.modules?.ged ? 'Ativo' : 'Ativar'}
                 </button>
               </div>
             </div>
