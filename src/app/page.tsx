@@ -1816,7 +1816,10 @@ export default function MatrizDashboard() {
           {/* BOTÃO PARA EXPERIMENTAR E ATIVAR MAIS MÓDULOS NO TESTE */}
           <div style={{ marginTop: '12px', padding: '0 4px' }}>
             <button
-              onClick={() => setModuleModalOpen(true)}
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                setModuleModalOpen(true);
+              }}
               style={{
                 width: '100%',
                 display: 'flex',
@@ -5556,7 +5559,7 @@ export default function MatrizDashboard() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 100,
+            zIndex: 1100,
             padding: '16px',
           }}
           onClick={() => setModuleModalOpen(false)}
