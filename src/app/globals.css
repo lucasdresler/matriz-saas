@@ -320,18 +320,24 @@ body:not(.agillex-theme) { --login-bg: #0B132B; }
   position: sticky;
   top: 76px;
   flex-shrink: 0;
-  background-color: #0F172A;
-  border-right: 1px solid #1E293B;
+  background-color: #0F172A !important;
+  border-right: 1px solid #1E293B !important;
   display: flex;
   flex-direction: column;
   z-index: 40;
-  color: #F8FAFC;
+  color: #F8FAFC !important;
 }
 
+.app-sidebar * {
+  --border-subtle: #334155;
+  --border-hover: #475569;
+}
+
+.app-sidebar button,
+.app-sidebar div,
 .app-sidebar span,
-.app-sidebar label,
-.app-sidebar div {
-  /* Garante legibilidade clara na sidebar escura */
+.app-sidebar label {
+  color: #F8FAFC;
 }
 
 .sidebar-backdrop {
@@ -348,7 +354,8 @@ body:not(.agillex-theme) { --login-bg: #0B132B; }
   flex-direction: column;
   width: 100%;
   min-width: 0;
-  background-color: var(--bg-main);
+  background-color: var(--bg-main) !important;
+  color: var(--text-primary) !important;
 }
 
 .topbar-header {
@@ -356,18 +363,71 @@ body:not(.agillex-theme) { --login-bg: #0B132B; }
   position: sticky;
   top: 76px;
   z-index: 30;
-  border-bottom: 1px solid var(--border-subtle);
-  background-color: #FFFFFF;
+  border-bottom: 1px solid #CBD5E1 !important;
+  background-color: #FFFFFF !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
   flex-shrink: 0;
-  color: var(--text-primary);
+  color: #0F172A !important;
 }
 
-.topbar-title {
+.topbar-title,
+.topbar-header h1,
+.topbar-header strong {
   color: #0F172A !important;
+}
+
+.topbar-header span {
+  color: #475569 !important;
+}
+
+/* Títulos do Workspace (exceto WhatsApp mockup e banners escuros) */
+.main-wrapper h1:not(.chat-bubble-text):not(.wa-chat *):not(.hero-banner *),
+.main-wrapper h2:not(.chat-bubble-text):not(.wa-chat *):not(.hero-banner *),
+.main-wrapper h3:not(.chat-bubble-text):not(.wa-chat *):not(.hero-banner *),
+.main-wrapper h4:not(.chat-bubble-text):not(.wa-chat *):not(.hero-banner *),
+.main-wrapper h5:not(.chat-bubble-text):not(.wa-chat *):not(.hero-banner *) {
+  color: #0F172A !important;
+}
+
+/* Textos e Rótulos no Workspace */
+.main-wrapper label {
+  color: #334155 !important;
+  font-weight: 600;
+}
+
+/* Cards do Workspace */
+.main-wrapper .card,
+.main-wrapper div[style*="var(--bg-surface)"] {
+  background-color: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+  color: #0F172A !important;
+}
+
+/* Elementos de Formulário */
+.main-wrapper input:not([type="checkbox"]):not([type="radio"]):not(.wa-input),
+.main-wrapper select:not(.wa-select),
+.main-wrapper textarea:not(.wa-textarea) {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.main-wrapper input:focus,
+.main-wrapper select:focus,
+.main-wrapper textarea:focus {
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+.main-wrapper input::placeholder,
+.main-wrapper textarea::placeholder {
+  color: #94A3B8 !important;
 }
 
 .content-scroll {

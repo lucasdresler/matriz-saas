@@ -1463,19 +1463,19 @@ export default function MatrizDashboard() {
                   justifyContent: 'space-between',
                   padding: '9px 12px',
                   borderRadius: '8px',
-                  backgroundColor: 'var(--bg-surface-elevated)',
-                  border: '1px solid var(--border-subtle)',
-                  color: '#fff',
+                  backgroundColor: '#1E293B',
+                  border: '1px solid #334155',
+                  color: '#F8FAFC',
                   textAlign: 'left',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
                   <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: currentOrg.logoColor, flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#F8FAFC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {currentOrg.name}
                   </span>
                 </div>
-                <ChevronDown size={15} color="var(--text-muted)" />
+                <ChevronDown size={15} color="#94A3B8" />
               </button>
               {workspaceError && (
                 <div role="alert" style={{ color: '#FCA5A5', fontSize: '0.72rem', marginTop: '6px' }}>
@@ -1552,13 +1552,13 @@ export default function MatrizDashboard() {
                 gap: '8px',
                 padding: '9px 12px',
                 borderRadius: '8px',
-                backgroundColor: 'var(--bg-surface-elevated)',
-                border: '1px solid var(--border-subtle)',
-                color: '#fff',
+                backgroundColor: '#1E293B',
+                border: '1px solid #334155',
+                color: '#F8FAFC',
               }}
             >
               <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: currentOrg.logoColor || '#38BDF8', flexShrink: 0 }} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#F8FAFC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentOrg.name}
               </span>
             </div>
@@ -3570,15 +3570,15 @@ export default function MatrizDashboard() {
                       <Receipt size={22} />
                     </div>
                     <div>
-                      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                      <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#064E3B', margin: 0 }}>
                         Agillex Cobrança Inteligente
                       </h2>
-                      <p style={{ fontSize: '0.8rem', color: '#10B981', margin: 0, fontWeight: 600 }}>
+                      <p style={{ fontSize: '0.8rem', color: '#047857', margin: 0, fontWeight: 700 }}>
                         Régua Ativa WhatsApp Oficial + Pix Copia e Cola via Asaas API (Taxa Fixa R$ 1,99)
                       </p>
                     </div>
                   </div>
-                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', maxWidth: '720px', lineHeight: '1.5', margin: 0 }}>
+                  <p style={{ fontSize: '0.84rem', color: '#334155', maxWidth: '720px', lineHeight: '1.5', margin: 0, fontWeight: 500 }}>
                     Automatize 100% da sua régua de cobrança: lembretes preventivos antes do vencimento, alertas no dia da fatura e recuperação cordial de inadimplência direto no WhatsApp com o código Pix pronto para pagar.
                   </p>
                 </div>
@@ -3591,14 +3591,14 @@ export default function MatrizDashboard() {
                       gap: '8px',
                       padding: '8px 14px',
                       borderRadius: '8px',
-                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      backgroundColor: '#D1FAE5',
+                      border: '1px solid #6EE7B7',
                       fontSize: '0.78rem',
-                      color: '#34D399',
-                      fontWeight: 600,
+                      color: '#065F46',
+                      fontWeight: 700,
                     }}
                   >
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' }} />
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#059669', boxShadow: '0 0 8px #059669' }} />
                     Webhook Asaas Conectado
                   </div>
                   <div
@@ -3608,11 +3608,11 @@ export default function MatrizDashboard() {
                       gap: '8px',
                       padding: '8px 14px',
                       borderRadius: '8px',
-                      backgroundColor: 'rgba(59, 130, 246, 0.12)',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      backgroundColor: '#EFF6FF',
+                      border: '1px solid #BFDBFE',
                       fontSize: '0.78rem',
-                      color: '#60A5FA',
-                      fontWeight: 600,
+                      color: '#1D4ED8',
+                      fontWeight: 700,
                     }}
                   >
                     <Zap size={14} />
@@ -3625,80 +3625,84 @@ export default function MatrizDashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
                 <div
                   style={{
-                    backgroundColor: 'var(--bg-surface)',
+                    backgroundColor: '#FFFFFF',
                     borderRadius: '12px',
-                    border: '1px solid var(--border-subtle)',
+                    border: '1px solid #CBD5E1',
                     padding: '18px 20px',
+                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Faturas Monitoradas</span>
-                    <Receipt size={18} style={{ color: '#60A5FA' }} />
+                    <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>Faturas Monitoradas</span>
+                    <Receipt size={18} style={{ color: '#2563EB' }} />
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
                     {cobrancaLogs.length}
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: '#60A5FA', marginTop: '6px', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.74rem', color: '#1D4ED8', marginTop: '6px', fontWeight: 700 }}>
                     {cobrancaLogs.length > 0 ? `↑ ${cobrancaLogs.length} monitoradas via régua` : 'Nenhuma fatura pendente'}
                   </div>
                 </div>
 
                 <div
                   style={{
-                    backgroundColor: 'var(--bg-surface)',
+                    backgroundColor: '#FFFFFF',
                     borderRadius: '12px',
-                    border: '1px solid var(--border-subtle)',
+                    border: '1px solid #CBD5E1',
                     padding: '18px 20px',
+                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Taxa de Liquidação Pix</span>
-                    <BadgePercent size={18} style={{ color: '#10B981' }} />
+                    <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>Taxa de Liquidação Pix</span>
+                    <BadgePercent size={18} style={{ color: '#059669' }} />
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#34D399', letterSpacing: '-0.02em' }}>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#059669', letterSpacing: '-0.02em' }}>
                     0%
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: '#10B981', marginTop: '6px', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.74rem', color: '#047857', marginTop: '6px', fontWeight: 700 }}>
                     Aguardando liquidações
                   </div>
                 </div>
 
                 <div
                   style={{
-                    backgroundColor: 'var(--bg-surface)',
+                    backgroundColor: '#FFFFFF',
                     borderRadius: '12px',
-                    border: '1px solid var(--border-subtle)',
+                    border: '1px solid #CBD5E1',
                     padding: '18px 20px',
+                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Recuperado no Mês</span>
-                    <TrendingUp size={18} style={{ color: '#34D399' }} />
+                    <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>Recuperado no Mês</span>
+                    <TrendingUp size={18} style={{ color: '#059669' }} />
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
                     R$ 0,00
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: '#34D399', marginTop: '6px', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.74rem', color: '#047857', marginTop: '6px', fontWeight: 700 }}>
                     Sem protesto ou desgaste
                   </div>
                 </div>
 
                 <div
                   style={{
-                    backgroundColor: 'var(--bg-surface)',
+                    backgroundColor: '#FFFFFF',
                     borderRadius: '12px',
-                    border: '1px solid var(--border-subtle)',
+                    border: '1px solid #CBD5E1',
                     padding: '18px 20px',
+                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Queda na Inadimplência</span>
-                    <ShieldCheck size={18} style={{ color: '#F59E0B' }} />
+                    <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 600 }}>Queda na Inadimplência</span>
+                    <ShieldCheck size={18} style={{ color: '#D97706' }} />
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#FBBF24', letterSpacing: '-0.02em' }}>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#D97706', letterSpacing: '-0.02em' }}>
                     0%
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: '#F59E0B', marginTop: '6px', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.74rem', color: '#B45309', marginTop: '6px', fontWeight: 700 }}>
                     Monitoramento ativo
                   </div>
                 </div>
@@ -3709,8 +3713,8 @@ export default function MatrizDashboard() {
                 {/* Coluna 1: Etapas da Régua */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px' }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Clock size={18} style={{ color: '#10B981' }} />
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Clock size={18} style={{ color: '#059669' }} />
                       Etapas da Régua Inteligente
                     </h3>
                     <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
@@ -3722,9 +3726,10 @@ export default function MatrizDashboard() {
                     <div
                       key={rule.id}
                       style={{
-                        backgroundColor: 'var(--bg-surface)',
+                        backgroundColor: '#FFFFFF',
                         borderRadius: '10px',
-                        border: rule.active ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-subtle)',
+                        border: rule.active ? '1px solid #A7F3D0' : '1px solid #CBD5E1',
+                        boxShadow: '0 2px 6px rgba(15, 23, 42, 0.04)',
                         padding: '16px',
                         opacity: rule.active ? 1 : 0.6,
                         transition: 'all 0.2s ease',
@@ -3733,7 +3738,7 @@ export default function MatrizDashboard() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0F172A' }}>
                               {rule.title}
                             </span>
                             <span
@@ -3741,15 +3746,15 @@ export default function MatrizDashboard() {
                                 fontSize: '0.68rem',
                                 padding: '2px 8px',
                                 borderRadius: '99px',
-                                fontWeight: 600,
+                                fontWeight: 700,
                                 backgroundColor:
-                                  rule.stage === 'preventivo' ? 'rgba(59, 130, 246, 0.15)' :
-                                  rule.stage === 'vencimento' ? 'rgba(245, 158, 11, 0.15)' :
-                                  rule.stage === 'recuperacao' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                  rule.stage === 'preventivo' ? '#EFF6FF' :
+                                  rule.stage === 'vencimento' ? '#FEF3C7' :
+                                  rule.stage === 'recuperacao' ? '#FEE2E2' : '#ECFDF5',
                                 color:
-                                  rule.stage === 'preventivo' ? '#60A5FA' :
-                                  rule.stage === 'vencimento' ? '#FBBF24' :
-                                  rule.stage === 'recuperacao' ? '#F87171' : '#34D399',
+                                  rule.stage === 'preventivo' ? '#1D4ED8' :
+                                  rule.stage === 'vencimento' ? '#B45309' :
+                                  rule.stage === 'recuperacao' ? '#B91C1C' : '#047857',
                               }}
                             >
                               {rule.timingLabel}
@@ -3764,12 +3769,13 @@ export default function MatrizDashboard() {
                               setSimStage(rule.stage);
                             }}
                             style={{
-                              fontSize: '0.7rem',
-                              padding: '4px 8px',
+                              fontSize: '0.72rem',
+                              padding: '4px 10px',
                               borderRadius: '6px',
-                              backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                              color: 'var(--text-secondary)',
-                              border: '1px solid var(--border-subtle)',
+                              backgroundColor: '#EFF6FF',
+                              color: '#1D4ED8',
+                              border: '1px solid #BFDBFE',
+                              fontWeight: 600,
                               cursor: 'pointer',
                             }}
                           >
@@ -3782,10 +3788,10 @@ export default function MatrizDashboard() {
                               fontSize: '0.72rem',
                               padding: '4px 10px',
                               borderRadius: '6px',
-                              backgroundColor: rule.active ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                              color: rule.active ? '#34D399' : 'var(--text-muted)',
-                              border: rule.active ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-subtle)',
-                              fontWeight: 600,
+                              backgroundColor: rule.active ? '#ECFDF5' : '#F1F5F9',
+                              color: rule.active ? '#059669' : '#64748B',
+                              border: rule.active ? '1px solid #A7F3D0' : '1px solid #CBD5E1',
+                              fontWeight: 700,
                               cursor: 'pointer',
                             }}
                           >
@@ -3796,12 +3802,12 @@ export default function MatrizDashboard() {
 
                       <div
                         style={{
-                          backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                          backgroundColor: '#F8FAFC',
                           borderRadius: '8px',
                           padding: '12px',
-                          border: '1px solid rgba(255, 255, 255, 0.05)',
-                          fontSize: '0.8rem',
-                          color: '#E2E8F0',
+                          border: '1px solid #E2E8F0',
+                          fontSize: '0.82rem',
+                          color: '#1E293B',
                           lineHeight: '1.5',
                           whiteSpace: 'pre-wrap',
                           fontFamily: 'system-ui, sans-serif',
@@ -3816,9 +3822,10 @@ export default function MatrizDashboard() {
                 {/* Coluna 2: Simulador de Disparo e Live Preview */}
                 <div
                   style={{
-                    backgroundColor: 'var(--bg-surface)',
+                    backgroundColor: '#FFFFFF',
                     borderRadius: '12px',
-                    border: '1px solid var(--border-subtle)',
+                    border: '1px solid #CBD5E1',
+                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
                     padding: '20px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -3826,18 +3833,18 @@ export default function MatrizDashboard() {
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Sparkles size={18} style={{ color: '#FBBF24' }} />
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Sparkles size={18} style={{ color: '#D97706' }} />
                       Simulador de Disparo WhatsApp
                     </h3>
-                    <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: 600 }}>
+                    <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700 }}>
                       Teste Instantâneo
                     </span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
-                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '0.75rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
                         Nome do Titular
                       </label>
                       <input
@@ -3848,15 +3855,16 @@ export default function MatrizDashboard() {
                           width: '100%',
                           padding: '8px 12px',
                           borderRadius: '8px',
-                          backgroundColor: 'var(--bg-surface-elevated)',
-                          border: '1px solid var(--border-subtle)',
-                          color: '#fff',
+                          backgroundColor: '#FFFFFF',
+                          border: '1px solid #CBD5E1',
+                          color: '#0F172A',
                           fontSize: '0.82rem',
+                          fontWeight: 500,
                         }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '0.75rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
                         WhatsApp com DDD
                       </label>
                       <input
@@ -3867,10 +3875,11 @@ export default function MatrizDashboard() {
                           width: '100%',
                           padding: '8px 12px',
                           borderRadius: '8px',
-                          backgroundColor: 'var(--bg-surface-elevated)',
-                          border: '1px solid var(--border-subtle)',
-                          color: '#fff',
+                          backgroundColor: '#FFFFFF',
+                          border: '1px solid #CBD5E1',
+                          color: '#0F172A',
                           fontSize: '0.82rem',
+                          fontWeight: 500,
                         }}
                       />
                     </div>
@@ -3878,7 +3887,7 @@ export default function MatrizDashboard() {
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
-                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '0.75rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
                         Valor da Fatura (R$)
                       </label>
                       <input
@@ -3889,15 +3898,16 @@ export default function MatrizDashboard() {
                           width: '100%',
                           padding: '8px 12px',
                           borderRadius: '8px',
-                          backgroundColor: 'var(--bg-surface-elevated)',
-                          border: '1px solid var(--border-subtle)',
-                          color: '#fff',
+                          backgroundColor: '#FFFFFF',
+                          border: '1px solid #CBD5E1',
+                          color: '#0F172A',
                           fontSize: '0.82rem',
+                          fontWeight: 500,
                         }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '0.75rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
                         Etapa da Régua
                       </label>
                       <select
@@ -3907,10 +3917,11 @@ export default function MatrizDashboard() {
                           width: '100%',
                           padding: '8px 12px',
                           borderRadius: '8px',
-                          backgroundColor: 'var(--bg-surface-elevated)',
-                          border: '1px solid var(--border-subtle)',
-                          color: '#fff',
+                          backgroundColor: '#FFFFFF',
+                          border: '1px solid #CBD5E1',
+                          color: '#0F172A',
                           fontSize: '0.82rem',
+                          fontWeight: 500,
                         }}
                       >
                         <option value="preventivo">Aviso Preventivo (D-2)</option>
@@ -3922,7 +3933,7 @@ export default function MatrizDashboard() {
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '0.75rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
                       Descrição do Serviço / Fatura
                     </label>
                     <input
@@ -3933,10 +3944,11 @@ export default function MatrizDashboard() {
                         width: '100%',
                         padding: '8px 12px',
                         borderRadius: '8px',
-                        backgroundColor: 'var(--bg-surface-elevated)',
-                        border: '1px solid var(--border-subtle)',
-                        color: '#fff',
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid #CBD5E1',
+                        color: '#0F172A',
                         fontSize: '0.82rem',
+                        fontWeight: 500,
                       }}
                     />
                   </div>
