@@ -1,50 +1,55 @@
 :root {
-  /* AllLogic Online Official Dark Navy Palette */
-  --bg-main: #060E1E;
-  --bg-surface: #0A172E;
-  --bg-surface-elevated: #0F2244;
-  --bg-surface-hover: #162E5A;
-  --bg-card: rgba(10, 23, 46, 0.85);
-  --border-subtle: rgba(31, 111, 255, 0.14);
-  --border-hover: rgba(31, 111, 255, 0.28);
-  --border-active: rgba(31, 111, 255, 0.5);
+  /* AllLogic Online — Paleta Executiva Agillex Hub (Sidebar Escura + Miolo Suave #E2E8F0) */
+  --bg-main: #E2E8F0;                /* Fundo aveludado da área de trabalho central */
+  --bg-surface: #FFFFFF;             /* Superfície dos cards e painéis */
+  --bg-surface-elevated: #F8FAFC;    /* Caixas internas elevadas e formulários */
+  --bg-surface-hover: #F1F5F9;       /* Hover de cards e linhas de tabela */
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --border-subtle: #CBD5E1;          /* Divisores nítidos */
+  --border-hover: #94A3B8;
+  --border-active: #2563EB;
 
-  --text-primary: #FFFFFF;
-  --text-secondary: #E2E8F0;
-  --text-muted: #94A3B8;
-  --text-subtle: #CBD5E1;
-  --text-inverse: #060E1E;
+  --sidebar-bg: #0F172A;             /* Sidebar escura executiva */
+  --sidebar-border: #1E293B;
+  --sidebar-text: #F8FAFC;
+  --sidebar-text-muted: #94A3B8;
+
+  --text-primary: #0F172A;           /* Texto principal de alto contraste */
+  --text-secondary: #334155;         /* Texto secundário e rótulos de leitura limpa */
+  --text-muted: #64748B;             /* Rótulos e legendas legíveis */
+  --text-subtle: #475569;
+  --text-inverse: #FFFFFF;
 
   /* Cores Institucionais AllLogic Online */
   --alllogic-navy: #0A1F44;
   --alllogic-blue: #1F6FFF;
-  --alllogic-blue-glow: rgba(31, 111, 255, 0.35);
-  --alllogic-blue-subtle: rgba(31, 111, 255, 0.12);
+  --alllogic-blue-glow: rgba(31, 111, 255, 0.25);
+  --alllogic-blue-subtle: rgba(31, 111, 255, 0.08);
   --alllogic-gold: #C9A227;
   --alllogic-gold-light: #DFB738;
-  --alllogic-gold-subtle: rgba(201, 162, 39, 0.14);
+  --alllogic-gold-subtle: rgba(201, 162, 39, 0.12);
 
-  --emerald-500: #10B981;
-  --emerald-400: #34D399;
-  --emerald-600: #059669;
-  --emerald-glow: rgba(16, 185, 129, 0.2);
-  --emerald-subtle: rgba(16, 185, 129, 0.1);
+  --emerald-500: #059669;
+  --emerald-400: #10B981;
+  --emerald-600: #047857;
+  --emerald-glow: rgba(16, 185, 129, 0.18);
+  --emerald-subtle: rgba(16, 185, 129, 0.08);
 
-  --blue-500: #1F6FFF;
-  --blue-subtle: rgba(31, 111, 255, 0.14);
-  --purple-500: #6366F1;
-  --purple-subtle: rgba(99, 102, 241, 0.12);
-  --amber-500: #C9A227;
-  --amber-subtle: rgba(201, 162, 39, 0.14);
-  --rose-500: #EF4444;
-  --rose-subtle: rgba(239, 68, 68, 0.12);
+  --blue-500: #2563EB;
+  --blue-subtle: rgba(37, 99, 235, 0.1);
+  --purple-500: #7C3AED;
+  --purple-subtle: rgba(124, 58, 237, 0.08);
+  --amber-500: #D97706;
+  --amber-subtle: rgba(217, 119, 6, 0.1);
+  --rose-500: #DC2626;
+  --rose-subtle: rgba(220, 38, 38, 0.1);
 
   --wa-green: #25D366;
   --wa-dark-green: #075E54;
   --wa-teal: #128C7E;
-  --wa-bubble-me: #005C4B;
-  --wa-bubble-lead: #202C33;
-  --wa-chat-bg: #0B141A;
+  --wa-bubble-me: #DCF8C6;
+  --wa-bubble-lead: #FFFFFF;
+  --wa-chat-bg: #EFEAE2;
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -52,10 +57,10 @@
   --radius-xl: 20px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 12px 28px -6px rgba(0, 0, 0, 0.5), 0 8px 10px -4px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 25px -4px rgba(31, 111, 255, 0.3);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 10px 25px -4px rgba(15, 23, 42, 0.1);
+  --shadow-glow: 0 0 20px -2px rgba(37, 99, 235, 0.2);
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -315,11 +320,18 @@ body:not(.agillex-theme) { --login-bg: #0B132B; }
   position: sticky;
   top: 76px;
   flex-shrink: 0;
-  background-color: var(--bg-surface);
-  border-right: 1px solid var(--border-subtle);
+  background-color: #0F172A;
+  border-right: 1px solid #1E293B;
   display: flex;
   flex-direction: column;
   z-index: 40;
+  color: #F8FAFC;
+}
+
+.app-sidebar span,
+.app-sidebar label,
+.app-sidebar div {
+  /* Garante legibilidade clara na sidebar escura */
 }
 
 .sidebar-backdrop {
@@ -336,6 +348,7 @@ body:not(.agillex-theme) { --login-bg: #0B132B; }
   flex-direction: column;
   width: 100%;
   min-width: 0;
+  background-color: var(--bg-main);
 }
 
 .topbar-header {
@@ -344,12 +357,17 @@ body:not(.agillex-theme) { --login-bg: #0B132B; }
   top: 76px;
   z-index: 30;
   border-bottom: 1px solid var(--border-subtle);
-  background-color: var(--bg-surface);
+  background-color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
   flex-shrink: 0;
+  color: var(--text-primary);
+}
+
+.topbar-title {
+  color: #0F172A !important;
 }
 
 .content-scroll {
@@ -423,11 +441,31 @@ body:not(.agillex-theme) { --login-bg: #0B132B; }
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  background-color: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
 }
 
 .table-wrapper table {
   min-width: 600px;
 }
+
+.table-wrapper th {
+  color: #475569 !important;
+  border-bottom: 2px solid #E2E8F0 !important;
+  background-color: #F8FAFC !important;
+  font-weight: 700 !important;
+}
+
+.table-wrapper td {
+  border-bottom: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+}
+
+.table-wrapper tr:hover td {
+  background-color: #F8FAFC !important;
+}
+
 
 @media (max-width: 768px) {
   .mobile-only {
