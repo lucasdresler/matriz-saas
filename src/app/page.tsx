@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import {
   LayoutDashboard,
   Kanban,
@@ -118,8 +118,10 @@ function getWorkspaceTab(tab: DashboardTab, org: Organization): DashboardTab {
   return 'agenda';
 }
 
-export default function MatrizDashboard() {
+export default function MatrizDashboard({ initialSlug }: { initialSlug?: string } = {}) {
   const router = useRouter();
+  const routeParams = useParams();
+  const currentRouteSlug = (typeof routeParams?.slug === 'string' ? routeParams.slug : undefined) || initialSlug;
   const messageIdPrefix = React.useId();
   const messageSequence = React.useRef(0);
   const createMessageId = () => `${messageIdPrefix}-${++messageSequence.current}`;
@@ -357,13 +359,36 @@ export default function MatrizDashboard() {
         }
 
         setOrganizations(availableOrganizations);
-        const defaultOrganization =
-          userData.user.role === 'super_admin'
-            ? availableOrganizations.find((org) => org.slug === 'alllogic') || availableOrganizations[0]
-            : availableOrganizations[0];
-        setActiveOrgId(defaultOrganization.id);
-        setActiveTab((tab) => getWorkspaceTab(tab, defaultOrganization));
-        setWorkspaceError('');
+
+        let targetOrg: Organization | undefined;
+        if (currentRouteSlug) {
+          targetOrg = availableOrganizations.find(
+            (org) => org.slug.toLowerCase() === currentRouteSlug.toLowerCase()
+          );
+          if (!targetOrg) {
+            if (userData.user.role === 'super_admin') {
+              setWorkspaceError(`Workspace com o identificador "${currentRouteSlug}" não foi encontrado.`);
+            } else {
+              targetOrg = availableOrganizations[0];
+              router.replace(`/${targetOrg.slug}`);
+            }
+          }
+        } else {
+          targetOrg =
+            userData.user.role === 'super_admin'
+              ? availableOrganizations.find((org) => org.slug === 'alllogic') || availableOrganizations[0]
+              : availableOrganizations[0];
+          if (targetOrg) {
+            router.replace(`/${targetOrg.slug}`);
+          }
+        }
+
+        const selectedOrg = targetOrg || availableOrganizations[0];
+        setActiveOrgId(selectedOrg.id);
+        setActiveTab((tab) => getWorkspaceTab(tab, selectedOrg));
+        if (targetOrg) {
+          setWorkspaceError('');
+        }
         setWorkspaceReady(true);
       } catch (error) {
         console.error('[Workspace] Falha ao carregar os workspaces:', error);
@@ -379,6 +404,16 @@ export default function MatrizDashboard() {
       isMounted = false;
     };
   }, []);
+
+  // Sincroniza organização ativa caso a rota /slug mude dinamicamente
+  useEffect(() => {
+    if (!workspaceReady || !currentRouteSlug || organizations.length === 0) return;
+    const matched = organizations.find((o) => o.slug.toLowerCase() === currentRouteSlug.toLowerCase());
+    if (matched && matched.id !== activeOrgId) {
+      setActiveOrgId(matched.id);
+      setActiveTab((tab) => getWorkspaceTab(tab, matched));
+    }
+  }, [currentRouteSlug, workspaceReady, organizations, activeOrgId]);
 
   const handleLogout = async () => {
     try {
@@ -1452,7 +1487,7 @@ export default function MatrizDashboard() {
           <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.05em' }}>
             Empresa
           </div>
-          {currentUser?.role === 'super_admin' && organizations.length > 1 && currentOrg.slug === 'alllogic' ? (
+          {currentUser?.role === 'super_admin' && organizations.length > 1 ? (
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
@@ -1519,6 +1554,7 @@ export default function MatrizDashboard() {
                         const firstActiveLead = workspaceLeads.find((lead) => messages[lead.id]?.length > 0);
                         setSelectedLeadId(firstActiveLead?.id || workspaceLeads[0]?.id || '');
                         setOrgDropdownOpen(false);
+                        router.push(`/${org.slug}`);
                       }}
                       style={{
                         width: '100%',

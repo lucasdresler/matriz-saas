@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
-
 const SESSION_COOKIE_NAME = 'agillex_session';
 const AUTH_SECRET = process.env.AUTH_SECRET || 'AllLogicAgillexHubSecretKey2026MasterKey!';
 
@@ -58,14 +57,10 @@ export async function proxy(req: NextRequest) {
       return NextResponse.next();
     }
     if (session) {
-      const expectedHost = session.role === 'super_admin'
-        ? 'hub.alllogiconline.com.br'
-        : 'hub.agillex.com.br';
-
-      if (isKnownHubHost && hostname !== expectedHost) {
+      if (isKnownHubHost && session.role !== 'super_admin' && hostname === 'hub.alllogiconline.com.br') {
         const destination = new URL(req.url);
         destination.protocol = 'https:';
-        destination.hostname = expectedHost;
+        destination.hostname = 'hub.agillex.com.br';
         destination.port = '';
         return NextResponse.redirect(destination);
       }
@@ -119,25 +114,19 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isKnownHubHost) {
-    const expectedHost = session.role === 'super_admin'
-      ? 'hub.alllogiconline.com.br'
-      : 'hub.agillex.com.br';
-
-    if (hostname !== expectedHost) {
-      if (pathname.startsWith('/api/')) {
-        return NextResponse.json(
-          { error: 'Acesso não permitido neste ambiente.' },
-          { status: 403 }
-        );
-      }
-
-      const destination = new URL(req.url);
-      destination.protocol = 'https:';
-      destination.hostname = expectedHost;
-      destination.port = '';
-      return NextResponse.redirect(destination);
+  if (isKnownHubHost && session.role !== 'super_admin' && hostname === 'hub.alllogiconline.com.br') {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'Acesso não permitido neste ambiente.' },
+        { status: 403 }
+      );
     }
+
+    const destination = new URL(req.url);
+    destination.protocol = 'https:';
+    destination.hostname = 'hub.agillex.com.br';
+    destination.port = '';
+    return NextResponse.redirect(destination);
   }
 
   if (session.role !== 'super_admin' && session.userId && session.email) {
