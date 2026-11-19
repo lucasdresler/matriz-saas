@@ -156,6 +156,7 @@ input, textarea, select {
 /* COMPONENTES COMPARTILHADOS - PADRÃO AGILLEX                                */
 /* ========================================================================== */
 
+.btn-primary,
 body.agillex-theme .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -174,12 +175,14 @@ body.agillex-theme .btn-primary {
   box-shadow: 0 0 20px rgba(31, 111, 255, 0.4);
 }
 
+.btn-primary:hover,
 body.agillex-theme .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 30px rgba(31, 111, 255, 0.55);
   filter: brightness(1.05);
 }
 
+.btn-secondary,
 body.agillex-theme .btn-secondary {
   display: inline-flex;
   align-items: center;
@@ -197,6 +200,7 @@ body.agillex-theme .btn-secondary {
   transition: all 0.2s ease;
 }
 
+.btn-secondary:hover,
 body.agillex-theme .btn-secondary:hover {
   background: rgba(31, 111, 255, 0.2);
   border-color: rgba(31, 111, 255, 0.4);

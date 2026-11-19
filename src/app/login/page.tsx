@@ -304,6 +304,25 @@ function LoginForm() {
             type="submit"
             disabled={loading}
             className="btn-primary"
+            style={{
+              width: '100%',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              background: 'linear-gradient(135deg, #1F6FFF 0%, #00F5D4 100%)',
+              color: '#060B18',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 20px',
+              fontWeight: 700,
+              fontSize: '0.95rem',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 0 20px rgba(31, 111, 255, 0.4)',
+              opacity: loading ? 0.7 : 1,
+              marginTop: '6px',
+            }}
           >
             {loading ? (
               <>

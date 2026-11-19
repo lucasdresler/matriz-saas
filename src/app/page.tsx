@@ -1526,55 +1526,75 @@ export default function MatrizDashboard({ initialSlug }: { initialSlug?: string 
                     top: '110%',
                     left: 0,
                     right: 0,
-                    backgroundColor: 'var(--bg-surface-elevated)',
-                    border: '1px solid var(--border-hover)',
+                    backgroundColor: '#0F172A',
+                    border: '1px solid #334155',
                     borderRadius: '10px',
-                    boxShadow: 'var(--shadow-lg)',
-                    zIndex: 50,
+                    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(31, 111, 255, 0.15)',
+                    zIndex: 100,
                     overflow: 'hidden',
-                    padding: '4px',
+                    padding: '6px',
                   }}
                 >
-                  {organizations.map((org) => (
-                    <button
-                      key={org.id}
-                      onClick={() => {
-                        setActiveOrgId(org.id);
-                        const targetTab = (org.modules?.agenda && !org.modules?.crm && !org.modules?.atendimento)
-                          ? 'agenda'
-                          : getWorkspaceTab(activeTab, org);
-                        setActiveTab(targetTab);
-                        const workspaceLeads = leads.filter((lead) => (
-                          lead.orgId === org.id
-                          || (
-                            org.slug === 'alllogic'
-                            && (lead.orgId === 'org-alllogic' || lead.orgId === 'a0000000-0000-0000-0000-000000000001')
-                          )
-                        ));
-                        const firstActiveLead = workspaceLeads.find((lead) => messages[lead.id]?.length > 0);
-                        setSelectedLeadId(firstActiveLead?.id || workspaceLeads[0]?.id || '');
-                        setOrgDropdownOpen(false);
-                        router.push(`/${org.slug}`);
-                      }}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        backgroundColor: org.id === activeOrgId ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                        color: org.id === activeOrgId ? '#fff' : 'var(--text-secondary)',
-                        fontSize: '0.82rem',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: org.logoColor }} />
-                        <span>{org.name}</span>
-                      </div>
-                      {org.id === activeOrgId && <Check size={14} color="#10B981" />}
-                    </button>
-                  ))}
+                  <div style={{ fontSize: '0.64rem', textTransform: 'uppercase', color: '#94A3B8', fontWeight: 700, padding: '4px 8px 6px', letterSpacing: '0.05em' }}>
+                    Workspaces Disponíveis
+                  </div>
+                  {organizations.map((org) => {
+                    const isSelected = org.id === activeOrgId;
+                    return (
+                      <button
+                        key={org.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveOrgId(org.id);
+                          const targetTab = (org.modules?.agenda && !org.modules?.crm && !org.modules?.atendimento)
+                            ? 'agenda'
+                            : getWorkspaceTab(activeTab, org);
+                          setActiveTab(targetTab);
+                          const workspaceLeads = leads.filter((lead) => (
+                            lead.orgId === org.id
+                            || (
+                              org.slug === 'alllogic'
+                              && (lead.orgId === 'org-alllogic' || lead.orgId === 'a0000000-0000-0000-0000-000000000001')
+                            )
+                          ));
+                          const firstActiveLead = workspaceLeads.find((lead) => messages[lead.id]?.length > 0);
+                          setSelectedLeadId(firstActiveLead?.id || workspaceLeads[0]?.id || '');
+                          setOrgDropdownOpen(false);
+                          router.push(`/${org.slug}`);
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '9px 10px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          backgroundColor: isSelected ? 'rgba(37, 99, 235, 0.3)' : 'transparent',
+                          color: isSelected ? '#FFFFFF' : '#E2E8F0',
+                          fontSize: '0.82rem',
+                          fontWeight: isSelected ? 700 : 500,
+                          textAlign: 'left',
+                          transition: 'background-color 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: org.logoColor || '#38BDF8', flexShrink: 0 }} />
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {org.name}
+                          </span>
+                        </div>
+                        {isSelected && <Check size={14} color="#10B981" />}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
